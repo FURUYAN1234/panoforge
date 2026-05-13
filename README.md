@@ -1,16 +1,18 @@
 # 360° AI Panorama Generator
 
-**v1.0.0-alpha** — Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.0.1-alpha** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
-> **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) 連携対応**
-> 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
+> **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
+> The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
 
 ---
 
 ## 🚀 Overview / 概要
 
+360° AI Panorama Generator is an experimental tool that generates "360-degree equirectangular panoramic images" from text or a single image, allowing interactive viewing and capturing via an integrated 3D viewer.
 360° AI Panorama Generatorは、テキストや1枚の画像から「360度エクイレクタングラー（正距円筒図法）パノラマ画像」を生成し、内蔵の3Dビューワーでインタラクティブに確認・キャプチャできる実験的ツールです。
 
+It provides seamless 360-degree environments as background assets for manga and video production tools like Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, supporting highly immersive expressions.
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫画・動画制作ツールにおいて、背景素材としてシームレスな360度空間を提供し、没入感のある表現をサポートします。
 
 ---
@@ -24,49 +26,54 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 ## ✨ Features / 機能
 
 ### 🖼️ 2-Stage Generation (2段階生成)
-- **テキストから画像生成**: 任意のシーン説明とスタイルから、高品質な2:1比率のベース画像を生成。
-- **画像から360°パノラマへ拡張**: 生成した画像、またはユーザーがドロップした手持ちの画像を、AIアウトペインティングによってシームレスな360度パノラマに拡張。
+- **Text-to-Image / テキストから画像生成**: Generates a high-quality 2:1 aspect ratio base image from any scene description and style. / 任意のシーン説明とスタイルから、高品質な2:1比率のベース画像を生成。
+- **Image-to-360° Panorama / 画像から360°パノラマへ拡張**: Expands the generated image, or a user-dropped image, into a seamless 360-degree panorama using AI outpainting. / 生成した画像、またはユーザーがドロップした手持ちの画像を、AIアウトペインティングによってシームレスな360度パノラマに拡張。
 
 ### 🎨 AI Style Suggestion (スタイルAI提案)
-- 「夕暮れのサイバーパンク都市」などのシーン説明から、AIが自動的に最適な「画風（スタイル）」を提案。
+- AI automatically suggests the optimal "art style" based on scene descriptions like "Cyberpunk city at dusk". / 「夕暮れのサイバーパンク都市」などのシーン説明から、AIが自動的に最適な「画風（スタイル）」を提案。
 
 ### 🌐 Interactive 360° Viewer (インタラクティブ・ビューワー)
-- **Three.js** を搭載した軽量で高速な内蔵ビューワー。
-- ドラッグによる全方位の視点移動、マウスホイールによる視野角（FOV）ズーム。
-- **自動回転モード**、**全画面モード**をサポート。
+- Built-in lightweight and fast viewer powered by **Three.js**. / **Three.js** を搭載した軽量で高速な内蔵ビューワー。
+- Supports full omnidirectional view rotation via drag and Field of View (FOV) zoom via mouse wheel. / ドラッグによる全方位の視点移動、マウスホイールによる視野角（FOV）ズーム。
+- Supports **Auto-Rotate Mode / 自動回転モード** and **Fullscreen Mode / 全画面モード**.
 
 ### 📸 HD Capture & Export (高解像度キャプチャ)
-- 任意の視点をフルHD (1920x1080) 解像度でキャプチャし、一瞬でPNG保存。
-- 360度元画像（エクイレクタングラー形式）の直接ダウンロード。
+- Instantly capture any viewpoint in Full HD (1920x1080) resolution and save as PNG. / 任意の視点をフルHD (1920x1080) 解像度でキャプチャし、一瞬でPNG保存。
+- Direct download of the original 360-degree image (equirectangular format). / 360度元画像（エクイレクタングラー形式）の直接ダウンロード。
 
 ---
 
 ## 🏗️ Unique Architecture Highlights / 固有アーキテクチャの要点
 
+This system is not merely an image generation tool. It is a **spatial rendering engine** designed to correct spatial distortions and build/provide seamless 360-degree environments in real time.
 本システムは単なる画像生成ツールではありません。空間の歪みを補正し、シームレスな360度環境をリアルタイムで構築・提供するための**空間レンダリングエンジン**です。
 
 * **2-Stage Image Expansion Pipeline (2段階拡張パイプライン)**:
+  Instead of directly generating a panorama from text, it first generates a high-resolution seed image, then uses AI outpainting to expand the edges so they connect seamlessly in equirectangular projection, minimizing structural collapse.
   テキストから直接パノラマを生成するのではなく、まず高解像度のシード画像を生成し、そのシード画像を中心としてAIのアウトペインティング（外側拡張）機能を用いて左右の端がシームレスに繋がる正距円筒図法に拡張します。これにより、破綻の少ないパノラマを生成します。
 * **Strict Autocomplete Contamination Prevention (自動入力汚染の完全排除)**:
+  Implements multi-layered defenses (dynamic `readonly` removal, randomized `name` attributes, delayed DOM clearing) to prevent unwanted strings from mixing into prompts via browser autocomplete.
   ブラウザの自動補完によって予期せぬ文字列がプロンプトに混入する問題（UI汚染）を防ぐため、`readonly`属性の動的解除、ランダムな`name`属性、および遅延評価によるDOM強制クリアの多段防御壁を実装しています。
 * **Robust Content Policy Handling (コンテンツポリシーのスマート検知)**:
+  Catches AI-model specific "200 OK responses with missing image data (safety filter blocks)" and provides users with specific guidance rather than generic API errors.
   AIモデル特有の「データ欠落を伴う200 OKレスポンス（安全フィルタブロック）」をキャッチし、単なるAPIエラーではなく「ポリシーエラー」としてユーザーに具体的な修正ガイダンスを提供します。
 
 ---
 
 ## 🧠 Zenith Protocol（AIモデル自動切替 / Auto AI Model Fallback）
 
+Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
 **画像生成 / Image Generation Fallback Pipeline**:
-1. `gemini-2.0-flash-preview-image-generation` (Primary: 安定)
-2. `gemini-3.1-flash-image-preview` (Backup 1: 次世代モデル)
-3. `gemini-2.0-flash-exp` (Fallback 1: 試験モデル)
+1. `gemini-2.0-flash-preview-image-generation` (Primary / 安定)
+2. `gemini-3.1-flash-image-preview` (Backup 1 / 次世代モデル)
+3. `gemini-2.0-flash-exp` (Fallback 1 / 試験モデル)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
-1. `gemini-2.5-flash` (Primary: 高速・高精度)
-2. `gemini-2.0-flash` (Backup 1: 安定)
-3. `gemini-1.5-flash` (Fallback 1: 保険)
+1. `gemini-2.5-flash` (Primary / 高速・高精度)
+2. `gemini-2.0-flash` (Backup 1 / 安定)
+3. `gemini-1.5-flash` (Fallback 1 / 保険)
 
 ---
 
@@ -74,15 +81,14 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を
 
 ### 💻 Local Launch (Windows) / ローカルでの起動
 
-1. **Download**: リポジトリからソースコードをダウンロード（ZIP解凍）またはクローンします。
-2. **Run**: フォルダ内の `start_panorama_generator.bat` をダブルクリックします。
-   *(事前にNode.jsのインストールが必要です)*
-3. **Start**: 必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
+1. **Download / ダウンロード**: Download (ZIP) or clone the source code from the repository. / リポジトリからソースコードをダウンロード（ZIP解凍）またはクローンします。
+2. **Run / 実行**: Double-click `start_panoforge.bat` in the folder. *(Requires Node.js to be installed previously)* / フォルダ内の `start_panoforge.bat` をダブルクリックします。*(事前にNode.jsのインストールが必要です)*
+3. **Start / 開始**: Required libraries will be installed automatically, and the browser will launch. / 必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
 
-### 🔑 APIキーについて
-- Google AI Studioで取得した **Gemini APIキー** が必要です。
-- 起動直後に表示される設定画面で入力します。
-- APIキーは**セッション限定**（メモリ内のみ保持）であり、ブラウザのローカルストレージには保存されません。
+### 🔑 About API Keys / APIキーについて
+- A **Gemini API Key** obtained from Google AI Studio is required. / Google AI Studioで取得した **Gemini APIキー** が必要です。
+- Enter the key in the settings screen shown immediately after launch. / 起動直後に表示される設定画面で入力します。
+- The API key is **session-limited** (kept in memory only) and is NOT saved in the browser's local storage. / APIキーは**セッション限定**（メモリ内のみ保持）であり、ブラウザのローカルストレージには保存されません。
 
 ---
 
@@ -92,45 +98,6 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を
 - **Bundler**: Vite
 - **3D Graphics**: Three.js
 - **AI**: Google GenAI SDK (Gemini API)
-
----
-
-## AI Manga Creative Suite / AIまんが制作エコシステム
-
-This project is part of an integrated ecosystem designed to support AI-powered manga and story creation.
-本プロジェクトは、AIを活用した漫画・ストーリー制作を支援する統合エコシステムの一部です。
-
-### Ecosystem Components / 構成システム
-
-#### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
-AIを活用した4コマ漫画制作に特化したシステムです。
-- [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
-- [Code / コード](https://github.com/FURUYAN1234/nano-banana-pro)
-- [Overview / 解説](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)
-
-#### 2. AI Story Maker
-AIを用いてクリエイティブなストーリーやプロットを生成するツールです。
-- [Demo / デモ](https://furuyan1234.github.io/story-maker/)
-- [Code / コード](https://github.com/FURUYAN1234/story-maker)
-- [Overview / 解説](https://github.com/FURUYAN1234/story-maker/blob/main/README.md)
-
-#### 3. AI Character Sheet Maker
-詳細なキャラクターシートや設定をデザインするための支援ツールです。
-- [Demo / デモ](https://furuyan1234.github.io/character-sheet-maker/)
-- [Code / コード](https://github.com/FURUYAN1234/character-sheet-maker)
-- [Overview / 解説](https://github.com/FURUYAN1234/character-sheet-maker/blob/main/README.md)
-
-#### 4. AI Comic Translation Tool
-AIを使って漫画を10言語に翻訳するツールです。
-- [Demo / デモ](https://furuyan1234.github.io/comic-translation/)
-- [Code / コード](https://github.com/FURUYAN1234/comic-translation)
-- [Overview / 解説](https://github.com/FURUYAN1234/comic-translation/blob/main/README.md)
-
-#### 5. 360° AI Panorama Generator
-シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。
-- [Demo / デモ](https://furuyan1234.github.io/panoforge/)
-- [Code / コード](https://github.com/FURUYAN1234/panoforge)
-- [Overview / 解説](https://github.com/FURUYAN1234/panoforge/blob/main/README.md)
 
 ---
 
@@ -271,3 +238,38 @@ These terms are governed by the laws of Japan.
 ---
 
 ## AI Manga Creative Suite / AIまんが制作エコシステム
+
+This project is part of an integrated ecosystem designed to support AI-powered manga and story creation.
+本プロジェクトは、AIを活用した漫画・ストーリー制作を支援する統合エコシステムの一部です。
+
+### Ecosystem Components / 構成システム
+
+#### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+AIを活用した4コマ漫画制作に特化したシステムです。 / A specialized system for 4-koma manga production using AI.
+- [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
+- [Code / コード](https://github.com/FURUYAN1234/nano-banana-pro)
+- [Overview / 解説](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)
+
+#### 2. AI Story Maker
+AIを用いてクリエイティブなストーリーやプロットを生成するツールです。 / A tool that uses AI to generate creative stories and plots.
+- [Demo / デモ](https://furuyan1234.github.io/story-maker/)
+- [Code / コード](https://github.com/FURUYAN1234/story-maker)
+- [Overview / 解説](https://github.com/FURUYAN1234/story-maker/blob/main/README.md)
+
+#### 3. AI Character Sheet Maker
+詳細なキャラクターシートや設定をデザインするための支援ツールです。 / An assistance tool for designing detailed character sheets and settings.
+- [Demo / デモ](https://furuyan1234.github.io/character-sheet-maker/)
+- [Code / コード](https://github.com/FURUYAN1234/character-sheet-maker)
+- [Overview / 解説](https://github.com/FURUYAN1234/character-sheet-maker/blob/main/README.md)
+
+#### 4. AI Comic Translation Tool
+AIを使って漫画を10言語に翻訳するツールです。 / A tool that translates manga into 10 languages using AI.
+- [Demo / デモ](https://furuyan1234.github.io/comic-translation/)
+- [Code / コード](https://github.com/FURUYAN1234/comic-translation)
+- [Overview / 解説](https://github.com/FURUYAN1234/comic-translation/blob/main/README.md)
+
+#### 5. 360° AI Panorama Generator
+シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。 / A tool that generates seamless 360-degree spatial backgrounds to provide background assets for manga and video.
+- [Demo / デモ](https://furuyan1234.github.io/panoforge/)
+- [Code / コード](https://github.com/FURUYAN1234/panoforge)
+- [Overview / 解説](https://github.com/FURUYAN1234/panoforge/blob/main/README.md)
