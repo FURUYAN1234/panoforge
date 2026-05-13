@@ -1,4 +1,4 @@
-# PanoForge (360° AI Panorama Generator)
+# 360° AI Panorama Generator
 
 **v1.0.0-alpha** — Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
@@ -9,7 +9,7 @@
 
 ## 🚀 Overview / 概要
 
-PanoForgeは、テキストや1枚の画像から「360度エクイレクタングラー（正距円筒図法）パノラマ画像」を生成し、内蔵の3Dビューワーでインタラクティブに確認・キャプチャできる実験的ツールです。
+360° AI Panorama Generatorは、テキストや1枚の画像から「360度エクイレクタングラー（正距円筒図法）パノラマ画像」を生成し、内蔵の3Dビューワーでインタラクティブに確認・キャプチャできる実験的ツールです。
 
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫画・動画制作ツールにおいて、背景素材としてシームレスな360度空間を提供し、没入感のある表現をサポートします。
 
@@ -75,7 +75,7 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を
 ### 💻 Local Launch (Windows) / ローカルでの起動
 
 1. **Download**: リポジトリからソースコードをダウンロード（ZIP解凍）またはクローンします。
-2. **Run**: フォルダ内の `start_panoforge.bat` をダブルクリックします。
+2. **Run**: フォルダ内の `start_panorama_generator.bat` をダブルクリックします。
    *(事前にNode.jsのインストールが必要です)*
 3. **Start**: 必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
 
@@ -126,7 +126,7 @@ AIを使って漫画を10言語に翻訳するツールです。
 - [Code / コード](https://github.com/FURUYAN1234/comic-translation)
 - [Overview / 解説](https://github.com/FURUYAN1234/comic-translation/blob/main/README.md)
 
-#### 5. PanoForge (360° AI Panorama Generator)
+#### 5. 360° AI Panorama Generator
 シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/panoforge/)
 - [Code / コード](https://github.com/FURUYAN1234/panoforge)
