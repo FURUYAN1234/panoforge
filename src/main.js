@@ -1,5 +1,5 @@
 // ============================================
-// PanoForge - メインエントリーポイント
+// 360° AI Panorama Generator - メインエントリーポイント
 // API起動時モーダル + 2段階生成 + インラインビューワー
 // ============================================
 
@@ -524,4 +524,4 @@ dom.errorDismiss.addEventListener('click', () => { dom.errorOverlay.classList.ad
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-console.log('🌐 PanoForge initialized');
+  console.log('🌐 360° AI Panorama Generator initialized');
