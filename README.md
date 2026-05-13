@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.0.1-alpha** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.0.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -148,92 +148,87 @@ Any commercial or educational use involving fees requires explicit prior written
 
 ---
 
-## 利用規約 / Terms of Use
+## Terms of Use / 利用規約
 
-### 1. 目的 / Purpose
+### 1. Purpose / 目的
 
-本ツールは創作支援を目的としたものであり、既存の著作物、ブランド、または特定の作家・作品の再現や代替を目的とした利用は想定していません。
 This tool is intended for creative assistance and is not designed to reproduce, substitute, or replicate existing copyrighted works, brands, or specific creators.
+本ツールは創作支援を目的としたものであり、既存の著作物、ブランド、または特定の作家・作品の再現や代替を目的とした利用は想定していません。
 
 ---
 
-### 2. 生成コンテンツに関する禁止事項 / Prohibited Uses
+### 2. Prohibited Uses / 生成コンテンツに関する禁止事項
 
-ユーザーは、本ツールを使用して以下の行為を行ってはなりません。
 Users must not engage in the following:
+ユーザーは、本ツールを使用して以下の行為を行ってはなりません。
 
-#### (1) 著作権・知的財産権侵害 / Intellectual Property Infringement
+#### (1) Intellectual Property Infringement / 著作権・知的財産権侵害
+Reproducing or closely imitating existing backgrounds, recognizable styles, or protected elements.
 - 既存の漫画、アニメ、小説、映画、ゲーム等の背景や美術設定を実質的に再現・模倣する行為
 - 特定の作家のスタイル・作風を識別可能なレベルで再現する行為
 - デザイン要素の無断流用
 - 商標、ロゴ、ブランド要素の無断使用
 
-Reproducing or closely imitating existing backgrounds, recognizable styles, or protected elements.
-
-#### (2) 権利侵害コンテンツの利用 / Use of Infringing Content
+#### (2) Use of Infringing Content / 権利侵害コンテンツの利用
+Generating, distributing, or monetizing infringing or derivative content without permission.
 - 第三者の著作権、商標権、パブリシティ権等を侵害するコンテンツの生成、公開、販売、共有
 - 既存IPに類似したコンテンツの無断商用利用
 
-Generating, distributing, or monetizing infringing or derivative content without permission.
-
-#### (3) 不正利用の助長 / Facilitation of Misuse
+#### (3) Facilitation of Misuse / 不正利用の助長
+Creating or sharing tools intended for infringement.
 - 権利侵害を目的としたプロンプト、テンプレート、ワークフローの作成・共有
 - 他者に侵害行為を促す行為
 
-Creating or sharing tools intended for infringement.
-
-#### (4) 法令違反・不正行為 / Illegal Activities
+#### (4) Illegal Activities / 法令違反・不正行為
+Any illegal or harmful use.
 - 適用される法令に違反する行為
 - 詐欺、不正行為、または有害な目的での利用
 
-Any illegal or harmful use.
-
 ---
 
-### 3. 生成物の責任および権利 / Responsibility & Ownership
+### 3. Responsibility & Ownership / 生成物の責任および権利
 
-生成されたコンテンツの内容および利用に関するすべての責任はユーザーに帰属します。
 The user bears full responsibility for generated content.
+生成されたコンテンツの内容および利用に関するすべての責任はユーザーに帰属します。
 
-本ツールの利用によって生成されたコンテンツについて、開発者は著作権その他の権利を主張しませんが、その適法性・利用可能性を保証するものではありません。
 The developer does not claim ownership of generated content but does not guarantee its legality or usability.
+本ツールの利用によって生成されたコンテンツについて、開発者は著作権その他の権利を主張しませんが、その適法性・利用可能性を保証するものではありません。
 
 ---
 
-### 4. 免責事項 / Disclaimer
+### 4. Disclaimer / 免責事項
 
-本ツールは「現状有姿（AS IS）」で提供され、明示または黙示を問わず、いかなる保証も行いません。
 This tool is provided "as is" without any warranties.
+本ツールは「現状有姿（AS IS）」で提供され、明示または黙示を問わず、いかなる保証も行いません。
 
-開発者は、本ツールの利用または生成コンテンツに起因するいかなる損害についても責任を負いません。
 The developer shall not be liable for any damages arising from use.
+開発者は、本ツールの利用または生成コンテンツに起因するいかなる損害についても責任を負いません。
 
 ---
 
-### 5. 権利侵害への対応 / Infringement & Takedown
+### 5. Infringement & Takedown / 権利侵害への対応
 
-権利侵害の申し立てがあった場合、開発者は独自の判断により以下の対応を行う場合があります。
 Upon receiving a valid claim, the developer may:
+権利侵害の申し立てがあった場合、開発者は独自の判断により以下の対応を行う場合があります。
 
+Remove content, restrict usage, or take necessary actions.
 - 該当コンテンツの削除要請または削除
 - 利用の制限または禁止
 - リポジトリの公開停止等の措置
 
-Remove content, restrict usage, or take necessary actions.
-
 ---
 
-### 6. 規約の変更 / Changes
+### 6. Changes / 規約の変更
 
-本規約は予告なく変更される場合があります。
 These terms may be updated without notice.
+本規約は予告なく変更される場合があります。
 
 ---
 
-### 7. 準拠法 / Governing Law
+### 7. Governing Law / 準拠法
 
-本規約は日本法に準拠します。
 These terms are governed by the laws of Japan.
+本規約は日本法に準拠します。
 
 ---
 
@@ -245,31 +240,31 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 ### Ecosystem Components / 構成システム
 
 #### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
-AIを活用した4コマ漫画制作に特化したシステムです。 / A specialized system for 4-koma manga production using AI.
+A specialized system for 4-koma manga production using AI. / AIを活用した4コマ漫画制作に特化したシステムです。
 - [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
 - [Code / コード](https://github.com/FURUYAN1234/nano-banana-pro)
 - [Overview / 解説](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)
 
 #### 2. AI Story Maker
-AIを用いてクリエイティブなストーリーやプロットを生成するツールです。 / A tool that uses AI to generate creative stories and plots.
+A tool that uses AI to generate creative stories and plots. / AIを用いてクリエイティブなストーリーやプロットを生成するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/story-maker/)
 - [Code / コード](https://github.com/FURUYAN1234/story-maker)
 - [Overview / 解説](https://github.com/FURUYAN1234/story-maker/blob/main/README.md)
 
 #### 3. AI Character Sheet Maker
-詳細なキャラクターシートや設定をデザインするための支援ツールです。 / An assistance tool for designing detailed character sheets and settings.
+An assistance tool for designing detailed character sheets and settings. / 詳細なキャラクターシートや設定をデザインするための支援ツールです。
 - [Demo / デモ](https://furuyan1234.github.io/character-sheet-maker/)
 - [Code / コード](https://github.com/FURUYAN1234/character-sheet-maker)
 - [Overview / 解説](https://github.com/FURUYAN1234/character-sheet-maker/blob/main/README.md)
 
 #### 4. AI Comic Translation Tool
-AIを使って漫画を10言語に翻訳するツールです。 / A tool that translates manga into 10 languages using AI.
+A tool that translates manga into 10 languages using AI. / AIを使って漫画を10言語に翻訳するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/comic-translation/)
 - [Code / コード](https://github.com/FURUYAN1234/comic-translation)
 - [Overview / 解説](https://github.com/FURUYAN1234/comic-translation/blob/main/README.md)
 
 #### 5. 360° AI Panorama Generator
-シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。 / A tool that generates seamless 360-degree spatial backgrounds to provide background assets for manga and video.
+A tool that generates seamless 360-degree spatial backgrounds to provide background assets for manga and video. / シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/panoforge/)
 - [Code / コード](https://github.com/FURUYAN1234/panoforge)
 - [Overview / 解説](https://github.com/FURUYAN1234/panoforge/blob/main/README.md)
