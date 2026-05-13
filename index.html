@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PanoForge - 360° AI Background Generator</title>
+  <meta name="description" content="1枚の画像から360°パノラマ背景をAIで自動生成。ビューワー＆HDキャプチャツール搭載。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>" />
+</head>
+<body>
+  <header id="app-header">
+    <div class="header-left">
+      <span class="logo-icon">🌐</span>
+      <h1 class="logo-text">PanoForge</h1>
+      <span class="logo-sub">360° AI Background</span>
+    </div>
+    <div class="header-right">
+      <button id="api-settings-btn" class="api-settings-btn" title="API設定">
+        <span class="api-btn-icon">🔑</span>
+        <span class="api-btn-label">API設定</span>
+        <span id="api-key-status" class="status-dot" title="未接続"></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main-section">
+    <!-- 入力カード -->
+    <div class="glass-card" id="input-card">
+      <div class="tab-bar">
+        <button class="tab active" data-tab="drop" id="tab-drop">
+          <span class="tab-icon">📁</span>画像をドロップ
+        </button>
+        <button class="tab" data-tab="generate" id="tab-generate">
+          <span class="tab-icon">✨</span>テキストから生成
+        </button>
+      </div>
+
+      <!-- ドロップゾーン -->
+      <div id="drop-zone" class="tab-content active">
+        <div class="drop-area" id="drop-area">
+          <div class="drop-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="drop-text">画像をここにドラッグ＆ドロップ</p>
+          <p class="drop-sub">または<label for="file-input" class="file-label">ファイルを選択</label></p>
+          <input type="file" id="file-input" accept="image/*" hidden />
+          <p class="drop-formats">PNG / JPG / WebP 対応 ・ 360°画像はビューワーで直接閲覧可</p>
+        </div>
+      </div>
+
+      <!-- テキスト生成ゾーン -->
+      <div id="generate-zone" class="tab-content">
+        <div class="generate-form">
+          <label for="scene-prompt" class="form-label">シーンの説明</label>
+          <textarea id="scene-prompt" rows="4" placeholder="例：夕暮れの東京の街並み、ネオンが輝く繁華街&#10;例：森の中の古い神社、木漏れ日が差し込む&#10;例：宇宙空間から見た地球と星々"></textarea>
+          <div class="prompt-options">
+            <label class="form-label">スタイル（選択 or 手入力）</label>
+            <div class="style-chips">
+              <button class="chip" data-style="アニメイラスト風">アニメイラスト</button>
+              <button class="chip" data-style="フォトリアル">フォトリアル</button>
+              <button class="chip" data-style="水彩画風">水彩画</button>
+              <button class="chip" data-style="油絵風">油絵</button>
+              <button class="chip" data-style="サイバーパンク風">サイバーパンク</button>
+              <button class="chip" data-style="ファンタジーアート風">ファンタジー</button>
+              <button class="chip" data-style="ピクセルアート風">ピクセルアート</button>
+              <button class="chip" data-style="浮世絵風">浮世絵</button>
+              <button class="chip" data-style="パステル調イラスト風">パステル</button>
+              <button class="chip" data-style="ゴシック調ダークアート風">ゴシック</button>
+              <button class="chip" data-style="絵本イラスト風">絵本風</button>
+              <button class="chip" data-style="ミニマリスト風">ミニマリスト</button>
+            </div>
+            <div class="style-input-row">
+              <input type="text" id="style-input" placeholder="スタイルを手入力 or チップ選択..." autocomplete="nope" name="pf_x_style_92741" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" />
+              <button id="style-ai-btn" class="style-ai-btn" title="AIがシーンに合ったスタイルを提案">✨ AI提案</button>
+            </div>
+          </div>
+          <!-- 画像生成ボタン -->
+          <button id="generate-image-btn" class="generate-image-btn" disabled>
+            <span>🎨</span><span>まず画像を生成</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- プレビューエリア -->
+      <div id="preview-section" class="hidden">
+        <div class="preview-header">
+          <h3 id="preview-label">入力画像</h3>
+          <button id="clear-preview" class="text-btn">✕ クリア</button>
+        </div>
+        <div class="preview-wrapper">
+          <img id="preview-image" alt="プレビュー" />
+        </div>
+      </div>
+
+      <!-- 360°パノラマ拡張ボタン -->
+      <button id="generate-btn" class="primary-btn" disabled>
+        <span class="btn-icon">🚀</span>
+        <span class="btn-text">360°パノラマに拡張</span>
+      </button>
+    </div>
+
+    <!-- 360°ビューワーカード（インライン） -->
+    <section id="viewer-section" class="hidden">
+      <div class="viewer-card glass-card">
+        <div class="viewer-toolbar">
+          <button id="btn-back" class="ctrl-btn">← 戻る</button>
+          <div class="viewer-info">
+            <span id="resolution-info" class="info-badge">--</span>
+            <span id="zoom-info" class="info-badge">100%</span>
+          </div>
+          <div class="viewer-toolbar-right">
+            <button id="btn-auto-rotate" class="ctrl-btn active">🔄 自動回転</button>
+            <button id="btn-fullscreen" class="ctrl-btn">⛶ 全画面</button>
+          </div>
+        </div>
+        <div class="viewer-viewport">
+          <div id="viewer-container"></div>
+          <div id="compass" class="compass"><span class="compass-label">N</span></div>
+          <div id="zoom-hint" class="zoom-hint">🖱️ ホイールでズーム</div>
+        </div>
+        <div class="viewer-bottom-bar">
+          <button id="btn-capture" class="primary-btn capture-btn">
+            <span class="btn-icon">📸</span>
+            <span class="btn-text">キャプチャ保存 (1920×1080)</span>
+          </button>
+          <button id="btn-save-original" class="ctrl-btn save-active-btn">💾 360°画像を保存</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 処理中オーバーレイ -->
+  <div id="processing-overlay" class="hidden">
+    <div class="processing-card">
+      <div class="processing-orbit"><div class="orbit-ring"></div><div class="orbit-dot"></div></div>
+      <h2 id="processing-title">処理中...</h2>
+      <div class="progress-steps">
+        <div class="step" id="step-analyze"><span class="step-icon">⏳</span>画像分析</div>
+        <div class="step" id="step-generate"><span class="step-icon">⏳</span>360°拡張生成</div>
+        <div class="step" id="step-render"><span class="step-icon">⏳</span>ビューワー構築</div>
+      </div>
+      <p id="processing-sub" class="processing-sub">AIが処理しています...</p>
+    </div>
+  </div>
+
+  <!-- エラーオーバーレイ -->
+  <div id="error-overlay" class="hidden">
+    <div class="error-card glass-card">
+      <div class="error-icon">⚠️</div>
+      <h3 id="error-title">エラー</h3>
+      <p id="error-message"></p>
+      <div class="error-actions">
+        <button id="error-retry" class="primary-btn"><span class="btn-text">リトライ</span></button>
+        <button id="error-dismiss" class="text-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APIキー設定モーダル -->
+  <div id="api-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3>🔑 Gemini API Key 設定</h3>
+        <button id="api-modal-close" class="modal-close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Google AI Studio で取得した Gemini API キーを入力してください。<br>キーはブラウザに保存されず、このセッション中のみ使用されます。</p>
+        <div class="api-input-group">
+          <label for="api-key-input" class="form-label">API Key</label>
+          <div class="api-input-wrapper">
+            <input type="password" id="api-key-input" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+            <button id="api-key-toggle" class="api-toggle-btn">
+              <svg id="icon-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <svg id="icon-eye-on" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="api-key-feedback" class="api-feedback"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="api-modal-apply" class="primary-btn modal-apply-btn" disabled>
+          <span class="btn-text">設定する</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 360°画像検出ダイアログ -->
+  <div id="pano-detect-overlay" class="modal-overlay hidden">
+    <div class="modal-card glass-card">
+      <div class="modal-header"><h3>🌐 360°パノラマ画像を検出</h3></div>
+      <div class="modal-body">
+        <p class="modal-desc">この画像は360°パノラマ画像（2:1比率）のようです。<br>どのモードで開きますか？</p>
+        <div class="pano-detect-preview"><img id="pano-detect-image" alt="プレビュー" /></div>
+      </div>
+      <div class="modal-footer pano-detect-actions">
+        <button id="pano-open-viewer" class="primary-btn"><span class="btn-icon">🌐</span><span class="btn-text">ビューワーで開く</span></button>
+        <button id="pano-use-source" class="ctrl-btn pano-source-btn">🚀 パノラマ生成素材として使う</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
