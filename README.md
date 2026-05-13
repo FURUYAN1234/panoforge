@@ -271,3 +271,17 @@ A tool that generates seamless 360-degree spatial backgrounds to provide backgro
 ---
 
 Developed by **FURU**
+
+---
+
+## 📋 ChangeLog
+
+### v1.0.4 (2026-05-14)
+- **[Docs]** AI Manga Creative Suite / AIまんが制作エコシステムの項目にNoteの解説リンクを追加し、一覧を最新化しました。 / Updated the Ecosystem list and added the Note explanation link.
+- **[Docs]** リポジトリのAbout欄にトピックタグを付与し、説明文を更新しました。 / Updated repository description and topic tags.
+
+### v1.0.3 (2026-05-14)
+- **[Docs]** ドキュメントフォーマットの修正と更新を行いました。 / Fixed documentation formatting.
+
+### v1.0.0 - v1.0.2 (2026-05-13)
+- **[Feature]** 360° AI Panorama Generator の初版およびバグフィックス版をリリース。Gemini 2.0 Flash APIを利用したシームレスな360度パノラマ背景の生成と、Three.jsによるインタラクティブビューワー、Zenith Protocolによるフォールバック機構を搭載。 / Initial releases of 360° AI Panorama Generator.
