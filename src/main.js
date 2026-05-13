@@ -32,6 +32,8 @@ const dom = {
   dropArea: $('#drop-area'),
   fileInput: $('#file-input'),
   scenePrompt: $('#scene-prompt'),
+  sceneChips: $$('.scene-chip'),
+  sceneAiBtn: $('#scene-ai-btn'),
   styleChips: $$('.chip'),
   styleInput: $('#style-input'),
   styleAiBtn: $('#style-ai-btn'),
@@ -176,6 +178,45 @@ dom.tabs.forEach(tab => {
 });
 
 // ============================
+// シーンチップ → テキストエリアに反映
+// ============================
+dom.sceneChips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    dom.sceneChips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    dom.scenePrompt.value = chip.dataset.scene;
+    updateButtons();
+  });
+});
+
+// シーン入力窓の変更時にチップの選択を解除
+dom.scenePrompt.addEventListener('input', () => {
+  const val = dom.scenePrompt.value.trim();
+  dom.sceneChips.forEach(c => {
+    c.classList.toggle('active', c.dataset.scene === val);
+  });
+  updateButtons();
+});
+
+// AIシーン提案ボタン
+dom.sceneAiBtn.addEventListener('click', async () => {
+  if (!engine.isReady()) return;
+  dom.sceneAiBtn.disabled = true;
+  dom.sceneAiBtn.textContent = '⏳ 考え中...';
+  try {
+    const suggestion = await engine.suggestScene();
+    dom.scenePrompt.value = suggestion;
+    dom.sceneChips.forEach(c => c.classList.remove('active'));
+    updateButtons();
+  } catch (e) {
+    console.error('シーン提案エラー:', e);
+  } finally {
+    dom.sceneAiBtn.disabled = false;
+    dom.sceneAiBtn.textContent = '✨ AI提案';
+  }
+});
+
+// ============================
 // スタイルチップ → 入力窓に反映
 // ============================
 dom.styleChips.forEach(chip => {
@@ -279,7 +320,7 @@ dom.clearPreview.addEventListener('click', () => {
 });
 
 // テキスト/スタイル入力変更時
-dom.scenePrompt.addEventListener('input', () => updateButtons());
+// scenePrompt inputは上のシーンチップ連動ハンドラで既に処理済み
 
 // ============================
 // 360°画像: 直接ビューワーで開く（ダイアログ不要）
@@ -321,12 +362,11 @@ function updateButtons() {
   const hasStyle = dom.styleInput.value.trim().length > 0;
   dom.generateImageBtn.disabled = !(hasApi && hasPrompt && hasStyle);
   dom.styleAiBtn.disabled = !(hasApi && hasPrompt);
+  dom.sceneAiBtn.disabled = !hasApi;
 
   // 360°拡張ボタン
   const hasInput = state.inputImageBase64 !== null;
   dom.generateBtn.disabled = !(hasApi && hasInput);
-
-
 }
 
 // ============================

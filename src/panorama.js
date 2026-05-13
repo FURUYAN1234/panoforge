@@ -1,5 +1,5 @@
 // ============================================
-// PanoForge - パノラマ生成エンジン (Gemini API)
+// 360° AI Panorama Generator - パノラマ生成エンジン (Gemini API)
 // Zenith-Style フォールバック + 2段階生成
 // ============================================
 
@@ -208,6 +208,37 @@ Generate the equirectangular panorama image now.`;
 
     const text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
     return text?.trim()?.replace(/[「」\n]/g, '') || 'アニメイラスト風';
+  }
+
+  /**
+   * AIにランダムなシーンを提案させる（テキスト専用モデル使用）
+   */
+  async suggestScene() {
+    if (!this.client) throw new Error('APIキーが設定されていません');
+
+    const prompt = `360度パノラマ背景画像にふさわしい、創造的で美しいシーンの説明を1つだけ提案してください。
+以下のカテゴリからランダムに選んで提案してください：
+- 都市・街（東京、パリ、未来都市など）
+- 自然・風景（森、海、山、草原など）
+- ファンタジー・SF（魔法の世界、宇宙、異世界など）
+- 室内・建築（城、神殿、カフェ、書斎など）
+- 時代もの（中世ヨーロッパ、江戸時代、古代文明など）
+
+30〜60文字程度の日本語で、具体的な情景描写を含めてください。
+例: 「オーロラが輝く北極圏の氷原、星空と凍った湖が反射する」
+シーン説明のみ回答し、その他の説明は不要です。`;
+
+    const response = await this._callWithFallback(
+      TEXT_MODELS, 'text',
+      {
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: { responseModalities: ['TEXT'] },
+      },
+      null
+    );
+
+    const text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+    return text?.trim()?.replace(/[「」\n]/g, '') || '夕暮れの東京の街並み、ネオンが輝く繁華街';
   }
 
   _extractImage(response) {

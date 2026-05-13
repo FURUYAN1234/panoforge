@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.0.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.0.6** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -29,8 +29,18 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 - **Text-to-Image / テキストから画像生成**: Generates a high-quality 2:1 aspect ratio base image from any scene description and style. / 任意のシーン説明とスタイルから、高品質な2:1比率のベース画像を生成。
 - **Image-to-360° Panorama / 画像から360°パノラマへ拡張**: Expands the generated image, or a user-dropped image, into a seamless 360-degree panorama using AI outpainting. / 生成した画像、またはユーザーがドロップした手持ちの画像を、AIアウトペインティングによってシームレスな360度パノラマに拡張。
 
-### 🎨 AI Style Suggestion (スタイルAI提案)
-- AI automatically suggests the optimal "art style" based on scene descriptions like "Cyberpunk city at dusk". / 「夕暮れのサイバーパンク都市」などのシーン説明から、AIが自動的に最適な「画風（スタイル）」を提案。
+### 🎬 Massive Scene Presets (大規模シーンプリセット)
+- Over **65 pre-built scene descriptions** across 7 categories, allowing one-click scene selection without manual typing. / 7カテゴリ計**65以上のシーンプリセット**を搭載し、手入力なしでワンクリックで選択可能。
+- **Categories / カテゴリ**: 🏙️ City/都市・街, 🌿 Nature/自然・風景, 🔮 Fantasy & SF/ファンタジー・SF, 🏠 Interior/室内・建築, ⏳ Historical/時代・歴史, 🌤️ Weather/天候・時間帯
+- Scrollable category-organized chip UI with free-text input fallback. / カテゴリ別スクロール式チップUIと自由入力の併用。
+
+### 🎨 Rich Style Presets (豊富なスタイルプリセット)
+- **24 art style presets** covering anime, photorealistic, watercolor, oil painting, cyberpunk, Ghibli-style, Shinkai-style, ukiyo-e, vaporwave, and more. / アニメ、フォトリアル、水彩画、油絵、サイバーパンク、ジブリ風、新海誠風、浮世絵、ヴェイパーウェイブ等、**24種のスタイルプリセット**を搭載。
+- One-click selection with free-text override. / ワンクリック選択と自由入力の切り替え。
+
+### ✨ Dual AI Suggestions (ダブルAI提案)
+- **Scene AI Suggestion / シーンAI提案**: AI proposes creative scene descriptions from diverse categories (city, nature, fantasy, historical, etc.). / AIが都市・自然・ファンタジー・歴史等の多様なカテゴリからクリエイティブなシーン説明を提案。
+- **Style AI Suggestion / スタイルAI提案**: AI recommends the optimal art style based on the current scene description. / AIが現在のシーン説明に基づいて最適な画風を推薦。
 
 ### 🌐 Interactive 360° Viewer (インタラクティブ・ビューワー)
 - Built-in lightweight and fast viewer powered by **Three.js**. / **Three.js** を搭載した軽量で高速な内蔵ビューワー。
@@ -275,6 +285,16 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.0.6 (2026-05-14)
+- **[Feature]** シーンプリセットを7カテゴリ計65個以上に大幅拡充（都市・街、自然・風景、ファンタジー・SF、室内・建築、時代・歴史、天候・時間帯）。ポチポチ選ぶだけで生成可能に。 / Massively expanded scene presets to 65+ across 7 categories for one-click generation.
+- **[Feature]** スタイルプリセットを24種に倍増（ジブリ風、新海誠風、ヴェイパーウェイブ、水墨画、アールヌーヴォー等を追加）。 / Doubled style presets to 24 (added Ghibli, Shinkai, vaporwave, ink wash, Art Nouveau, etc.).
+- **[Feature]** シーンAI提案ボタンを追加。AIがランダムなシーン説明を提案。 / Added Scene AI suggestion button for creative scene proposal.
+- **[Cleanup]** 不要な一時スクリプトおよびViteテンプレート残骸を削除。 / Removed temporary scripts and Vite template leftovers.
+
+### v1.0.5 (2026-05-14)
+- **[Feature]** シーンの説明にプリセットチップ＋自由入力窓＋AI提案ボタンのUIを追加。 / Added scene preset chips, free input textarea, and AI suggestion button.
+- **[Feature]** スタイルAI提案機能を実装。シーンに基づいて最適なスタイルをAIが推薦。 / Implemented style AI suggestion based on scene description.
 
 ### v1.0.4 (2026-05-14)
 - **[Docs]** AI Manga Creative Suite / AIまんが制作エコシステムの項目にNoteの解説リンクを追加し、一覧を最新化しました。 / Updated the Ecosystem list and added the Note explanation link.

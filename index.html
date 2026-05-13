@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360° AI Panorama Generator v1.0.5</title>
+  <title>360° AI Panorama Generator v1.0.6</title>
   <meta name="description" content="1枚の画像から360°パノラマ背景をAIで自動生成。ビューワー＆HDキャプチャツール搭載。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -57,8 +57,99 @@
       <!-- テキスト生成ゾーン -->
       <div id="generate-zone" class="tab-content">
         <div class="generate-form">
-          <label for="scene-prompt" class="form-label">シーンの説明</label>
-          <textarea id="scene-prompt" rows="4" placeholder="例：夕暮れの東京の街並み、ネオンが輝く繁華街&#10;例：森の中の古い神社、木漏れ日が差し込む&#10;例：宇宙空間から見た地球と星々"></textarea>
+          <!-- シーンの説明: プリセットチップ + 自由入力 + AI提案 -->
+          <label class="form-label">シーンの説明（選択 or 手入力）</label>
+          <div class="scene-chips-section">
+            <div class="chip-category-label">🏙️ 都市・街</div>
+            <div class="scene-chips">
+              <button class="scene-chip" data-scene="夕暮れの東京の街並み、ネオンが輝く繁華街">夕暮れの東京</button>
+              <button class="scene-chip" data-scene="雨に濡れた夜の渋谷スクランブル交差点、反射する光">雨の渋谷</button>
+              <button class="scene-chip" data-scene="ヨーロッパの古い石畳の路地、カフェの灯りが漏れる">ヨーロッパの路地</button>
+              <button class="scene-chip" data-scene="未来的な高層ビル群のスカイライン、空飛ぶ車が行き交う">未来都市</button>
+              <button class="scene-chip" data-scene="京都の花見小路、夕方の提灯が灯る石畳の道">京都の花見小路</button>
+              <button class="scene-chip" data-scene="ニューヨークのタイムズスクエア、巨大な広告と人混み">タイムズスクエア</button>
+              <button class="scene-chip" data-scene="パリのセーヌ川沿い、エッフェル塔が見える夕景">パリの夕景</button>
+              <button class="scene-chip" data-scene="香港の密集した高層アパート群、看板とネオンの洪水">香港の夜景</button>
+              <button class="scene-chip" data-scene="ヴェネツィアの運河、ゴンドラと色鮮やかな建物">ヴェネツィア</button>
+              <button class="scene-chip" data-scene="深夜の秋葉原、電気街のネオンと無人の歩行者天国">深夜の秋葉原</button>
+              <button class="scene-chip" data-scene="朝霧に包まれた上海のビル群、黄浦江の反射">朝霧の上海</button>
+            </div>
+            <div class="chip-category-label">🌿 自然・風景</div>
+            <div class="scene-chips">
+              <button class="scene-chip" data-scene="森の中の古い神社、木漏れ日が差し込む参道">森の神社</button>
+              <button class="scene-chip" data-scene="満開の桜並木、花びらが舞い散る川沿いの道">桜並木</button>
+              <button class="scene-chip" data-scene="夕陽に染まる広大な草原、遠くに連なる山脈">夕暮れの草原</button>
+              <button class="scene-chip" data-scene="深い霧に包まれた針葉樹林、神秘的な雰囲気">霧の森</button>
+              <button class="scene-chip" data-scene="エメラルドグリーンの熱帯の海、白い砂浜とヤシの木">南国のビーチ</button>
+              <button class="scene-chip" data-scene="雪に覆われた山頂、雲海の上に広がる青空">雪山の頂上</button>
+              <button class="scene-chip" data-scene="紅葉に染まる渓谷、清流と苔むした岩">紅葉の渓谷</button>
+              <button class="scene-chip" data-scene="広大な砂漠のオアシス、ヤシの木と青い泉">砂漠のオアシス</button>
+              <button class="scene-chip" data-scene="北欧のフィヨルド、断崖絶壁と青緑の海水">北欧フィヨルド</button>
+              <button class="scene-chip" data-scene="ラベンダー畑が一面に広がるプロヴァンスの丘">ラベンダー畑</button>
+              <button class="scene-chip" data-scene="巨大な滝が流れ落ちる熱帯のジャングル、虹がかかる">ジャングルの滝</button>
+              <button class="scene-chip" data-scene="氷河の洞窟、透き通った青い氷の壁と天井">氷河の洞窟</button>
+              <button class="scene-chip" data-scene="火山の噴火口付近、溶岩流と赤い空">火山と溶岩</button>
+            </div>
+            <div class="chip-category-label">🔮 ファンタジー・SF</div>
+            <div class="scene-chips">
+              <button class="scene-chip" data-scene="宇宙空間から見た地球と星々、オーロラが輝く">宇宙空間</button>
+              <button class="scene-chip" data-scene="魔法の森、巨大なキノコと光る蝶、魔法の粒子が漂う">魔法の森</button>
+              <button class="scene-chip" data-scene="天空に浮かぶ城、雲の上の王国、滝が雲海に落ちる">天空の城</button>
+              <button class="scene-chip" data-scene="廃墟化したサイバーパンクの街、ネオンと蔦が混在">廃墟サイバー</button>
+              <button class="scene-chip" data-scene="水中の古代遺跡、光が差し込む海底神殿">海底神殿</button>
+              <button class="scene-chip" data-scene="蒸気機関とギアが動くスチームパンクの工房">スチームパンク</button>
+              <button class="scene-chip" data-scene="クリスタルの洞窟、七色に輝く巨大な結晶群">クリスタル洞窟</button>
+              <button class="scene-chip" data-scene="異世界の浮遊島、光る植物と二つの月が浮かぶ空">異世界の浮遊島</button>
+              <button class="scene-chip" data-scene="ドラゴンの巣がある火山の頂上、宝石が散りばめられた洞窟">ドラゴンの巣</button>
+              <button class="scene-chip" data-scene="サイバー空間のデジタルグリッド、データの光が流れる仮想世界">サイバー空間</button>
+              <button class="scene-chip" data-scene="宇宙ステーションの展望デッキ、窓から見える星雲と惑星">宇宙ステーション</button>
+              <button class="scene-chip" data-scene="エルフの隠れ里、巨大な樹の中に作られた美しい都市">エルフの里</button>
+            </div>
+            <div class="chip-category-label">🏠 室内・建築</div>
+            <div class="scene-chips">
+              <button class="scene-chip" data-scene="暖炉の火が揺れる古い洋館の書斎、壁一面の本棚">洋館の書斎</button>
+              <button class="scene-chip" data-scene="和室の畳部屋、障子から差し込む午後の光、縁側の庭園">和室と庭園</button>
+              <button class="scene-chip" data-scene="巨大なステンドグラスが輝くゴシック大聖堂の内部">大聖堂</button>
+              <button class="scene-chip" data-scene="おしゃれなカフェの店内、木のテーブルと観葉植物">カフェ店内</button>
+              <button class="scene-chip" data-scene="日本の温泉旅館、露天風呂から見える雪景色の庭">温泉旅館</button>
+              <button class="scene-chip" data-scene="廃墟化した工場、錆びた機械と差し込む光、蔦が絡む">廃墟工場</button>
+              <button class="scene-chip" data-scene="豪華な舞踏会場、シャンデリアが輝く広間">舞踏会場</button>
+              <button class="scene-chip" data-scene="図書館の巨大な吹き抜け、天井まで続く無限の本棚">幻想図書館</button>
+              <button class="scene-chip" data-scene="魔法使いの研究室、ポーションや魔導書が並ぶ棚">魔法使いの部屋</button>
+              <button class="scene-chip" data-scene="日本の学校の教室、夕日が差し込む放課後の風景">学校の教室</button>
+              <button class="scene-chip" data-scene="宇宙船のブリッジ、ホログラム画面と操縦席">宇宙船内部</button>
+            </div>
+            <div class="chip-category-label">⏳ 時代・歴史</div>
+            <div class="scene-chips">
+              <button class="scene-chip" data-scene="中世ヨーロッパの城下町、石造りの建物と馬車が行き交う">中世の城下町</button>
+              <button class="scene-chip" data-scene="江戸時代の宿場町、旅籠と往来する旅人たち">江戸の宿場町</button>
+              <button class="scene-chip" data-scene="古代エジプト、巨大なピラミッドとスフィンクスが並ぶ砂漠">古代エジプト</button>
+              <button class="scene-chip" data-scene="古代ギリシャの神殿、白大理石の列柱とオリーブの丘">ギリシャ神殿</button>
+              <button class="scene-chip" data-scene="ヴィクトリア朝ロンドンの霧深い街路、ガス灯と馬車">ヴィクトリア朝</button>
+              <button class="scene-chip" data-scene="大正ロマンの街並み、レンガ造りの洋館と桜">大正ロマン</button>
+              <button class="scene-chip" data-scene="平安時代の貴族の庭園、池に映る月と紅葉">平安の庭園</button>
+              <button class="scene-chip" data-scene="古代ローマのコロッセウム内部、観客席から見たアリーナ">コロッセウム</button>
+              <button class="scene-chip" data-scene="戦国時代の山城、雲海に浮かぶ天守閣">戦国の山城</button>
+            </div>
+            <div class="chip-category-label">🌤️ 天候・時間帯</div>
+            <div class="scene-chips">
+              <button class="scene-chip" data-scene="オーロラが輝く北極圏の氷原、星空と凍った湖">オーロラの夜</button>
+              <button class="scene-chip" data-scene="激しい雷雨の海、荒波と稲妻が走る暗い空">嵐の海</button>
+              <button class="scene-chip" data-scene="早朝の田園風景、朝露が光る水田と朝焼け">朝焼けの田園</button>
+              <button class="scene-chip" data-scene="満天の星空の下、天の川が輝く高原のキャンプ場">星空キャンプ</button>
+              <button class="scene-chip" data-scene="吹雪の中の北欧の村、暖かい光が漏れる木造の家">吹雪の村</button>
+              <button class="scene-chip" data-scene="虹がかかる草原、雨上がりの新緑と水たまりの反射">虹の草原</button>
+              <button class="scene-chip" data-scene="濃霧に包まれたロンドンの橋、ぼんやり光る街灯">霧のロンドン</button>
+              <button class="scene-chip" data-scene="月明かりに照らされた竹林、静寂の和風庭園">月夜の竹林</button>
+              <button class="scene-chip" data-scene="マジックアワーの港町、紫とオレンジに染まる空と海">マジックアワー</button>
+            </div>
+          </div>
+          <div class="scene-input-row">
+            <textarea id="scene-prompt" rows="3" placeholder="シーンを手入力 or 上のボタンから選択...&#10;例：夕暮れの東京の街並み、ネオンが輝く繁華街"></textarea>
+            <button id="scene-ai-btn" class="style-ai-btn scene-ai-btn" title="AIがランダムなシーンを提案">✨ AI提案</button>
+          </div>
+
+          <!-- スタイル: プリセットチップ + 自由入力 + AI提案 -->
           <div class="prompt-options">
             <label class="form-label">スタイル（選択 or 手入力）</label>
             <div class="style-chips">
@@ -74,6 +165,18 @@
               <button class="chip" data-style="ゴシック調ダークアート風">ゴシック</button>
               <button class="chip" data-style="絵本イラスト風">絵本風</button>
               <button class="chip" data-style="ミニマリスト風">ミニマリスト</button>
+              <button class="chip" data-style="コンセプトアート風">コンセプトアート</button>
+              <button class="chip" data-style="マットペインティング風">マットペイント</button>
+              <button class="chip" data-style="スタジオジブリ風の温かいアニメ">ジブリ風</button>
+              <button class="chip" data-style="新海誠風の美麗な写実アニメ">新海誠風</button>
+              <button class="chip" data-style="レトロポップアート風">レトロポップ</button>
+              <button class="chip" data-style="墨絵・水墨画風">水墨画</button>
+              <button class="chip" data-style="ステンドグラス風の鮮やかな色彩">ステンドグラス</button>
+              <button class="chip" data-style="写真フィルム風のノスタルジックな色調">フィルム写真</button>
+              <button class="chip" data-style="ヴェイパーウェイブ風のネオン色彩">ヴェイパーウェイブ</button>
+              <button class="chip" data-style="アールヌーヴォー風の装飾的なスタイル">アールヌーヴォー</button>
+              <button class="chip" data-style="ローポリ3DCG風">ローポリ3D</button>
+              <button class="chip" data-style="写実的なハイパーリアリズム">ハイパーリアル</button>
             </div>
             <div class="style-input-row">
               <input type="text" id="style-input" placeholder="スタイルを手入力 or チップ選択..." autocomplete="nope" name="pf_x_style_92741" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" />
