@@ -1,4 +1,4 @@
-# PanoForge (360° Background Generator)
+# PanoForge (360° AI Panorama Generator)
 
 **v1.0.0-alpha** — Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
@@ -106,26 +106,31 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 AIを活用した4コマ漫画制作に特化したシステムです。
 - [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
 - [Code / コード](https://github.com/FURUYAN1234/nano-banana-pro)
+- [Overview / 解説](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)
 
 #### 2. AI Story Maker
 AIを用いてクリエイティブなストーリーやプロットを生成するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/story-maker/)
 - [Code / コード](https://github.com/FURUYAN1234/story-maker)
+- [Overview / 解説](https://github.com/FURUYAN1234/story-maker/blob/main/README.md)
 
 #### 3. AI Character Sheet Maker
 詳細なキャラクターシートや設定をデザインするための支援ツールです。
 - [Demo / デモ](https://furuyan1234.github.io/character-sheet-maker/)
 - [Code / コード](https://github.com/FURUYAN1234/character-sheet-maker)
+- [Overview / 解説](https://github.com/FURUYAN1234/character-sheet-maker/blob/main/README.md)
 
 #### 4. AI Comic Translation Tool
 AIを使って漫画を10言語に翻訳するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/comic-translation/)
 - [Code / コード](https://github.com/FURUYAN1234/comic-translation)
+- [Overview / 解説](https://github.com/FURUYAN1234/comic-translation/blob/main/README.md)
 
-#### 5. PanoForge (360° Background Generator)
+#### 5. PanoForge (360° AI Panorama Generator)
 シームレスな360度空間の背景を生成し、漫画や動画の背景素材として提供するツールです。
 - [Demo / デモ](https://furuyan1234.github.io/panoforge/)
 - [Code / コード](https://github.com/FURUYAN1234/panoforge)
+- [Overview / 解説](https://github.com/FURUYAN1234/panoforge/blob/main/README.md)
 
 ---
 
