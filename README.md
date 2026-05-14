@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.0.9** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.1.0** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -289,6 +289,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.1.0 (2026-05-14)
+- **[Major]** 360°パノラマ拡張プロンプトを大幅強化。左右端のシームレス接続を「最優先事項」として明示し、equirectangular投影の数学的制約（360°ラップ、極点歪み、バレル歪曲）を技術的に詳述。つなぎ目の見えるパノラマ生成を大幅に改善。 / Major prompt engineering overhaul for 360° panorama expansion. Seamless left-right edge connection is now enforced as the absolute top priority with detailed technical constraints for equirectangular projection.
+- **[Improve]** テキスト→画像生成プロンプトも360°変換を前提とした広角構図に最適化。 / Text-to-image generation prompt now optimized for wide-angle composition suitable for 360° conversion.
 
 ### v1.0.9 (2026-05-14)
 - **[Feature]** 360°画像保存時にGPano XMPメタデータをJPEGバイナリに埋め込む機能を実装。Google Photos、Facebook等で自動的に360°ビューワーが起動する形式で出力。 / Added GPano XMP metadata injection into JPEG binary on 360° image save. Images now auto-open in 360° viewer on Google Photos, Facebook, etc.

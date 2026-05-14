@@ -120,17 +120,20 @@ export class PanoramaEngine {
     if (!this.client) throw new Error('APIキーが設定されていません');
     onProgress?.('generate');
 
-    const prompt = `Generate a high-quality background illustration image.
+    const prompt = `Generate a high-quality background illustration image optimized for 360-degree panoramic extension.
 
 Scene: ${sceneDescription}
 Style: ${styleText || 'anime illustration style with vibrant colors'}
 
 Requirements:
-1. Create a beautiful, detailed background scene
-2. High resolution, rich in detail and atmosphere
-3. NO text, NO watermarks, NO UI elements, NO people or characters
-4. Focus on BACKGROUND ENVIRONMENT ONLY
-5. Landscape orientation (wider than tall)
+1. Create a beautiful, detailed WIDE-ANGLE background scene (ultra-wide perspective)
+2. The scene should depict an ENVIRONMENT that extends naturally in all directions
+3. Include continuous elements (sky, floor/ground, walls) that can wrap around 360 degrees
+4. High resolution, rich in detail, consistent lighting and atmosphere throughout
+5. NO text, NO watermarks, NO UI elements, NO people or characters
+6. Focus on BACKGROUND ENVIRONMENT ONLY - this will become a 360° panorama
+7. Use wide-angle or fisheye-like perspective to capture more of the surrounding space
+8. Ensure the scene has depth and elements at varying distances
 
 Generate the image now.`;
 
@@ -152,19 +155,37 @@ Generate the image now.`;
     if (!this.client) throw new Error('APIキーが設定されていません');
     onProgress?.('analyze');
 
-    const prompt = `You are an expert panoramic image creator. I am providing you with a reference background image.
+    const prompt = `You are a world-class equirectangular panorama specialist. I am providing you with a reference background image.
 
-Your task: Generate a COMPLETE 360-degree equirectangular panorama image that extends and wraps around from this scene.
+Your task: Generate a COMPLETE 360-degree equirectangular panorama image based on this scene.
 
-CRITICAL REQUIREMENTS:
-1. Output MUST be in equirectangular projection format with exactly 2:1 aspect ratio
-2. The LEFT edge and RIGHT edge MUST connect seamlessly
-3. Maintain the EXACT same art style, color palette, lighting, and atmosphere
-4. Naturally extend the scene in all horizontal directions (full 360°)
-5. Include appropriate sky/ceiling above and ground/floor below
-6. The original scene content should be recognizable
-7. DO NOT add any text, watermarks, or UI elements
-8. Make the output as high resolution as possible
+=== ABSOLUTE TOP PRIORITY: SEAMLESS LEFT-RIGHT EDGE CONNECTION ===
+The LEFT EDGE and RIGHT EDGE of the output image represent the SAME POINT in 3D space.
+They MUST connect PERFECTLY and SEAMLESSLY when the image is wrapped into a sphere.
+- The pixel colors, lines, shapes, and perspective at x=0 must EXACTLY continue from x=max
+- Imagine cutting a cylinder and unrolling it: the cut edges must rejoin perfectly
+- ANY visible seam, discontinuity, or mismatched element at the left-right boundary is a CRITICAL FAILURE
+
+=== EQUIRECTANGULAR FORMAT REQUIREMENTS ===
+1. Output MUST be exactly 2:1 aspect ratio (e.g. 2048x1024, 4096x2048)
+2. Horizontal axis = full 360° of longitude (left-to-right wraps around)
+3. Vertical axis = 180° of latitude (top=zenith/sky, bottom=nadir/ground)
+4. Objects near top and bottom edges should show natural polar stretching/distortion
+5. Straight horizontal lines in 3D become curved lines in equirectangular (barrel distortion)
+
+=== SCENE CONTINUITY ===
+1. Maintain the EXACT same art style, color palette, lighting direction, and atmosphere
+2. The scene must feel like a SINGLE CONTINUOUS SPACE, not stitched panels
+3. Extend the environment naturally in all directions (imagine standing in the center looking around)
+4. Include consistent sky/ceiling above and ground/floor below across the entire image
+5. Architectural elements (walls, floors, ceilings) must follow correct perspective for 360° projection
+
+=== QUALITY ===
+1. Highest possible resolution
+2. NO text, NO watermarks, NO UI elements
+3. Rich detail and consistent quality across the entire panorama
+
+REMINDER: The single most important requirement is that the LEFT and RIGHT edges connect SEAMLESSLY. This is a 360° wrap-around image.
 
 Generate the equirectangular panorama image now.`;
 
