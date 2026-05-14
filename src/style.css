@@ -37,6 +37,12 @@ body{
 }
 .logo-sub{font-size:0.7rem;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase}
 .header-right{display:flex;align-items:center}
+.version-badge{
+  font-family:var(--font);font-size:0.6rem;font-weight:600;letter-spacing:0.5px;
+  color:var(--text-dim);background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.15);
+  padding:2px 7px;border-radius:8px;white-space:nowrap;vertical-align:middle;
+  -webkit-text-fill-color:var(--text-dim);
+}
 
 /* API設定ボタン */
 .api-settings-btn{
