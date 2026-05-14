@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.1.3** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.1.4** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -289,6 +289,12 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.1.4 (2026-05-15)
+- **[Improve]** 処理中の進行状況（ステップ）表示を動的生成方式に変更し、通常画像生成時と360°パノラマ拡張時の表示を適正化しました。 / Optimized processing step display to dynamically switch between normal image generation and 360° panorama expansion.
+- **[Improve]** 360°プレビュー画像の表示制限を撤廃し、2:1比率のワイドストリップとして自然に表示されるように修正。 / Removed height constraint on 360° preview to display the full equirectangular panoramic strip correctly.
+- **[Improve]** メニュー画面の「ダウンロード」ボタンからも、GPano XMPメタデータ付きのJPEG形式で360°パノラマ画像を保存できるように統一（タイムスタンプ付きファイル名）。 / Unified 360° image download from the main menu to save as JPEG with GPano XMP metadata and timestamped filenames.
+- **[Bugfix]** テキストからの初回画像生成（Step 1）で誤って360°風の歪んだ画像が生成されてしまう問題を防ぐため、プロンプトからパノラマ関連の指示を削除し、通常の構図で出力されるように修正。 / Removed panorama-related instructions from the Step 1 prompt to ensure the initial generated image uses a standard, non-distorted composition.
 
 ### v1.1.3 (2026-05-14)
 - **[Bugfix]** AI提案機能（シーン/スタイル）において、一部のAIモデル（Gemini 2.0/2.5等）が思考プロセス（Chain of Thought）を出力してしまい入力窓に混入する問題を修正。プロンプトの厳格化と後処理ロジックの追加により、最終的な提案内容のみを抽出するように改善しました。 / Fixed an issue where the AI suggestion feature would leak the AI's internal thought process into the input field by tightening the prompt and adding post-processing logic to extract only the final output.

@@ -202,7 +202,7 @@ export class PanoramaViewer {
           const outputBlob = new Blob([output], { type: 'image/jpeg' });
           const url = URL.createObjectURL(outputBlob);
           const link = document.createElement('a');
-          link.download = `panoforge_360_${w}x${h}_${Date.now()}.jpg`;
+          link.download = `AI_Panorama_360_generated_image_${this._getTimestamp()}.jpg`;
           link.href = url;
           document.body.appendChild(link);
           link.click();
@@ -213,6 +213,15 @@ export class PanoramaViewer {
       }, 'image/jpeg', 0.95);
     };
     img.src = this.currentImageDataUrl;
+  }
+
+  /**
+   * タイムスタンプ生成（YYYYMMDDHHmmss 14桁）
+   */
+  _getTimestamp() {
+    const now = new Date();
+    const pad = (n, d = 2) => String(n).padStart(d, '0');
+    return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   }
 
   /**
@@ -314,7 +323,7 @@ export class PanoramaViewer {
 
     // ダウンロード
     const link = document.createElement('a');
-    link.download = `panoforge_capture_${width}x${height}_${Date.now()}.png`;
+    link.download = `AI_Panorama_360_capture_${width}x${height}_${this._getTimestamp()}.png`;
     link.href = dataUrl;
     document.body.appendChild(link);
     link.click();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360° AI Panorama Generator v1.1.3</title>
+  <title>360° AI Panorama Generator v1.1.4</title>
   <meta name="description" content="1枚の画像から360°パノラマ背景をAIで自動生成。ビューワー＆HDキャプチャツール搭載。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,7 +15,7 @@
     <div class="header-left">
       <span class="logo-icon">🌐</span>
       <h1 class="logo-text" style="font-size:1.1rem; line-height:1.2;">360° AI Panorama<br>Generator</h1>
-      <span class="version-badge">v1.1.3</span>
+      <span class="version-badge">v1.1.4</span>
     </div>
     <div class="header-right">
       <button id="api-settings-btn" class="api-settings-btn" title="API設定">
@@ -191,11 +191,14 @@
         </div>
       </div>
 
-      <!-- プレビューエリア -->
-      <div id="preview-section" class="hidden">
+      <!-- Step 1 プレビュー: 生成画像 -->
+      <div id="preview-section" class="dual-preview-section hidden">
         <div class="preview-header">
-          <h3 id="preview-label">入力画像</h3>
-          <button id="clear-preview" class="text-btn">✕ クリア</button>
+          <h3 id="preview-label">🎨 生成された画像</h3>
+          <div class="preview-actions">
+            <button id="dl-generated" class="preview-dl-btn" title="画像をダウンロード">📥 ダウンロード</button>
+            <button id="clear-preview" class="text-btn">✕ クリア</button>
+          </div>
         </div>
         <div class="preview-wrapper">
           <img id="preview-image" alt="プレビュー" />
@@ -207,6 +210,21 @@
         <span class="btn-icon">🚀</span>
         <span class="btn-text">360°パノラマに拡張</span>
       </button>
+
+      <!-- Step 2 プレビュー: 360°パノラマ画像 -->
+      <div id="pano-preview-section" class="dual-preview-section hidden">
+        <div class="preview-header">
+          <h3>🌐 360°パノラマ画像</h3>
+          <div class="preview-actions">
+            <button id="dl-panorama" class="preview-dl-btn" title="360°画像をダウンロード">📥 ダウンロード</button>
+            <button id="open-viewer-btn" class="preview-viewer-btn" title="ビューワーで開く">👁 ビューワー</button>
+          </div>
+        </div>
+        <div class="preview-wrapper pano-preview-wrapper">
+          <img id="pano-preview-image" alt="360°パノラマ" />
+          <div class="pano-preview-badge">360° EQUIRECTANGULAR</div>
+        </div>
+      </div>
     </div>
 
     <!-- 360°ビューワーカード（インライン） -->
@@ -244,11 +262,7 @@
     <div class="processing-card">
       <div class="processing-orbit"><div class="orbit-ring"></div><div class="orbit-dot"></div></div>
       <h2 id="processing-title">処理中...</h2>
-      <div class="progress-steps">
-        <div class="step" id="step-analyze"><span class="step-icon">⏳</span>画像分析</div>
-        <div class="step" id="step-generate"><span class="step-icon">⏳</span>360°拡張生成</div>
-        <div class="step" id="step-render"><span class="step-icon">⏳</span>ビューワー構築</div>
-      </div>
+      <div id="progress-steps" class="progress-steps"></div>
       <p id="processing-sub" class="processing-sub">AIが処理しています...</p>
     </div>
   </div>
@@ -270,7 +284,7 @@
   <div id="api-modal-overlay" class="modal-overlay hidden">
     <div class="modal-card glass-card">
       <div class="modal-header">
-        <h3>🔑 Gemini API Key 設定 <span class="version-badge">v1.1.3</span></h3>
+        <h3>🔑 Gemini API Key 設定 <span class="version-badge">v1.1.4</span></h3>
         <button id="api-modal-close" class="modal-close-btn">✕</button>
       </div>
       <div class="modal-body">

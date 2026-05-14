@@ -104,10 +104,12 @@ export class PanoramaEngine {
     }
     // コンテンツポリシー系が1つでもあればそれを主因とする
     const hasContentBlock = errors.some(e => e.isContentBlock);
+    // 技術的詳細はコンソールのみに出力（デバッグ用）
+    console.error('全モデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
     const err = new Error(
       hasContentBlock
         ? 'コンテンツポリシーにより生成がブロックされました。'
-        : `全モデルで生成に失敗しました。\n${errors.map(e => `[${e.label}] ${e.msg}`).join('\n')}`
+        : '画像の生成に失敗しました。サーバーが混雑しているか、一時的な問題が発生しています。'
     );
     err.isContentPolicy = hasContentBlock;
     throw err;
@@ -120,20 +122,20 @@ export class PanoramaEngine {
     if (!this.client) throw new Error('APIキーが設定されていません');
     onProgress?.('generate');
 
-    const prompt = `Generate a high-quality background illustration image optimized for 360-degree panoramic extension.
+    const prompt = `Generate a single high-quality background illustration image.
 
 Scene: ${sceneDescription}
 Style: ${styleText || 'anime illustration style with vibrant colors'}
 
 Requirements:
-1. Create a beautiful, detailed WIDE-ANGLE background scene (ultra-wide perspective)
-2. The scene should depict an ENVIRONMENT that extends naturally in all directions
-3. Include continuous elements (sky, floor/ground, walls) that can wrap around 360 degrees
-4. High resolution, rich in detail, consistent lighting and atmosphere throughout
+1. Create a beautiful, detailed background scene with STANDARD composition and perspective
+2. Use a normal camera angle (NOT wide-angle, NOT fisheye, NOT panoramic)
+3. The image should look like a single photograph or painting with natural framing
+4. High resolution, rich in detail, with beautiful lighting and atmosphere
 5. NO text, NO watermarks, NO UI elements, NO people or characters
-6. Focus on BACKGROUND ENVIRONMENT ONLY - this will become a 360° panorama
-7. Use wide-angle or fisheye-like perspective to capture more of the surrounding space
-8. Ensure the scene has depth and elements at varying distances
+6. Focus on the ENVIRONMENT and SCENERY described in the scene
+7. The image should have a natural aspect ratio (roughly 4:3 or 16:9)
+8. Do NOT create a 360-degree or equirectangular image - just a normal scene
 
 Generate the image now.`;
 

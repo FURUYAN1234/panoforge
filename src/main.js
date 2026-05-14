@@ -38,22 +38,30 @@ const dom = {
   styleInput: $('#style-input'),
   styleAiBtn: $('#style-ai-btn'),
   generateImageBtn: $('#generate-image-btn'),
+  // Step 1 プレビュー: 生成画像
   previewSection: $('#preview-section'),
   previewImage: $('#preview-image'),
   previewLabel: $('#preview-label'),
   clearPreview: $('#clear-preview'),
+  dlGenerated: $('#dl-generated'),
+  // 360°拡張ボタン
   generateBtn: $('#generate-btn'),
+  // Step 2 プレビュー: 360°パノラマ
+  panoPreviewSection: $('#pano-preview-section'),
+  panoPreviewImage: $('#pano-preview-image'),
+  dlPanorama: $('#dl-panorama'),
+  openViewerBtn: $('#open-viewer-btn'),
+  // 処理中 / エラー
   processingOverlay: $('#processing-overlay'),
   processingTitle: $('#processing-title'),
   processingSub: $('#processing-sub'),
-  stepAnalyze: $('#step-analyze'),
-  stepGenerate: $('#step-generate'),
-  stepRender: $('#step-render'),
+  progressSteps: $('#progress-steps'),
   errorOverlay: $('#error-overlay'),
   errorTitle: $('#error-title'),
   errorMessage: $('#error-message'),
   errorRetry: $('#error-retry'),
   errorDismiss: $('#error-dismiss'),
+  // ビューワー
   viewerSection: $('#viewer-section'),
   btnBack: $('#btn-back'),
   btnAutoRotate: $('#btn-auto-rotate'),
@@ -73,11 +81,17 @@ const state = {
   activeTab: 'drop',
   inputImageBase64: null,
   inputImageMime: null,
+  // 360°パノラマデータ（生成画像とは分離して保持）
+  panoBase64: null,
+  panoMime: null,
+  panoDataUrl: null,
+  // その他
   lastAction: null,
   appLocked: false,
   pendingPanoDataUrl: null,
   pendingPanoFile: null,
   isDirectView: false, // 既存360°画像を直接表示中（保存ボタン非表示）
+  generatedDataUrl: null, // 生成画像のDataURL保持
 };
 
 // ============================
@@ -304,21 +318,150 @@ function handleFile(file) {
 function setInputImage(dataUrl, file, label) {
   state.inputImageMime = file ? file.type : 'image/png';
   state.inputImageBase64 = dataUrl.split(',')[1];
+  state.generatedDataUrl = dataUrl; // ダウンロード用に保持
   dom.previewImage.src = dataUrl;
-  dom.previewLabel.textContent = label || '入力画像';
+  dom.previewLabel.textContent = label || '📁 入力画像';
   dom.previewSection.classList.remove('hidden');
   updateButtons();
 }
 
-// プレビュークリア
+// プレビュークリア（生成画像 + 360°パノラマ両方をクリア）
 dom.clearPreview.addEventListener('click', () => {
   state.inputImageBase64 = null;
   state.inputImageMime = null;
+  state.generatedDataUrl = null;
+  state.panoBase64 = null;
+  state.panoMime = null;
+  state.panoDataUrl = null;
   dom.previewImage.src = '';
   dom.previewSection.classList.add('hidden');
+  dom.panoPreviewImage.src = '';
+  dom.panoPreviewSection.classList.add('hidden');
   dom.fileInput.value = '';
   updateButtons();
 });
+
+// タイムスタンプ生成（YYYYMMDDHHmmss 14桁）
+function getTimestamp() {
+  const now = new Date();
+  const pad = (n, d = 2) => String(n).padStart(d, '0');
+  return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+}
+
+// 生成画像ダウンロード（PNG）
+dom.dlGenerated.addEventListener('click', () => {
+  if (!state.generatedDataUrl) return;
+  const filename = `AI_Panorama_normal_generated_image_${getTimestamp()}.png`;
+  downloadDataUrl(state.generatedDataUrl, filename);
+});
+
+// 360°パノラマダウンロード（XMPメタデータ付きJPEG）
+dom.dlPanorama.addEventListener('click', () => {
+  if (!state.panoDataUrl) return;
+  download360AsJpegWithXMP(state.panoDataUrl);
+});
+
+// パノラマプレビューからビューワーを開く
+dom.openViewerBtn.addEventListener('click', () => {
+  if (!state.panoDataUrl) return;
+  openPanoInViewer(state.panoDataUrl, false);
+});
+
+// 通常ダウンロードユーティリティ
+function downloadDataUrl(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// 360°画像: GPano XMPメタデータ付きJPEGとしてダウンロード
+function download360AsJpegWithXMP(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const w = img.width;
+    const h = img.height;
+
+    // Canvas経由でJPEG化
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    canvas.toBlob((blob) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const jpegData = new Uint8Array(reader.result);
+        const xmpPacket = buildGPanoXMP(w, h);
+        const output = injectXMPIntoJPEG(jpegData, xmpPacket);
+
+        const outputBlob = new Blob([output], { type: 'image/jpeg' });
+        const url = URL.createObjectURL(outputBlob);
+        const link = document.createElement('a');
+        link.download = `AI_Panorama_360_generated_image_${getTimestamp()}.jpg`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      reader.readAsArrayBuffer(blob);
+    }, 'image/jpeg', 0.95);
+  };
+  img.src = dataUrl;
+}
+
+// GPano XMPメタデータパケットを構築
+function buildGPanoXMP(width, height) {
+  return [
+    '<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>',
+    '<x:xmpmeta xmlns:x="adobe:ns:meta/">',
+    '  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">',
+    '    <rdf:Description rdf:about=""',
+    '      xmlns:GPano="http://ns.google.com/photos/1.0/panorama/"',
+    `      GPano:ProjectionType="equirectangular"`,
+    `      GPano:UsePanoramaViewer="True"`,
+    `      GPano:FullPanoWidthPixels="${width}"`,
+    `      GPano:FullPanoHeightPixels="${height}"`,
+    `      GPano:CroppedAreaImageWidthPixels="${width}"`,
+    `      GPano:CroppedAreaImageHeightPixels="${height}"`,
+    `      GPano:CroppedAreaLeftPixels="0"`,
+    `      GPano:CroppedAreaTopPixels="0" />`,
+    '  </rdf:RDF>',
+    '</x:xmpmeta>',
+    '<?xpacket end="w"?>',
+  ].join('\n');
+}
+
+// JPEG バイナリの APP1 セグメントに XMP データを注入
+function injectXMPIntoJPEG(jpegData, xmpString) {
+  const nsStr = 'http://ns.adobe.com/xap/1.0/';
+  const nsEncoded = new TextEncoder().encode(nsStr);
+  const nsBytes = new Uint8Array(nsEncoded.length + 1); // +1 for null terminator
+  nsBytes.set(nsEncoded);
+
+  const xmpBytes = new TextEncoder().encode(xmpString);
+  const segmentDataLen = 2 + nsBytes.length + xmpBytes.length;
+
+  const app1 = new Uint8Array(2 + 2 + nsBytes.length + xmpBytes.length);
+  app1[0] = 0xFF;
+  app1[1] = 0xE1;
+  app1[2] = (segmentDataLen >> 8) & 0xFF;
+  app1[3] = segmentDataLen & 0xFF;
+  app1.set(nsBytes, 4);
+  app1.set(xmpBytes, 4 + nsBytes.length);
+
+  // SOI (先頭2バイト: FF D8) の直後に APP1 を挿入
+  const output = new Uint8Array(jpegData.length + app1.length);
+  output.set(jpegData.subarray(0, 2));
+  output.set(app1, 2);
+  output.set(jpegData.subarray(2), 2 + app1.length);
+
+  return output;
+}
 
 // テキスト/スタイル入力変更時
 // scenePrompt inputは上のシーンチップ連動ハンドラで既に処理済み
@@ -356,6 +499,23 @@ function openDirectViewer(dataUrl) {
   setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 }
 
+// パノラマプレビューからビューワーを開く汎用関数
+function openPanoInViewer(dataUrl, isDirect) {
+  if (!viewer) {
+    viewer = new PanoramaViewer('viewer-container');
+    viewer.init();
+    viewer.onRotationChange = updateCompass;
+    viewer.onZoomChange = updateZoomInfo;
+    viewer.onResolutionLoad = updateResInfo;
+  }
+  viewer.loadPanorama(dataUrl);
+  state.isDirectView = isDirect;
+  dom.btnSaveOriginal.classList.toggle('hidden', isDirect);
+  dom.inputCard.classList.add('hidden');
+  dom.viewerSection.classList.remove('hidden');
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+}
+
 // ============================
 // ボタン状態更新
 // ============================
@@ -384,14 +544,15 @@ async function executeImageGeneration() {
   if (!prompt || !style) return;
 
   state.lastAction = () => executeImageGeneration();
-  showProcessing('画像生成中...', 'AIがシーンを描画しています...');
-  setStepState('analyze', 'active');
+  // 画像生成は1ステップのみ
+  showProcessing('画像生成中...', 'AIがシーンを描画しています...', [
+    { id: 'gen', label: '🎨 画像生成' }
+  ]);
+  setStepState('gen', 'active');
 
   try {
     const onProgress = (step, detail) => {
       if (step === 'generate') {
-        setStepState('analyze', 'done');
-        setStepState('generate', 'active');
         dom.processingSub.textContent = '画像を生成しています...';
       } else if (step === 'fallback') {
         dom.processingSub.textContent = `モデル切替中: ${detail || '再試行'}...`;
@@ -399,16 +560,17 @@ async function executeImageGeneration() {
     };
 
     const result = await engine.generateImage(prompt, style, onProgress);
-    setStepState('generate', 'done');
+    setStepState('gen', 'done');
     await sleep(300);
     hideProcessing();
 
-    // 生成画像をプレビューにセット
+    // 生成画像をStep 1プレビューにセット（Step 2とは分離）
     const dataUrl = `data:${result.mimeType};base64,${result.base64}`;
     state.inputImageMime = result.mimeType;
     state.inputImageBase64 = result.base64;
+    state.generatedDataUrl = dataUrl;
     dom.previewImage.src = dataUrl;
-    dom.previewLabel.textContent = '生成された画像（→360°に拡張可能）';
+    dom.previewLabel.textContent = '🎨 生成された画像';
     dom.previewSection.classList.remove('hidden');
     updateButtons();
 
@@ -418,10 +580,10 @@ async function executeImageGeneration() {
     if (error.isContentPolicy) {
       showError(
         '⛔ コンテンツポリシー制限',
-        'AIの安全フィルタにより画像生成がブロックされました（※誤検知の可能性もあります）。\n\n【対処方法】\n• そのまま「リトライ」を押す（タイミングにより成功することがあります）\n• シーンの説明をより具体的・穏やかな表現に変更する\n• スタイルを変えてみる（例：絵本風、水彩画風）'
+        'AIの安全フィルタにより画像生成がブロックされました。\n※誤検知の場合もあります。そのままリトライすると成功することがあります。'
       );
     } else {
-      showError('画像生成エラー', error.message || '不明なエラーが発生しました。');
+      showError('画像生成に失敗しました', 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。');
     }
   }
 }
@@ -434,7 +596,12 @@ dom.generateBtn.addEventListener('click', () => executePanoramaExpansion());
 async function executePanoramaExpansion() {
   if (!state.inputImageBase64) return;
   state.lastAction = () => executePanoramaExpansion();
-  showProcessing('パノラマ拡張中...', '入力画像を分析しています...');
+  // パノラマは3ステップ
+  showProcessing('パノラマ拡張中...', '入力画像を分析しています...', [
+    { id: 'analyze', label: '🔍 画像分析' },
+    { id: 'generate', label: '🌐 360°拡張生成' },
+    { id: 'render', label: '💻 ビューワー準備' },
+  ]);
 
   try {
     const onProgress = (step, detail) => {
@@ -459,6 +626,16 @@ async function executePanoramaExpansion() {
 
     const dataUrl = `data:${result.mimeType};base64,${result.base64}`;
 
+    // 360°パノラマデータを状態に保存（生成画像とは分離）
+    state.panoBase64 = result.base64;
+    state.panoMime = result.mimeType;
+    state.panoDataUrl = dataUrl;
+
+    // Step 2 プレビューにパノラマ画像をセット
+    dom.panoPreviewImage.src = dataUrl;
+    dom.panoPreviewSection.classList.remove('hidden');
+
+    // ビューワーも準備
     if (!viewer) {
       viewer = new PanoramaViewer('viewer-container');
       viewer.init();
@@ -472,7 +649,7 @@ async function executePanoramaExpansion() {
     setStepState('render', 'done');
     await sleep(300);
     hideProcessing();
-    showViewer();
+    // ビューワーには自動遷移せず、メニュー画面に留まる（ユーザーがビューワーボタンで開く）
 
   } catch (error) {
     console.error('パノラマ拡張エラー:', error);
@@ -480,10 +657,10 @@ async function executePanoramaExpansion() {
     if (error.isContentPolicy) {
       showError(
         '⛔ コンテンツポリシー制限',
-        'AIの安全フィルタによりパノラマ生成がブロックされました（※誤検知の可能性もあります）。\n\n【対処方法】\n• そのまま「リトライ」を押す（タイミングにより成功することがあります）\n• 別の画像を使用する\n• テキスト生成で異なるシーンからやり直す'
+        'AIの安全フィルタによりパノラマ生成がブロックされました。\n※誤検知の場合もあります。そのままリトライすると成功することがあります。'
       );
     } else {
-      showError('生成エラー', error.message || '不明なエラーが発生しました。');
+      showError('パノラマ生成に失敗しました', 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。');
     }
   }
 }
@@ -531,26 +708,35 @@ function hideViewer() {
 // ============================
 // 処理中 / エラー表示
 // ============================
-function showProcessing(title, sub) {
-  resetSteps();
+// 処理中オーバーレイ: ステップを動的に生成
+let currentSteps = {};
+
+function showProcessing(title, sub, steps) {
+  // ステップDOMを動的に構築
+  dom.progressSteps.innerHTML = '';
+  currentSteps = {};
+  if (steps && steps.length > 0) {
+    steps.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'step';
+      div.id = `step-${s.id}`;
+      div.innerHTML = `<span class="step-icon">⏳</span>${s.label}`;
+      dom.progressSteps.appendChild(div);
+      currentSteps[s.id] = div;
+    });
+  }
   dom.processingTitle.textContent = title || '処理中...';
   dom.processingSub.textContent = sub || '';
   dom.processingOverlay.classList.remove('hidden');
 }
 function hideProcessing() { dom.processingOverlay.classList.add('hidden'); }
 
-function setStepState(stepName, s) {
-  const map = { analyze: dom.stepAnalyze, generate: dom.stepGenerate, render: dom.stepRender };
-  const el = map[stepName]; if (!el) return;
+function setStepState(stepId, s) {
+  const el = currentSteps[stepId];
+  if (!el) return;
   el.classList.remove('active', 'done');
   if (s === 'active') { el.classList.add('active'); el.querySelector('.step-icon').textContent = '⏳'; }
   else if (s === 'done') { el.classList.add('done'); el.querySelector('.step-icon').textContent = '✅'; }
-}
-function resetSteps() {
-  [dom.stepAnalyze, dom.stepGenerate, dom.stepRender].forEach(el => {
-    el.classList.remove('active', 'done');
-    el.querySelector('.step-icon').textContent = '⏳';
-  });
 }
 
 function showError(title, message) {
