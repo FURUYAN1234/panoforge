@@ -216,7 +216,7 @@ Generate the equirectangular panorama image now.`;
     const prompt = `シーン「${sceneDescription}」に最も合う画像スタイルを1つだけ提案してください。
 20文字以内の日本語で、「〜風」「〜調」の形式で回答してください。
 例: 「夕暮れの水彩画風」「レトロポップ調」「幻想的なファンタジーアート風」
-スタイル名のみ回答し、説明は不要です。`;
+【絶対厳守】思考プロセス、理由、前置きなどは一切書かず、スタイル名のみを直接出力してください。`;
 
     const response = await this._callWithFallback(
       TEXT_MODELS, 'text',
@@ -227,8 +227,14 @@ Generate the equirectangular panorama image now.`;
       null
     );
 
-    const text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
-    return text?.trim()?.replace(/[「」\n]/g, '') || 'アニメイラスト風';
+    let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+    if (text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const decisionLine = lines.find(l => l.includes('最終決定') || l.includes('提案:'));
+      text = decisionLine ? decisionLine : (lines.length > 0 ? lines[lines.length - 1] : text);
+      text = text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').trim();
+    }
+    return text?.replace(/[「」]/g, '') || 'アニメイラスト風';
   }
 
   /**
@@ -247,7 +253,7 @@ Generate the equirectangular panorama image now.`;
 
 30〜60文字程度の日本語で、具体的な情景描写を含めてください。
 例: 「オーロラが輝く北極圏の氷原、星空と凍った湖が反射する」
-シーン説明のみ回答し、その他の説明は不要です。`;
+【絶対厳守】思考プロセス、理由、前置きなどは一切書かず、シーン説明のみを直接出力してください。`;
 
     const response = await this._callWithFallback(
       TEXT_MODELS, 'text',
@@ -258,8 +264,14 @@ Generate the equirectangular panorama image now.`;
       null
     );
 
-    const text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
-    return text?.trim()?.replace(/[「」\n]/g, '') || '夕暮れの東京の街並み、ネオンが輝く繁華街';
+    let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+    if (text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const decisionLine = lines.find(l => l.includes('最終決定') || l.includes('提案:'));
+      text = decisionLine ? decisionLine : (lines.length > 0 ? lines[lines.length - 1] : text);
+      text = text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').trim();
+    }
+    return text?.replace(/[「」]/g, '') || '夕暮れの東京の街並み、ネオンが輝く繁華街';
   }
 
   _extractImage(response) {
