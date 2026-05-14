@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.1.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.1.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -289,6 +289,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.1.2 (2026-05-14)
+- **[Improve]** ユーザーの混乱を防ぐため、安全フィルタによるブロック時のエラーダイアログで「そのままリトライで成功する可能性がある」旨を明記するように修正。 / Improved content policy error messages to clarify that retrying might succeed due to safety filter false positives.
 
 ### v1.1.1 (2026-05-14)
 - **[Feature]** アプリタイトルの横とAPI設定モーダルのヘッダーに現在のバージョンを示すバッジ（vX.Y.Z）を表示。UIの利便性と管理性を向上。 / Added version badges to the main header and API settings modal for better visibility.
