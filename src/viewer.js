@@ -174,17 +174,110 @@ export class PanoramaViewer {
   }
 
   /**
-   * 現在のパノラマ画像をダウンロード（オリジナル360°画像）
+   * 現在のパノラマ画像をGPano XMPメタデータ付きJPEGでダウンロード
+   * Google Photos / Facebook 等で自動的に360°ビューワーが起動する形式
    */
   downloadOriginal() {
     if (!this.currentImageDataUrl) return;
 
-    const link = document.createElement('a');
-    link.download = `panoforge_360_original_${Date.now()}.png`;
-    link.href = this.currentImageDataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const img = new Image();
+    img.onload = () => {
+      const w = img.width;
+      const h = img.height;
+
+      // Canvas経由でJPEG化
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob((blob) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const jpegData = new Uint8Array(reader.result);
+          const xmpPacket = this._buildGPanoXMP(w, h);
+          const output = this._injectXMPIntoJPEG(jpegData, xmpPacket);
+
+          const outputBlob = new Blob([output], { type: 'image/jpeg' });
+          const url = URL.createObjectURL(outputBlob);
+          const link = document.createElement('a');
+          link.download = `panoforge_360_${w}x${h}_${Date.now()}.jpg`;
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        };
+        reader.readAsArrayBuffer(blob);
+      }, 'image/jpeg', 0.95);
+    };
+    img.src = this.currentImageDataUrl;
+  }
+
+  /**
+   * GPano XMPメタデータパケットを構築
+   * @param {number} width - 画像の幅
+   * @param {number} height - 画像の高さ
+   * @returns {string} XMPパケット文字列
+   */
+  _buildGPanoXMP(width, height) {
+    return [
+      '<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>',
+      '<x:xmpmeta xmlns:x="adobe:ns:meta/">',
+      '  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">',
+      '    <rdf:Description rdf:about=""',
+      '      xmlns:GPano="http://ns.google.com/photos/1.0/panorama/"',
+      `      GPano:ProjectionType="equirectangular"`,
+      `      GPano:UsePanoramaViewer="True"`,
+      `      GPano:FullPanoWidthPixels="${width}"`,
+      `      GPano:FullPanoHeightPixels="${height}"`,
+      `      GPano:CroppedAreaImageWidthPixels="${width}"`,
+      `      GPano:CroppedAreaImageHeightPixels="${height}"`,
+      `      GPano:CroppedAreaLeftPixels="0"`,
+      `      GPano:CroppedAreaTopPixels="0" />`,
+      '  </rdf:RDF>',
+      '</x:xmpmeta>',
+      '<?xpacket end="w"?>',
+    ].join('\n');
+  }
+
+  /**
+   * JPEG バイナリの APP1 セグメントに XMP データを注入
+   * SOI (FF D8) 直後に APP1 マーカー (FF E1) + XMP名前空間 + パケットを挿入
+   * @param {Uint8Array} jpegData - 元のJPEGバイナリ
+   * @param {string} xmpString - XMPパケット文字列
+   * @returns {Uint8Array} XMP埋め込み済みJPEGバイナリ
+   */
+  _injectXMPIntoJPEG(jpegData, xmpString) {
+    // XMP APP1 の名前空間識別子（null終端）
+    const nsStr = 'http://ns.adobe.com/xap/1.0/';
+    const nsEncoded = new TextEncoder().encode(nsStr);
+    const nsBytes = new Uint8Array(nsEncoded.length + 1); // +1 for null terminator
+    nsBytes.set(nsEncoded);
+    // nsBytes の最後のバイトは既に 0x00（null終端）
+
+    const xmpBytes = new TextEncoder().encode(xmpString);
+
+    // APP1セグメント長 = 2(長さフィールド自身) + 名前空間 + XMPデータ
+    const segmentDataLen = 2 + nsBytes.length + xmpBytes.length;
+
+    // APP1セグメント全体: FF E1 [2byte長さ] [名前空間] [XMPデータ]
+    const app1 = new Uint8Array(2 + 2 + nsBytes.length + xmpBytes.length);
+    app1[0] = 0xFF;
+    app1[1] = 0xE1;
+    app1[2] = (segmentDataLen >> 8) & 0xFF;
+    app1[3] = segmentDataLen & 0xFF;
+    app1.set(nsBytes, 4);
+    app1.set(xmpBytes, 4 + nsBytes.length);
+
+    // SOI (先頭2バイト: FF D8) の直後に APP1 を挿入
+    const output = new Uint8Array(jpegData.length + app1.length);
+    output.set(jpegData.subarray(0, 2));           // SOI
+    output.set(app1, 2);                            // APP1 (XMP)
+    output.set(jpegData.subarray(2), 2 + app1.length); // 残りのJPEGデータ
+
+    return output;
   }
 
   /**

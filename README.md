@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.0.8** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.0.9** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -50,6 +50,10 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 ### 📸 HD Capture & Export (高解像度キャプチャ)
 - Instantly capture any viewpoint in Full HD (1920x1080) resolution and save as PNG. / 任意の視点をフルHD (1920x1080) 解像度でキャプチャし、一瞬でPNG保存。
 - Direct download of the original 360-degree image (equirectangular format). / 360度元画像（エクイレクタングラー形式）の直接ダウンロード。
+
+### 🌐 GPano XMP Metadata (Google Photos対応)
+- Saved 360° images embed **GPano XMP metadata** (equirectangular projection tags) directly into the JPEG binary. / 保存される360°画像には**GPano XMPメタデータ**（正距円筒図法タグ）がJPEGバイナリに直接埋め込まれます。
+- Google Photos, Facebook, and other platforms automatically open the image in 360° viewer mode. / Google Photos、Facebook等のプラットフォームで自動的に360°ビューワーモードで開かれます。
 
 ---
 
@@ -285,6 +289,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.0.9 (2026-05-14)
+- **[Feature]** 360°画像保存時にGPano XMPメタデータをJPEGバイナリに埋め込む機能を実装。Google Photos、Facebook等で自動的に360°ビューワーが起動する形式で出力。 / Added GPano XMP metadata injection into JPEG binary on 360° image save. Images now auto-open in 360° viewer on Google Photos, Facebook, etc.
+- **[Change]** 保存形式をPNGからJPEG (95%品質) に変更。XMPメタデータ埋め込みのため。 / Changed output format from PNG to JPEG (95% quality) to support XMP metadata embedding.
 
 ### v1.0.8 (2026-05-14)
 - **[Fix]** スタイルプリセットから固有名詞（「ジブリ風」「新海誠風」）を削除し、一般的な表現（「手描きアニメ風」「光彩写実アニメ」）に置換。商標・著作権のコンプライアンス対応。 / Replaced proprietary style names (Ghibli, Shinkai) with generic descriptions for compliance.
