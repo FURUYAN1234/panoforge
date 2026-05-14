@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.0.7** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.0.8** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro/blob/main/README.md)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -285,6 +285,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.0.8 (2026-05-14)
+- **[Fix]** スタイルプリセットから固有名詞（「ジブリ風」「新海誠風」）を削除し、一般的な表現（「手描きアニメ風」「光彩写実アニメ」）に置換。商標・著作権のコンプライアンス対応。 / Replaced proprietary style names (Ghibli, Shinkai) with generic descriptions for compliance.
 
 ### v1.0.7 (2026-05-14)
 - **[Feature]** 既存の360°画像をビューワーで開いた際、「360°画像を保存」ボタンを非表示にするリードオンリーモードを実装。元画像の劣化コピー保存を防止し、キャプチャ保存のみ有効に。 / Added read-only viewer mode for pre-existing 360° images. Hides the save button to prevent quality-degraded re-saves; capture function remains available.
