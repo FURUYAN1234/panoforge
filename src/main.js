@@ -77,6 +77,7 @@ const state = {
   appLocked: false,
   pendingPanoDataUrl: null,
   pendingPanoFile: null,
+  isDirectView: false, // 既存360°画像を直接表示中（保存ボタン非表示）
 };
 
 // ============================
@@ -347,6 +348,9 @@ function openDirectViewer(dataUrl) {
     viewer.onResolutionLoad = updateResInfo;
   }
   viewer.loadPanorama(dataUrl);
+  // 既存360°画像は保存ボタンを非表示（元画像は手元にあるため再保存不要）
+  state.isDirectView = true;
+  dom.btnSaveOriginal.classList.add('hidden');
   dom.inputCard.classList.add('hidden');
   dom.viewerSection.classList.remove('hidden');
   setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
@@ -511,6 +515,9 @@ function updateResInfo(w, h) {
 // ビューワー表示/非表示
 // ============================
 function showViewer() {
+  // AI生成経由 → 保存ボタンを表示
+  state.isDirectView = false;
+  dom.btnSaveOriginal.classList.remove('hidden');
   dom.inputCard.classList.add('hidden');
   dom.viewerSection.classList.remove('hidden');
   setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
