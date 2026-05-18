@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.2.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.2.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -305,6 +305,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.2.2 (2026-05-18)
+- **[Bugfix]** 起動時のポート競合エラーを防ぐため、バッチファイル（`start_panorama_generator.bat`）にゾンビプロセス（Node.js）のクリーンアップ処理を追加。 / Added zombie node process cleanup in the startup batch file to prevent port conflict errors on launch.
 
 ### v1.2.1 (2026-05-18)
 - **[Feature]** Dual-API アーキテクチャを実装。Gemini APIに加えて **OpenAI API (DALL-E 3 & GPT-4o)** を公式サポート。APIキーの形式 (`sk-`) を自動判別し、UIとバックエンドロジックをシームレスに切り替えます。 / Implemented Dual-API Architecture, officially supporting OpenAI API (DALL-E 3 & GPT-4o) alongside Gemini. Automatically detects key format and switches UI/backend logic.
