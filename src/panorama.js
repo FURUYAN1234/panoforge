@@ -1,5 +1,5 @@
 // ============================================
-// 360° AI Panorama Generator - パノラマ生成エンジン (Gemini API)
+// 360° AI Panorama Generator - パノラマ生成エンジン (Dual-API)
 // Zenith-Style フォールバック + 2段階生成
 // ============================================
 
@@ -21,25 +21,123 @@ const TEXT_MODELS = [
 
 export class PanoramaEngine {
   constructor() {
-    this.client = null;
+    this.geminiClient = null;
+    this.openAIKey = null;
+    this.activeEngine = null; // 'gemini' | 'openai'
     this.lastSuccessImageModel = null;
     this.lastSuccessTextModel = null;
   }
 
   setApiKey(apiKey) {
-    if (!apiKey || apiKey.trim() === '') { this.client = null; return false; }
-    try {
-      this.client = new GoogleGenAI({ apiKey: apiKey.trim() });
-      return true;
-    } catch (e) {
-      console.error('APIクライアント初期化失敗:', e);
-      this.client = null;
-      return false;
+    if (!apiKey || apiKey.trim() === '') {
+      this.geminiClient = null;
+      this.openAIKey = null;
+      this.activeEngine = null;
+      return null;
+    }
+    const key = apiKey.trim();
+    if (key.startsWith('sk-')) {
+      this.openAIKey = key;
+      this.geminiClient = null;
+      this.activeEngine = 'openai';
+      return 'openai';
+    } else {
+      try {
+        this.geminiClient = new GoogleGenAI({ apiKey: key });
+        this.openAIKey = null;
+        this.activeEngine = 'gemini';
+        return 'gemini';
+      } catch (e) {
+        console.error('Gemini APIクライアント初期化失敗:', e);
+        return null;
+      }
     }
   }
 
-  isReady() { return this.client !== null; }
+  isReady() { return this.activeEngine !== null; }
 
+  // ============================================
+  // OpenAI Utilities
+  // ============================================
+  async _callOpenAIChat(messages, model = "gpt-4o-mini", responseFormat = "text") {
+    const payload = { model, messages, temperature: 0.7 };
+    if (responseFormat === "json_object") payload.response_format = { type: "json_object" };
+    
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(`OpenAI Chat Error: ${err.error?.message || res.status}`);
+    }
+    const data = await res.json();
+    return data.choices[0].message.content;
+  }
+
+  async _callOpenAIImage(prompt, size = "1024x1024", quality = "high") {
+    // ユーザー環境のAPIプロキシ仕様に合わせて、dall-e-3のエイリアスとして gpt-image-2 を使用
+    // quality も 'hd' ではなく 'high' 等を指定する仕様のため変換
+    const mappedQuality = quality === "hd" ? "high" : quality === "standard" ? "medium" : quality;
+    const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality };
+    // 一部のAPIプロキシでは response_format が非対応のため送信しない
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      // safety system filter
+      if (err.error?.code === "content_policy_violation") {
+        const customErr = new Error('コンテンツポリシーにより生成がブロックされました。');
+        customErr.isContentPolicy = true;
+        throw customErr;
+      }
+      throw new Error(`OpenAI Image Error: ${err.error?.message || res.status}`);
+    }
+    const data = await res.json();
+    const imgData = data.data[0];
+    
+    let base64 = "";
+    if (imgData.b64_json) {
+      base64 = imgData.b64_json;
+    } else if (imgData.url) {
+      const imgRes = await fetch(imgData.url);
+      if (!imgRes.ok) throw new Error("画像URLのダウンロードに失敗しました");
+      const blob = await imgRes.blob();
+      base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const resStr = reader.result;
+          resolve(resStr.substring(resStr.indexOf(",") + 1));
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } else {
+      throw new Error("画像データが見つかりませんでした");
+    }
+    
+    return { base64, mimeType: "image/png" };
+  }
+
+  async _analyzeImageWithVision(base64Image, mimeType) {
+    const prompt = `Analyze this image in extreme detail. Describe the environment, setting, time of day, lighting, architectural style, specific objects, colors, and overall atmosphere. Do NOT mention that it is an image or photo. Just describe the scene inside it as if writing a prompt for an image generator. Keep it concise but highly descriptive.`;
+    const messages = [{
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}`, detail: "high" } }
+      ]
+    }];
+    return await this._callOpenAIChat(messages, "gpt-4o");
+  }
+
+  // ============================================
+  // Gemini Utilities
+  // ============================================
   _getModelOrder(models, lastSuccess) {
     if (lastSuccess) {
       const preferred = models.find(m => m.id === lastSuccess);
@@ -62,24 +160,20 @@ export class PanoramaEngine {
         } else {
           console.log(`🎯 ${tier.label} で生成開始`);
         }
-        const response = await this.client.models.generateContent({
+        const response = await this.geminiClient.models.generateContent({
           model: tier.id, ...requestConfig,
         });
 
-        // === コンテンツ安全チェック（フォールバックトリガー） ===
         if (!response.candidates || response.candidates.length === 0) {
           throw new Error('空のレスポンス（安全フィルタの可能性）');
         }
 
         const candidate = response.candidates[0];
-
-        // finishReasonチェック: SAFETY / RECITATION / OTHER はブロック扱い
         const finishReason = candidate.finishReason;
         if (finishReason && finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
           throw new Error(`コンテンツブロック (finishReason: ${finishReason})`);
         }
 
-        // IMAGE要求時: 画像データが含まれているか確認
         const needsImage = requestConfig.config?.responseModalities?.includes('IMAGE');
         if (needsImage) {
           const parts = candidate.content?.parts;
@@ -90,7 +184,6 @@ export class PanoramaEngine {
           }
         }
 
-        // === 全チェック通過: 成功 ===
         if (lastSuccessKey === 'image') this.lastSuccessImageModel = tier.id;
         else this.lastSuccessTextModel = tier.id;
         console.log(`✅ ${tier.label} で生成成功`);
@@ -102,9 +195,7 @@ export class PanoramaEngine {
         errors.push({ label: tier.label, msg, isContentBlock });
       }
     }
-    // コンテンツポリシー系が1つでもあればそれを主因とする
     const hasContentBlock = errors.some(e => e.isContentBlock);
-    // 技術的詳細はコンソールのみに出力（デバッグ用）
     console.error('全モデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
     const err = new Error(
       hasContentBlock
@@ -115,11 +206,32 @@ export class PanoramaEngine {
     throw err;
   }
 
+  _extractImage(response) {
+    if (!response.candidates || response.candidates.length === 0) {
+      throw new Error('AIからの応答がありませんでした。プロンプトを変えて再試行してください。');
+    }
+    const parts = response.candidates[0].content?.parts;
+    if (!parts) throw new Error('レスポンスの解析に失敗しました。');
+
+    for (const part of parts) {
+      if (part.inlineData?.data) {
+        return { base64: part.inlineData.data, mimeType: part.inlineData.mimeType || 'image/png' };
+      }
+    }
+    const textPart = parts.find(p => p.text);
+    const reason = textPart?.text || '不明な理由';
+    throw new Error(`画像の生成に失敗しました。理由: ${reason.substring(0, 200)}`);
+  }
+
+  // ============================================
+  // Core Functions
+  // ============================================
+
   /**
    * テキストから画像を生成（Step 1）
    */
   async generateImage(sceneDescription, styleText, onProgress) {
-    if (!this.client) throw new Error('APIキーが設定されていません');
+    if (!this.isReady()) throw new Error('APIキーが設定されていません');
     onProgress?.('generate');
 
     const prompt = `Generate a single high-quality background illustration image.
@@ -134,30 +246,58 @@ Requirements:
 4. High resolution, rich in detail, with beautiful lighting and atmosphere
 5. NO text, NO watermarks, NO UI elements, NO people or characters
 6. Focus on the ENVIRONMENT and SCENERY described in the scene
-7. The image should have a natural aspect ratio (roughly 4:3 or 16:9)
+7. The image should have a natural aspect ratio
 8. Do NOT create a 360-degree or equirectangular image - just a normal scene
 
 Generate the image now.`;
 
-    const response = await this._callWithFallback(
-      IMAGE_MODELS, 'image',
-      {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: { responseModalities: ['IMAGE', 'TEXT'] },
-      },
-      (tierLabel) => onProgress?.('fallback', tierLabel)
-    );
-    return this._extractImage(response);
+    if (this.activeEngine === 'openai') {
+      return await this._callOpenAIImage(prompt, "1792x1024", "hd");
+    } else {
+      const response = await this._callWithFallback(
+        IMAGE_MODELS, 'image',
+        {
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: { responseModalities: ['IMAGE', 'TEXT'] },
+        },
+        (tierLabel) => onProgress?.('fallback', tierLabel)
+      );
+      return this._extractImage(response);
+    }
   }
 
   /**
    * 既存の画像を360°パノラマに拡張（Step 2 / ドロップ画像）
    */
   async expandToPanorama(imageBase64, mimeType, onProgress) {
-    if (!this.client) throw new Error('APIキーが設定されていません');
-    onProgress?.('analyze');
+    if (!this.isReady()) throw new Error('APIキーが設定されていません');
+    
+    if (this.activeEngine === 'openai') {
+      onProgress?.('analyze');
+      const analyzedScene = await this._analyzeImageWithVision(imageBase64, mimeType);
+      
+      onProgress?.('generate');
+      const panoPrompt = `Create a COMPLETE 360-degree equirectangular panorama image based exactly on this scene description:
 
-    const prompt = `You are a world-class equirectangular panorama specialist. I am providing you with a reference background image.
+${analyzedScene}
+
+=== EQUIRECTANGULAR FORMAT REQUIREMENTS ===
+1. The output MUST be a strict equirectangular panorama projection.
+2. The left and right edges MUST connect PERFECTLY and SEAMLESSLY when wrapped into a sphere.
+3. Natural vertical distortion at the top (zenith) and bottom (nadir).
+4. Maintain the described art style, color palette, lighting, and atmosphere.
+
+=== QUALITY ===
+1. Highest possible resolution and rich detail.
+2. NO text, NO watermarks, NO UI elements, NO borders.
+
+Generate the equirectangular panorama image now.`;
+      
+      return await this._callOpenAIImage(panoPrompt, "1792x1024", "hd");
+    } else {
+      onProgress?.('analyze');
+      
+      const prompt = `You are a world-class equirectangular panorama specialist. I am providing you with a reference background image.
 
 Your task: Generate a COMPLETE 360-degree equirectangular panorama image based on this scene.
 
@@ -191,59 +331,64 @@ REMINDER: The single most important requirement is that the LEFT and RIGHT edges
 
 Generate the equirectangular panorama image now.`;
 
-    onProgress?.('generate');
-    const response = await this._callWithFallback(
-      IMAGE_MODELS, 'image',
-      {
-        contents: [{
-          role: 'user',
-          parts: [
-            { inlineData: { mimeType, data: imageBase64 } },
-            { text: prompt }
-          ]
-        }],
-        config: { responseModalities: ['IMAGE', 'TEXT'] },
-      },
-      (tierLabel) => onProgress?.('fallback', tierLabel)
-    );
-    return this._extractImage(response);
+      onProgress?.('generate');
+      const response = await this._callWithFallback(
+        IMAGE_MODELS, 'image',
+        {
+          contents: [{
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType, data: imageBase64 } },
+              { text: prompt }
+            ]
+          }],
+          config: { responseModalities: ['IMAGE', 'TEXT'] },
+        },
+        (tierLabel) => onProgress?.('fallback', tierLabel)
+      );
+      return this._extractImage(response);
+    }
   }
 
   /**
    * AIにスタイルを提案させる（テキスト専用モデル使用）
    */
   async suggestStyle(sceneDescription) {
-    if (!this.client) throw new Error('APIキーが設定されていません');
+    if (!this.isReady()) throw new Error('APIキーが設定されていません');
 
     const prompt = `シーン「${sceneDescription}」に最も合う画像スタイルを1つだけ提案してください。
 20文字以内の日本語で、「〜風」「〜調」の形式で回答してください。
 例: 「夕暮れの水彩画風」「レトロポップ調」「幻想的なファンタジーアート風」
 【絶対厳守】思考プロセス、理由、前置きなどは一切書かず、スタイル名のみを直接出力してください。`;
 
-    const response = await this._callWithFallback(
-      TEXT_MODELS, 'text',
-      {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: { responseModalities: ['TEXT'] },
-      },
-      null
-    );
-
-    let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
-    if (text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      const decisionLine = lines.find(l => l.includes('最終決定') || l.includes('提案:'));
-      text = decisionLine ? decisionLine : (lines.length > 0 ? lines[lines.length - 1] : text);
-      text = text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').trim();
+    if (this.activeEngine === 'openai') {
+      const text = await this._callOpenAIChat([{ role: "user", content: prompt }]);
+      return text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').replace(/[「」]/g, '').trim() || 'アニメイラスト風';
+    } else {
+      const response = await this._callWithFallback(
+        TEXT_MODELS, 'text',
+        {
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: { responseModalities: ['TEXT'] },
+        },
+        null
+      );
+      let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+      if (text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const decisionLine = lines.find(l => l.includes('最終決定') || l.includes('提案:'));
+        text = decisionLine ? decisionLine : (lines.length > 0 ? lines[lines.length - 1] : text);
+        text = text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').trim();
+      }
+      return text?.replace(/[「」]/g, '') || 'アニメイラスト風';
     }
-    return text?.replace(/[「」]/g, '') || 'アニメイラスト風';
   }
 
   /**
    * AIにランダムなシーンを提案させる（テキスト専用モデル使用）
    */
   async suggestScene() {
-    if (!this.client) throw new Error('APIキーが設定されていません');
+    if (!this.isReady()) throw new Error('APIキーが設定されていません');
 
     const prompt = `360度パノラマ背景画像にふさわしい、創造的で美しいシーンの説明を1つだけ提案してください。
 以下のカテゴリからランダムに選んで提案してください：
@@ -257,39 +402,27 @@ Generate the equirectangular panorama image now.`;
 例: 「オーロラが輝く北極圏の氷原、星空と凍った湖が反射する」
 【絶対厳守】思考プロセス、理由、前置きなどは一切書かず、シーン説明のみを直接出力してください。`;
 
-    const response = await this._callWithFallback(
-      TEXT_MODELS, 'text',
-      {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: { responseModalities: ['TEXT'] },
-      },
-      null
-    );
+    if (this.activeEngine === 'openai') {
+      const text = await this._callOpenAIChat([{ role: "user", content: prompt }]);
+      return text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').replace(/[「」]/g, '').trim() || '夕暮れの東京の街並み、ネオンが輝く繁華街';
+    } else {
+      const response = await this._callWithFallback(
+        TEXT_MODELS, 'text',
+        {
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: { responseModalities: ['TEXT'] },
+        },
+        null
+      );
 
-    let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
-    if (text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      const decisionLine = lines.find(l => l.includes('最終決定') || l.includes('提案:'));
-      text = decisionLine ? decisionLine : (lines.length > 0 ? lines[lines.length - 1] : text);
-      text = text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').trim();
-    }
-    return text?.replace(/[「」]/g, '') || '夕暮れの東京の街並み、ネオンが輝く繁華街';
-  }
-
-  _extractImage(response) {
-    if (!response.candidates || response.candidates.length === 0) {
-      throw new Error('AIからの応答がありませんでした。プロンプトを変えて再試行してください。');
-    }
-    const parts = response.candidates[0].content?.parts;
-    if (!parts) throw new Error('レスポンスの解析に失敗しました。');
-
-    for (const part of parts) {
-      if (part.inlineData?.data) {
-        return { base64: part.inlineData.data, mimeType: part.inlineData.mimeType || 'image/png' };
+      let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+      if (text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const decisionLine = lines.find(l => l.includes('最終決定') || l.includes('提案:'));
+        text = decisionLine ? decisionLine : (lines.length > 0 ? lines[lines.length - 1] : text);
+        text = text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').trim();
       }
+      return text?.replace(/[「」]/g, '') || '夕暮れの東京の街並み、ネオンが輝く繁華街';
     }
-    const textPart = parts.find(p => p.text);
-    const reason = textPart?.text || '不明な理由';
-    throw new Error(`画像の生成に失敗しました。理由: ${reason.substring(0, 200)}`);
   }
 }

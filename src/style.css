@@ -59,6 +59,7 @@ body{
   transition:background var(--transition),box-shadow var(--transition);margin-left:4px;flex-shrink:0;
 }
 .status-dot.connected{background:var(--success);box-shadow:0 0 8px rgba(0,230,118,0.5)}
+.status-dot.openai{background:#81c784;box-shadow:0 0 8px rgba(129,199,132,0.5)}
 
 /* モーダル共通 */
 .modal-overlay{
@@ -104,6 +105,7 @@ body{
 .api-toggle-btn:hover{color:var(--text-bright);background:rgba(255,255,255,0.06)}
 .api-feedback{margin-top:12px;font-size:0.8rem;min-height:20px;transition:all var(--transition)}
 .api-feedback.success{color:var(--success)}.api-feedback.error{color:var(--danger)}
+.api-warning{color:var(--warning);font-weight:600;margin-top:8px;}
 
 /* メインセクション */
 #main-section{
@@ -163,6 +165,15 @@ body{
   text-underline-offset:3px;transition:color var(--transition);
 }
 .file-label:hover{color:var(--text-bright)}
+
+/* OpenAI注釈 */
+.openai-note{
+  margin-top:16px;padding:14px;background:rgba(129,199,132,0.1);border-left:4px solid #81c784;
+  border-radius:var(--radius-xs);text-align:left;animation:fadeIn 0.3s ease;
+}
+.openai-note-title{font-size:0.85rem;color:#81c784;font-weight:600;margin-bottom:4px}
+.openai-note-desc{font-size:0.8rem;color:var(--text-dim);line-height:1.6}
+.openai-note-desc strong{color:var(--text-bright);font-weight:600}
 
 /* テキスト生成フォーム */
 .generate-form{display:flex;flex-direction:column;gap:16px}

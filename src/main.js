@@ -15,6 +15,7 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 const dom = {
   apiSettingsBtn: $('#api-settings-btn'),
+  apiStatusText: $('#api-status-text'),
   apiKeyStatus: $('#api-key-status'),
   apiModalOverlay: $('#api-modal-overlay'),
   apiModalClose: $('#api-modal-close'),
@@ -23,7 +24,10 @@ const dom = {
   iconEyeOff: $('#icon-eye-off'),
   iconEyeOn: $('#icon-eye-on'),
   apiKeyFeedback: $('#api-key-feedback'),
+  apiKeyWarning: $('#api-key-warning'),
   apiModalApply: $('#api-modal-apply'),
+  openaiVisionNote: $('#openai-vision-note'),
+  processingTimer: $('#processing-timer'),
 
   inputCard: $('#input-card'),
   tabs: $$('.tab'),
@@ -138,9 +142,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 dom.apiKeyInput.addEventListener('input', () => {
-  dom.apiModalApply.disabled = dom.apiKeyInput.value.trim().length === 0;
+  const val = dom.apiKeyInput.value.trim();
+  dom.apiModalApply.disabled = val.length === 0;
   dom.apiKeyFeedback.textContent = '';
   dom.apiKeyFeedback.className = 'api-feedback';
+  dom.apiKeyWarning.classList.toggle('hidden', !val.startsWith('sk-'));
 });
 
 dom.apiKeyToggle.addEventListener('click', () => {
@@ -153,11 +159,26 @@ dom.apiKeyToggle.addEventListener('click', () => {
 dom.apiModalApply.addEventListener('click', () => {
   const key = dom.apiKeyInput.value.trim();
   if (!key) return;
-  const ok = engine.setApiKey(key);
-  if (ok) {
+  const engineType = engine.setApiKey(key);
+  if (engineType) {
     dom.apiKeyStatus.classList.add('connected');
     dom.apiSettingsBtn.classList.add('connected');
-    dom.apiKeyFeedback.textContent = '✓ APIキーが設定されました';
+    
+    // エンジンごとのスタイル変更
+    if (engineType === 'openai') {
+      dom.apiKeyStatus.classList.add('openai');
+      dom.apiKeyFeedback.textContent = '✓ OpenAI API に接続しました';
+      dom.apiStatusText.textContent = 'Engine: OpenAI';
+      state.appLocked = false;
+      dom.openaiVisionNote.classList.remove('hidden');
+    } else {
+      dom.apiKeyStatus.classList.remove('openai');
+      dom.apiKeyFeedback.textContent = '✓ Gemini API に接続しました';
+      dom.apiStatusText.textContent = 'Engine: Gemini';
+      state.appLocked = false;
+      dom.openaiVisionNote.classList.add('hidden');
+    }
+    
     dom.apiKeyFeedback.className = 'api-feedback success';
     setAppLocked(false);
     setTimeout(() => {
@@ -166,10 +187,12 @@ dom.apiModalApply.addEventListener('click', () => {
       dom.apiKeyInput.type = 'password';
       dom.iconEyeOff.classList.remove('hidden');
       dom.iconEyeOn.classList.add('hidden');
+      dom.apiKeyWarning.classList.add('hidden');
     }, 800);
   } else {
-    dom.apiKeyStatus.classList.remove('connected');
+    dom.apiKeyStatus.classList.remove('connected', 'openai');
     dom.apiSettingsBtn.classList.remove('connected');
+    dom.apiStatusText.textContent = '未接続';
     dom.apiKeyFeedback.textContent = '✕ APIキーの初期化に失敗しました';
     dom.apiKeyFeedback.className = 'api-feedback error';
   }
@@ -338,6 +361,9 @@ dom.clearPreview.addEventListener('click', () => {
   dom.panoPreviewImage.src = '';
   dom.panoPreviewSection.classList.add('hidden');
   dom.fileInput.value = '';
+  if (engine.activeEngine === 'openai') {
+    dom.openaiVisionNote.classList.remove('hidden');
+  }
   updateButtons();
 });
 
@@ -543,17 +569,20 @@ async function executeImageGeneration() {
   const style = dom.styleInput.value.trim();
   if (!prompt || !style) return;
 
+  const isOpenAI = engine.activeEngine === 'openai';
+  const subText = isOpenAI ? '画像を生成しています...\n（※OpenAIモードのため完了まで約2〜4分かかります）' : 'AIがシーンを描画しています...';
+
   state.lastAction = () => executeImageGeneration();
   // 画像生成は1ステップのみ
-  showProcessing('画像生成中...', 'AIがシーンを描画しています...', [
+  showProcessing('画像生成中...', subText, [
     { id: 'gen', label: '🎨 画像生成' }
-  ]);
+  ], isOpenAI);
   setStepState('gen', 'active');
 
   try {
     const onProgress = (step, detail) => {
       if (step === 'generate') {
-        dom.processingSub.textContent = '画像を生成しています...';
+        dom.processingSub.textContent = subText;
       } else if (step === 'fallback') {
         dom.processingSub.textContent = `モデル切替中: ${detail || '再試行'}...`;
       }
@@ -577,13 +606,14 @@ async function executeImageGeneration() {
   } catch (error) {
     console.error('画像生成エラー:', error);
     hideProcessing();
-    if (error.isContentPolicy) {
+    if (error.isContentPolicy || (error.message && error.message.includes('content_policy'))) {
       showError(
         '⛔ コンテンツポリシー制限',
         'AIの安全フィルタにより画像生成がブロックされました。\n※誤検知の場合もあります。そのままリトライすると成功することがあります。'
       );
     } else {
-      showError('画像生成に失敗しました', 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。');
+      const msg = error.message ? error.message : 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。';
+      showError('画像生成に失敗しました', msg);
     }
   }
 }
@@ -596,12 +626,15 @@ dom.generateBtn.addEventListener('click', () => executePanoramaExpansion());
 async function executePanoramaExpansion() {
   if (!state.inputImageBase64) return;
   state.lastAction = () => executePanoramaExpansion();
+  const isOpenAI = engine.activeEngine === 'openai';
+  const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードのため完了まで約2〜4分かかります）' : '入力画像を分析しています...';
+
   // パノラマは3ステップ
-  showProcessing('パノラマ拡張中...', '入力画像を分析しています...', [
+  showProcessing('パノラマ拡張中...', subText, [
     { id: 'analyze', label: '🔍 画像分析' },
     { id: 'generate', label: '🌐 360°拡張生成' },
     { id: 'render', label: '💻 ビューワー準備' },
-  ]);
+  ], isOpenAI);
 
   try {
     const onProgress = (step, detail) => {
@@ -610,7 +643,9 @@ async function executePanoramaExpansion() {
       } else if (step === 'generate') {
         setStepState('analyze', 'done');
         setStepState('generate', 'active');
-        dom.processingSub.textContent = 'AIが360°背景を生成しています...';
+        dom.processingSub.innerHTML = isOpenAI 
+          ? 'AIが360°背景を生成しています...<br>（※OpenAIモードのため完了まで約2〜4分かかります）' 
+          : 'AIが360°背景を生成しています...';
       } else if (step === 'fallback') {
         dom.processingSub.textContent = `モデル切替中: ${detail || '再試行'}...`;
       }
@@ -654,13 +689,14 @@ async function executePanoramaExpansion() {
   } catch (error) {
     console.error('パノラマ拡張エラー:', error);
     hideProcessing();
-    if (error.isContentPolicy) {
+    if (error.isContentPolicy || (error.message && error.message.includes('content_policy'))) {
       showError(
         '⛔ コンテンツポリシー制限',
         'AIの安全フィルタによりパノラマ生成がブロックされました。\n※誤検知の場合もあります。そのままリトライすると成功することがあります。'
       );
     } else {
-      showError('パノラマ生成に失敗しました', 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。');
+      const msg = error.message ? error.message : 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。';
+      showError('パノラマ生成に失敗しました', msg);
     }
   }
 }
@@ -710,8 +746,10 @@ function hideViewer() {
 // ============================
 // 処理中オーバーレイ: ステップを動的に生成
 let currentSteps = {};
+let processingTimerInterval = null;
+let processingStartTime = 0;
 
-function showProcessing(title, sub, steps) {
+function showProcessing(title, sub, steps, showTimer = false) {
   // ステップDOMを動的に構築
   dom.progressSteps.innerHTML = '';
   currentSteps = {};
@@ -726,10 +764,32 @@ function showProcessing(title, sub, steps) {
     });
   }
   dom.processingTitle.textContent = title || '処理中...';
-  dom.processingSub.textContent = sub || '';
+  // 改行をサポート
+  dom.processingSub.innerHTML = (sub || '').replace(/\n/g, '<br>');
   dom.processingOverlay.classList.remove('hidden');
+
+  if (showTimer) {
+    dom.processingTimer.classList.remove('hidden');
+    dom.processingTimer.textContent = '00:00';
+    processingStartTime = Date.now();
+    processingTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - processingStartTime) / 1000);
+      const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      const s = String(elapsed % 60).padStart(2, '0');
+      dom.processingTimer.textContent = `${m}:${s}`;
+    }, 1000);
+  } else {
+    dom.processingTimer.classList.add('hidden');
+  }
 }
-function hideProcessing() { dom.processingOverlay.classList.add('hidden'); }
+
+function hideProcessing() { 
+  dom.processingOverlay.classList.add('hidden'); 
+  if (processingTimerInterval) {
+    clearInterval(processingTimerInterval);
+    processingTimerInterval = null;
+  }
+}
 
 function setStepState(stepId, s) {
   const el = currentSteps[stepId];
