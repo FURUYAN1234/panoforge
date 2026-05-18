@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.1.4** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
+**v1.1.5** — AI-driven 360° panoramic background generation and expansion tool using Gemini API / Gemini API を使用したAI駆動の360度パノラマ背景生成・拡張ツール
 
 > **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
@@ -96,7 +96,7 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を
 ### 💻 Local Launch (Windows) / ローカルでの起動
 
 1. **Download / ダウンロード**: Download (ZIP) or clone the source code from the repository. / リポジトリからソースコードをダウンロード（ZIP解凍）またはクローンします。
-2. **Run / 実行**: Double-click `start_panoforge.bat` in the folder. *(Requires Node.js to be installed previously)* / フォルダ内の `start_panoforge.bat` をダブルクリックします。*(事前にNode.jsのインストールが必要です)*
+2. **Run / 実行**: Double-click `start_panorama_generator.bat` in the folder. *(Requires Node.js to be installed previously)* / フォルダ内の `start_panorama_generator.bat` をダブルクリックします。*(事前にNode.jsのインストールが必要です)*
 3. **Start / 開始**: Required libraries will be installed automatically, and the browser will launch. / 必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
 
 ### 🔑 About API Keys / APIキーについて
@@ -294,6 +294,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.1.5 (2026-05-18)
+- **[Bugfix]** 起動バッチファイル名を修正 (start_panorama_generator.bat) / Fixed startup batch file name.
 
 ### v1.1.4 (2026-05-15)
 - **[Improve]** 処理中の進行状況（ステップ）表示を動的生成方式に変更し、通常画像生成時と360°パノラマ拡張時の表示を適正化しました。 / Optimized processing step display to dynamically switch between normal image generation and 360° panorama expansion.
