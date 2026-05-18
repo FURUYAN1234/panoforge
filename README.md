@@ -307,14 +307,11 @@ Developed by **FURU**
 ## 📋 ChangeLog
 
 ### v1.2.1 (2026-05-18)
+- **[Feature]** Dual-API アーキテクチャを実装。Gemini APIに加えて **OpenAI API (DALL-E 3 & GPT-4o)** を公式サポート。APIキーの形式 (`sk-`) を自動判別し、UIとバックエンドロジックをシームレスに切り替えます。 / Implemented Dual-API Architecture, officially supporting OpenAI API (DALL-E 3 & GPT-4o) alongside Gemini. Automatically detects key format and switches UI/backend logic.
 - **[Feature]** OpenAIモード（DALL-E 3）での画像生成・拡張時に、2〜4分の待機時間を示すタイマーと明確な案内を表示するようUIを改善。 / Added a processing timer and clear wait-time annotations (2-4 minutes) for OpenAI mode generation and expansion.
 - **[Improve]** メイン画面右上の「API設定」ボタンを改修し、現在のエンジン（Gemini/OpenAI）を表示するバッジと、設定を開くボタンを完全に分離して視認性を向上。 / Separated the API engine status badge and the settings button in the top right header for better visibility.
-- **[Document]** READMEを大幅に加筆・修正。Dual-APIアーキテクチャの解説を強化し、OpenAI API利用時の「従量課金」および「パノラマ拡張における再構築（近似生成）仕様」の注意事項を明記。 / Major README rewrite to highlight Dual-API architecture, clearly documenting OpenAI API pay-as-you-go costs and the "re-creation" limitations of DALL-E 3 panorama expansion.
-
-### v1.2.0 (2026-05-18)
-- **[Feature]** Dual-API アーキテクチャを実装。Gemini APIに加えて **OpenAI API (DALL-E 3 & GPT-4o)** を公式サポート。APIキーの形式 (`sk-`) を自動判別し、UIとバックエンドロジックをシームレスに切り替えます。 / Implemented Dual-API Architecture, officially supporting OpenAI API (DALL-E 3 & GPT-4o) alongside Gemini. Automatically detects key format and switches UI/backend logic.
-- **[Improve]** OpenAIモード時の画像拡張について、DALL-E 3の仕様上「アウトペイントではなくGPT-4oによる再構築」となる旨の注釈UIを追加。左右のシームレス化は強力なプロンプトで制御されます。 / Added UI annotations for OpenAI mode image expansion, clarifying the "re-creation" process via GPT-4o.
 - **[Improve]** APIキー入力モーダルのUIを刷新。他アプリと共通のスマートゲート仕様（状態インジケータ色変更、従量課金警告）を導入。 / Revamped API Key Modal UI with Smart Gate design (status indicator color change, usage-based billing warning).
+- **[Document]** READMEを大幅に加筆・修正。Dual-APIアーキテクチャの解説を強化し、OpenAI API利用時の「従量課金」および「パノラマ拡張における再構築（近似生成）仕様」の注意事項を明記。 / Major README rewrite to highlight Dual-API architecture, clearly documenting OpenAI API pay-as-you-go costs and the "re-creation" limitations of DALL-E 3 panorama expansion.
 
 ### v1.1.5 (2026-05-18)
 - **[Bugfix]** 起動バッチファイル名を修正 (start_panorama_generator.bat) / Fixed startup batch file name.
