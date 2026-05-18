@@ -3,27 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360° AI Panorama Generator v1.1.5</title>
+  <title>360° AI Panorama Generator v1.2.1</title>
   <meta name="description" content="1枚の画像から360°パノラマ背景をAIで自動生成。ビューワー＆HDキャプチャツール搭載。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>" />
-  <script type="module" crossorigin src="./assets/index-y0zjO3Cz.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CHLuR1Kv.css">
+  <script type="module" crossorigin src="./assets/index-BG2pqUro.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-2YP2vsyf.css">
 </head>
 <body>
   <header id="app-header">
     <div class="header-left">
       <span class="logo-icon">🌐</span>
       <h1 class="logo-text" style="font-size:1.1rem; line-height:1.2;">360° AI Panorama<br>Generator</h1>
-      <span class="version-badge">v1.1.5</span>
+      <span class="version-badge">v1.2.1</span>
     </div>
-    <div class="header-right">
+    <div class="header-right" style="display:flex; align-items:center; gap: 12px;">
+      <div id="api-status-badge" style="display:flex; align-items:center; gap:6px; padding: 6px 12px; border-radius: 20px; background: rgba(255,255,255,0.05); font-size: 0.85rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">
+        <span id="api-key-status" class="status-dot" title="未接続"></span>
+        <span id="api-status-text">未接続</span>
+      </div>
       <button id="api-settings-btn" class="api-settings-btn" title="API設定">
         <span class="api-btn-icon">🔑</span>
         <span class="api-btn-label">API設定</span>
-        <span id="api-key-status" class="status-dot" title="未接続"></span>
       </button>
     </div>
   </header>
@@ -54,6 +57,15 @@
           <p class="drop-sub">または<label for="file-input" class="file-label">ファイルを選択</label></p>
           <input type="file" id="file-input" accept="image/*" hidden />
           <p class="drop-formats">PNG / JPG / WebP 対応 ・ 360°画像はビューワーで直接閲覧可</p>
+        </div>
+        
+        <!-- OpenAIモード時の注釈（画像拡張） -->
+        <div id="openai-vision-note" class="openai-note hidden">
+          <div class="openai-note-title">ℹ️ OpenAIモードの画像拡張について</div>
+          <div class="openai-note-desc">
+            OpenAI API（DALL-E 3）は既存画像の直接拡張に非対応なため、GPT-4oが画像を詳細に解析し、そのテキスト情報から<strong>似た構成の360°画像を新規生成</strong>します。<br>
+            ※元の絵がそのまま切り貼りされるわけではなく「それっぽくなる」挙動となりますが、左右のつなぎ目は綺麗に補間されます。
+          </div>
         </div>
       </div>
 
@@ -266,6 +278,7 @@
       <h2 id="processing-title">処理中...</h2>
       <div id="progress-steps" class="progress-steps"></div>
       <p id="processing-sub" class="processing-sub">AIが処理しています...</p>
+      <div id="processing-timer" class="processing-timer hidden" style="margin-top: 15px; font-family: 'Orbitron', monospace; font-size: 1.5rem; color: #64b5f6; font-weight: bold; letter-spacing: 2px;">00:00</div>
     </div>
   </div>
 
@@ -286,11 +299,14 @@
   <div id="api-modal-overlay" class="modal-overlay hidden">
     <div class="modal-card glass-card">
       <div class="modal-header">
-        <h3>🔑 Gemini API Key 設定 <span class="version-badge">v1.1.5</span></h3>
+        <h3>🔑 API Key 設定 <span class="version-badge">v1.2.1</span></h3>
         <button id="api-modal-close" class="modal-close-btn">✕</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Google AI Studio で取得した Gemini API キーを入力してください。<br>キーはブラウザに保存されず、このセッション中のみ使用されます。</p>
+        <p class="modal-desc">
+          Gemini または OpenAI (sk-...) の API キーを入力してください。<br>
+          キーはブラウザに保存されず、このセッション中のみ使用されます。
+        </p>
         <div class="api-input-group">
           <label for="api-key-input" class="form-label">API Key</label>
           <div class="api-input-wrapper">
@@ -302,6 +318,11 @@
           </div>
         </div>
         <div id="api-key-feedback" class="api-feedback"></div>
+        <div id="api-key-warning" class="api-feedback api-warning hidden">⚠ 従量課金（OpenAI API）</div>
+        <div class="api-links-container" style="margin-top: 15px; text-align: center; font-size: 0.8rem;">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" class="api-link" style="color: #64b5f6; margin-right: 15px;">🔵 Gemini キー取得</a>
+          <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" class="api-link" style="color: #81c784;">🟢 OpenAI キー取得（従量課金）</a>
+        </div>
       </div>
       <div class="modal-footer">
         <button id="api-modal-apply" class="primary-btn modal-apply-btn" disabled>
