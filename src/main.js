@@ -570,7 +570,7 @@ async function executeImageGeneration() {
   if (!prompt || !style) return;
 
   const isOpenAI = engine.activeEngine === 'openai';
-  const subText = isOpenAI ? '画像を生成しています...\n（※OpenAIモードのため完了まで約2〜4分かかります）' : 'AIがシーンを描画しています...';
+  const subText = isOpenAI ? '画像を生成しています...\n（※OpenAIモードのため完了まで約2〜5分かかります）' : 'AIがシーンを描画しています...';
 
   state.lastAction = () => executeImageGeneration();
   // 画像生成は1ステップのみ
@@ -627,7 +627,7 @@ async function executePanoramaExpansion() {
   if (!state.inputImageBase64) return;
   state.lastAction = () => executePanoramaExpansion();
   const isOpenAI = engine.activeEngine === 'openai';
-  const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードのため完了まで約2〜4分かかります）' : '入力画像を分析しています...';
+  const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードのため完了まで約2〜5分かかります）' : '入力画像を分析しています...';
 
   // パノラマは3ステップ
   showProcessing('パノラマ拡張中...', subText, [
@@ -644,7 +644,7 @@ async function executePanoramaExpansion() {
         setStepState('analyze', 'done');
         setStepState('generate', 'active');
         dom.processingSub.innerHTML = isOpenAI 
-          ? 'AIが360°背景を生成しています...<br>（※OpenAIモードのため完了まで約2〜4分かかります）' 
+          ? 'AIが360°背景を生成しています...<br>（※OpenAIモードのため完了まで約2〜5分かかります）' 
           : 'AIが360°背景を生成しています...';
       } else if (step === 'fallback') {
         dom.processingSub.textContent = `モデル切替中: ${detail || '再試行'}...`;
@@ -774,6 +774,13 @@ function showProcessing(title, sub, steps, showTimer = false) {
     processingStartTime = Date.now();
     processingTimerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - processingStartTime) / 1000);
+      if (elapsed >= 300) { // 5分 (300秒) タイムアウト
+        clearInterval(processingTimerInterval);
+        processingTimerInterval = null;
+        hideProcessing();
+        showError('⏳ タイムアウトエラー', '生成処理が制限時間の5分を超過しました。しばらく時間をおいてから再度お試しください。');
+        return;
+      }
       const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
       const s = String(elapsed % 60).padStart(2, '0');
       dom.processingTimer.textContent = `${m}:${s}`;

@@ -19,6 +19,22 @@ const TEXT_MODELS = [
   { id: 'gemini-1.5-flash', label: 'Tier3: Gemini 1.5 Flash' },
 ];
 
+// OpenAI テキスト専用モデル
+const OPENAI_TEXT_MODELS = [
+  { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
+  { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
+  { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
+  { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' },
+];
+
+// OpenAI ビジョン対応モデル
+const OPENAI_VISION_MODELS = [
+  { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
+  { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
+  { id: 'gpt-4o', label: 'OpenAI Vision Fallback 1: gpt-4o' },
+  { id: 'gpt-4o-mini', label: 'OpenAI Vision Fallback 2: gpt-4o-mini' },
+];
+
 export class PanoramaEngine {
   constructor() {
     this.geminiClient = null;
@@ -26,6 +42,8 @@ export class PanoramaEngine {
     this.activeEngine = null; // 'gemini' | 'openai'
     this.lastSuccessImageModel = null;
     this.lastSuccessTextModel = null;
+    this.lastSuccessOpenAITextModel = null;
+    this.lastSuccessOpenAIVisionModel = null;
   }
 
   setApiKey(apiKey) {
@@ -59,7 +77,7 @@ export class PanoramaEngine {
   // ============================================
   // OpenAI Utilities
   // ============================================
-  async _callOpenAIChat(messages, model = "gpt-4o-mini", responseFormat = "text") {
+    async _callOpenAIChat(messages, model = "gpt-4o-mini", responseFormat = "text") {
     const payload = { model, messages, temperature: 0.7 };
     if (responseFormat === "json_object") payload.response_format = { type: "json_object" };
     
@@ -74,6 +92,85 @@ export class PanoramaEngine {
     }
     const data = await res.json();
     return data.choices[0].message.content;
+  }
+
+  _getOpenAIModelOrder(models, lastSuccess) {
+    if (lastSuccess) {
+      const preferred = models.find(m => m.id === lastSuccess);
+      const rest = models.filter(m => m.id !== lastSuccess);
+      return preferred ? [preferred, ...rest] : [...models];
+    }
+    return [...models];
+  }
+
+  async _callOpenAIChatWithFallback(messages, responseFormat = "text") {
+    const lastSuccess = this.lastSuccessOpenAITextModel;
+    const ordered = this._getOpenAIModelOrder(OPENAI_TEXT_MODELS, lastSuccess);
+    const errors = [];
+    
+    for (let i = 0; i < ordered.length; i++) {
+      const tier = ordered[i];
+      try {
+        if (i > 0) {
+          console.warn(`⚠️ OpenAI Text ${ordered[i-1].label} 失敗 → ${tier.label} にフォールバック`);
+        } else {
+          console.log(`🎯 OpenAI Text ${tier.label} で処理開始`);
+        }
+        
+        const text = await this._callOpenAIChat(messages, tier.id, responseFormat);
+        
+        this.lastSuccessOpenAITextModel = tier.id;
+        console.log(`✅ OpenAI Text ${tier.label} で処理成功`);
+        return text;
+      } catch (err) {
+        const msg = err?.message || String(err);
+        console.error(`❌ OpenAI Text ${tier.label} エラー:`, msg);
+        errors.push({ label: tier.label, msg });
+      }
+    }
+    
+    console.error('OpenAI全テキストモデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
+    throw new Error('OpenAIテキスト生成のすべてのモデル呼び出しに失敗しました。');
+  }
+
+  async _callOpenAIVisionWithFallback(base64Image, mimeType) {
+    const prompt = `Analyze this image in extreme detail. Describe the environment, setting, time of day, lighting, architectural style, specific objects, colors, and overall atmosphere. Do NOT mention that it is an image or photo. Just describe the scene inside it as if writing a prompt for an image generator. Keep it concise but highly descriptive.`;
+    
+    const lastSuccess = this.lastSuccessOpenAIVisionModel;
+    const ordered = this._getOpenAIModelOrder(OPENAI_VISION_MODELS, lastSuccess);
+    const errors = [];
+    
+    for (let i = 0; i < ordered.length; i++) {
+      const tier = ordered[i];
+      try {
+        if (i > 0) {
+          console.warn(`⚠️ OpenAI Vision ${ordered[i-1].label} 失敗 → ${tier.label} にフォールバック`);
+        } else {
+          console.log(`🎯 OpenAI Vision ${tier.label} で処理開始`);
+        }
+        
+        const messages = [{
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}`, detail: "high" } }
+          ]
+        }];
+        
+        const text = await this._callOpenAIChat(messages, tier.id);
+        
+        this.lastSuccessOpenAIVisionModel = tier.id;
+        console.log(`✅ OpenAI Vision ${tier.label} で処理成功`);
+        return text;
+      } catch (err) {
+        const msg = err?.message || String(err);
+        console.error(`❌ OpenAI Vision ${tier.label} エラー:`, msg);
+        errors.push({ label: tier.label, msg });
+      }
+    }
+    
+    console.error('OpenAI全ビジョンモデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
+    throw new Error('OpenAI画像解析のすべてのモデル呼び出しに失敗しました。');
   }
 
   async _callOpenAIImage(prompt, size = "1024x1024", quality = "high") {
@@ -124,15 +221,7 @@ export class PanoramaEngine {
   }
 
   async _analyzeImageWithVision(base64Image, mimeType) {
-    const prompt = `Analyze this image in extreme detail. Describe the environment, setting, time of day, lighting, architectural style, specific objects, colors, and overall atmosphere. Do NOT mention that it is an image or photo. Just describe the scene inside it as if writing a prompt for an image generator. Keep it concise but highly descriptive.`;
-    const messages = [{
-      role: "user",
-      content: [
-        { type: "text", text: prompt },
-        { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}`, detail: "high" } }
-      ]
-    }];
-    return await this._callOpenAIChat(messages, "gpt-4o");
+    return await this._callOpenAIVisionWithFallback(base64Image, mimeType);
   }
 
   // ============================================
@@ -362,7 +451,7 @@ Generate the equirectangular panorama image now.`;
 【絶対厳守】思考プロセス、理由、前置きなどは一切書かず、スタイル名のみを直接出力してください。`;
 
     if (this.activeEngine === 'openai') {
-      const text = await this._callOpenAIChat([{ role: "user", content: prompt }]);
+      const text = await this._callOpenAIChatWithFallback([{ role: "user", content: prompt }]);
       return text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').replace(/[「」]/g, '').trim() || 'アニメイラスト風';
     } else {
       const response = await this._callWithFallback(
@@ -403,7 +492,7 @@ Generate the equirectangular panorama image now.`;
 【絶対厳守】思考プロセス、理由、前置きなどは一切書かず、シーン説明のみを直接出力してください。`;
 
     if (this.activeEngine === 'openai') {
-      const text = await this._callOpenAIChat([{ role: "user", content: prompt }]);
+      const text = await this._callOpenAIChatWithFallback([{ role: "user", content: prompt }]);
       return text.replace(/^.*[:：]\s*/, '').replace(/\*+/g, '').replace(/[「」]/g, '').trim() || '夕暮れの東京の街並み、ネオンが輝く繁華街';
     } else {
       const response = await this._callWithFallback(
