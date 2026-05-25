@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.2.4** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.2.10** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -65,15 +65,16 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `gemini-2.0-flash-preview-image-generation` (Primary / 安定)
-2. `gemini-3.1-flash-image-preview` (Backup 1 / 次世代モデル)
-3. `gemini-2.0-flash-exp` (Fallback 1 / 試験モデル)
+1. `gemini-3.1-flash-image-preview` (Primary / 安定画像生成)
+2. `gemini-2.5-flash-image` (Backup 1 / 次世代モデル)
+3. `imagen-3.0-generate-002` (Fallback 1 / レガシー生成)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
 - **Gemini**:
-  1. `gemini-2.5-flash` (Primary / 高速・高精度)
-  2. `gemini-2.0-flash` (Backup 1 / 安定)
-  3. `gemini-1.5-flash` (Fallback 1 / 保険)
+  1. `gemini-3.5-flash` (Primary / 高速・高精度)
+  2. `gemini-flash-latest` (Backup 1 / 安定)
+  3. `gemini-1.5-pro` (Backup 2 / 高度推論)
+  4. `gemini-1.5-flash` (Fallback 1 / 保険)
 - **OpenAI**:
   1. `gpt-4.1` (Primary / 高速・高精度)
   2. `gpt-4.1-mini` (Backup 1 / 高速・安価)
@@ -121,14 +122,15 @@ Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super A
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
 **画像生成 / Image Generation Fallback Pipeline**:
-1. `gemini-2.0-flash-preview-image-generation` (Primary / 安定)
-2. `gemini-3.1-flash-image-preview` (Backup 1 / 次世代モデル)
-3. `gemini-2.0-flash-exp` (Fallback 1 / 試験モデル)
+1. `gemini-3.1-flash-image-preview` (Primary / 安定画像生成)
+2. `gemini-2.5-flash-image` (Backup 1 / 次世代モデル)
+3. `imagen-3.0-generate-002` (Fallback 1 / レガシー生成)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
-1. `gemini-2.5-flash` (Primary / 高速・高精度)
-2. `gemini-2.0-flash` (Backup 1 / 安定)
-3. `gemini-1.5-flash` (Fallback 1 / 保険)
+1. `gemini-3.5-flash` (Primary / 高速・高精度)
+2. `gemini-flash-latest` (Backup 1 / 安定)
+3. `gemini-1.5-pro` (Backup 2 / 高度推論)
+4. `gemini-1.5-flash` (Fallback 1 / 保険)
 
 ---
 
@@ -335,6 +337,28 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.2.10 (2026-05-25)
+- **[Feature]** プロダクション環境への正式デプロイ。Gemini API非推奨化対応、両APIタイムアウト動的制御、およびThree.jsビューワーのメモリ・リソースリーク（GPUテクスチャ解放漏れ、非表示時の描画ループ継続、OrbitControlsの破棄漏れ、キャプチャ時の画面チラツキ）の修正がすべて適用された安定版を公開。
+
+### v1.2.9 (2026-05-25)
+- **[Bugfix]** Three.js ビューワーの破棄（`destroy()` 実行）時において、`OrbitControls` が明示的に解放（`dispose()`）されておらず、内部イベントリスナーがメモリリークを引き起こすバグを修正しました。
+- **[Bugfix]** 高解像度キャプチャの実行時に、CanvasのCSSスタイルサイズが一瞬変更されることで画面レイアウトが崩れて激しくチラつく表示バグを、`renderer.setSize(..., false)` の指定により解決しました。
+
+### v1.2.8 (2026-05-25)
+- **[Bugfix]** Three.js 3Dビューワーにおいて、新規ロード時に古いテクスチャオブジェクト（`material.map`）が明示的に解放されずにGPUメモリ上に残り続け、ブラウザタブクラッシュを招くメモリリークバグを修正しました。
+- **[Bugfix]** ビューワーを閉じて元の設定画面に戻った際にも、裏で 3D レンダリングループ（`requestAnimationFrame`）が回り続け、無駄なCPU/GPUリソースを消費し続けるリークバグを修正しました。
+
+### v1.2.7 (2026-05-25)
+- **[Bugfix]** 廃止された旧Gemini画像生成モデルの404エラーを解消するため、`IMAGE_MODELS` の優先リストを最新モデル（`gemini-3.1-flash-image-preview` / `gemini-2.5-flash-image` 等）に更新しました。
+- **[Bugfix]** 前回の25秒一律タイムアウトにより画像生成がタイムアウト失敗する不整合を解消するため、タイムアウト制御をリクエストタイプに応じて動的化（画像生成時は60秒に自動延長）しました。
+
+### v1.2.6 (2026-05-25)
+- **[Feature]** OpenAI APIの全リクエストに対してもタイムアウト制御（テキスト・ビジョン: 25秒、画像生成: 60秒、ダウンロード: 30秒）を導入し、両APIにおける網羅的なフリーズ対策を適用しました。
+
+### v1.2.5 (2026-05-25)
+- **[Feature]** Gemini API非推奨化対応として、テキスト生成（シーン/スタイル提案）の優先モデルを `gemini-3.5-flash` / `gemini-flash-latest` に更新し、フォールバック先に `gemini-1.5-pro` などを配置。
+- **[Feature]** API呼び出し中のフリーズを防ぐため、25秒のタイムアウト制御を追加し、タイムアウトや例外発生時には自動でフォールバックモデルへ移行して再試行する仕組みを導入。
 
 ### v1.2.4 (2026-05-23)
 - **[Feature]** OpenAI APIのモデル最適化およびテキスト・ビジョンの双方へのフォールバックチェーンを実装。 / Implemented OpenAI model optimization and fallback chains for both text and vision requests.

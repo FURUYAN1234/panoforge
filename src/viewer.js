@@ -100,6 +100,9 @@ export class PanoramaViewer {
     if (this.sphere) {
       this.scene.remove(this.sphere);
       this.sphere.geometry.dispose();
+      if (this.sphere.material.map) {
+        this.sphere.material.map.dispose();
+      }
       this.sphere.material.dispose();
     }
 
@@ -305,7 +308,7 @@ export class PanoramaViewer {
 
     // キャプチャ用にリサイズ
     this.renderer.setPixelRatio(1);
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
 
@@ -317,7 +320,7 @@ export class PanoramaViewer {
 
     // 元に戻す
     this.renderer.setPixelRatio(origPixelRatio);
-    this.renderer.setSize(origSize.x, origSize.y);
+    this.renderer.setSize(origSize.x, origSize.y, false);
     this.camera.aspect = origAspect;
     this.camera.updateProjectionMatrix();
 
@@ -385,8 +388,14 @@ export class PanoramaViewer {
     if (this.container) {
       this.container.removeEventListener('wheel', this._wheelHandler);
     }
+    if (this.controls) {
+      this.controls.dispose();
+    }
     if (this.sphere) {
       this.sphere.geometry.dispose();
+      if (this.sphere.material.map) {
+        this.sphere.material.map.dispose();
+      }
       this.sphere.material.dispose();
     }
     if (this.renderer) {

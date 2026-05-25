@@ -739,6 +739,10 @@ function showViewer() {
 function hideViewer() {
   dom.viewerSection.classList.add('hidden');
   dom.inputCard.classList.remove('hidden');
+  if (viewer) {
+    viewer.destroy();
+    viewer = null;
+  }
 }
 
 // ============================

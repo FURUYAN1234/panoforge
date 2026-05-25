@@ -5,18 +5,34 @@
 
 import { GoogleGenAI } from '@google/genai';
 
+// タイムアウト付きでPromiseを実行するヘルパー関数
+async function callWithTimeout(promise, ms) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`APIリクエストがタイムアウトしました（${ms / 1000}秒）`));
+    }, ms);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // 画像生成対応モデル（generateContent + responseModalities IMAGE）
 const IMAGE_MODELS = [
-  { id: 'gemini-2.0-flash-preview-image-generation', label: 'Tier1: Gemini 2.0 Flash Preview Image' },
-  { id: 'gemini-3.1-flash-image-preview', label: 'Tier2: Gemini 3.1 Flash Image Preview' },
-  { id: 'gemini-2.0-flash-exp', label: 'Tier3: Gemini 2.0 Flash Exp' },
+  { id: 'gemini-3.1-flash-image-preview', label: 'Tier1: Gemini 3.1 Flash Image Preview' },
+  { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image' },
+  { id: 'imagen-3.0-generate-002', label: 'Tier3: Imagen 3.0 Generate' },
 ];
 
 // テキスト専用モデル（スタイル提案等）
 const TEXT_MODELS = [
-  { id: 'gemini-2.5-flash', label: 'Tier1: Gemini 2.5 Flash' },
-  { id: 'gemini-2.0-flash', label: 'Tier2: Gemini 2.0 Flash' },
-  { id: 'gemini-1.5-flash', label: 'Tier3: Gemini 1.5 Flash' },
+  { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
+  { id: 'gemini-flash-latest', label: 'Tier2: Gemini Flash Latest' },
+  { id: 'gemini-1.5-pro', label: 'Tier3: Gemini 1.5 Pro' },
+  { id: 'gemini-1.5-flash', label: 'Tier4: Gemini 1.5 Flash' },
 ];
 
 // OpenAI テキスト専用モデル
@@ -77,15 +93,18 @@ export class PanoramaEngine {
   // ============================================
   // OpenAI Utilities
   // ============================================
-    async _callOpenAIChat(messages, model = "gpt-4o-mini", responseFormat = "text") {
+  async _callOpenAIChat(messages, model = "gpt-4o-mini", responseFormat = "text") {
     const payload = { model, messages, temperature: 0.7 };
     if (responseFormat === "json_object") payload.response_format = { type: "json_object" };
     
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
-      body: JSON.stringify(payload)
-    });
+    const res = await callWithTimeout(
+      fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
+        body: JSON.stringify(payload)
+      }),
+      25000
+    );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
       throw new Error(`OpenAI Chat Error: ${err.error?.message || res.status}`);
@@ -179,11 +198,14 @@ export class PanoramaEngine {
     const mappedQuality = quality === "hd" ? "high" : quality === "standard" ? "medium" : quality;
     const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality };
     // 一部のAPIプロキシでは response_format が非対応のため送信しない
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
-      body: JSON.stringify(payload)
-    });
+    const res = await callWithTimeout(
+      fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
+        body: JSON.stringify(payload)
+      }),
+      60000
+    );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
       // safety system filter
@@ -201,7 +223,7 @@ export class PanoramaEngine {
     if (imgData.b64_json) {
       base64 = imgData.b64_json;
     } else if (imgData.url) {
-      const imgRes = await fetch(imgData.url);
+      const imgRes = await callWithTimeout(fetch(imgData.url), 30000);
       if (!imgRes.ok) throw new Error("画像URLのダウンロードに失敗しました");
       const blob = await imgRes.blob();
       base64 = await new Promise((resolve, reject) => {
@@ -236,7 +258,7 @@ export class PanoramaEngine {
     return [...models];
   }
 
-  async _callWithFallback(models, lastSuccessKey, requestConfig, onModelSwitch) {
+  async _callWithFallback(models, lastSuccessKey, requestConfig, timeoutMs = 25000, onModelSwitch) {
     const lastSuccess = lastSuccessKey === 'image' ? this.lastSuccessImageModel : this.lastSuccessTextModel;
     const ordered = this._getModelOrder(models, lastSuccess);
     const errors = [];
@@ -249,9 +271,12 @@ export class PanoramaEngine {
         } else {
           console.log(`🎯 ${tier.label} で生成開始`);
         }
-        const response = await this.geminiClient.models.generateContent({
-          model: tier.id, ...requestConfig,
-        });
+        const response = await callWithTimeout(
+          this.geminiClient.models.generateContent({
+            model: tier.id, ...requestConfig,
+          }),
+          timeoutMs
+        );
 
         if (!response.candidates || response.candidates.length === 0) {
           throw new Error('空のレスポンス（安全フィルタの可能性）');
@@ -349,6 +374,7 @@ Generate the image now.`;
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           config: { responseModalities: ['IMAGE', 'TEXT'] },
         },
+        60000,
         (tierLabel) => onProgress?.('fallback', tierLabel)
       );
       return this._extractImage(response);
@@ -433,6 +459,7 @@ Generate the equirectangular panorama image now.`;
           }],
           config: { responseModalities: ['IMAGE', 'TEXT'] },
         },
+        60000,
         (tierLabel) => onProgress?.('fallback', tierLabel)
       );
       return this._extractImage(response);
@@ -460,6 +487,7 @@ Generate the equirectangular panorama image now.`;
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           config: { responseModalities: ['TEXT'] },
         },
+        25000,
         null
       );
       let text = response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
@@ -501,6 +529,7 @@ Generate the equirectangular panorama image now.`;
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           config: { responseModalities: ['TEXT'] },
         },
+        25000,
         null
       );
 
