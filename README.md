@@ -122,6 +122,12 @@ This system is not merely an image generation tool. It is a **spatial rendering 
 * **Robust Content Policy Handling (コンテンツポリシーのスマート検知)**:
   Catches AI-model specific "200 OK responses with missing image data (safety filter blocks)" and provides users with specific guidance rather than generic API errors.
   AIモデル特有の「データ欠落を伴う200 OKレスポンス（安全フィルタブロック）」をキャッチし、単なるAPIエラーではなく「ポリシーエラー」としてユーザーに具体的な修正ガイダンスを提供します。
+* **5-Point Visual Consistency & Elements Preservation (5点視覚統一と要素追加禁止)**:
+  To prevent the AI from adding unintended furniture or changing the art style across the 360° space, the generation engine enforces a strict "5-point visual consistency check" (art style, lighting, contrast, saturation, and color temperature) and a preservation rule that forbids adding any objects not present in the original image.
+  360度空間の拡張時に、AIが勝手に余計な家具を追加したり、パノラマの左右で画風が変わってしまう問題を防ぐため、「5点視覚統一チェック」（画風・照明・コントラスト・彩度・色温度の維持）と「元画像にない要素の追加禁止」をプロンプトで厳格に定義しています。
+* **OpenAI Vision Enhancement for Style & Character Integrity (OpenAI Vision 解析プロンプトの強化)**:
+  During image-to-360° conversion, the system utilizes a hardened Vision OCR prompt that explicitly extracts the art style, character descriptions, and lighting characteristics. This resolves the common issue of anime styles reverting to photorealism and ensures that characters present in the original image are not omitted in the final panorama.
+  画像の360度変換時（OpenAIモード）、元の画像からアートスタイル、人物（服装や行動）、照明を詳細に抽出する解析プロンプトを導入。アニメ画風がフォトリアルになってしまう現象を防止し、元画像にいる人物キャラクターが消去される問題を解決しています。
 
 ---
 
