@@ -153,7 +153,18 @@ export class PanoramaEngine {
   }
 
   async _callOpenAIVisionWithFallback(base64Image, mimeType) {
-    const prompt = `Analyze this image in extreme detail. Describe the environment, setting, time of day, lighting, architectural style, specific objects, colors, and overall atmosphere. Do NOT mention that it is an image or photo. Just describe the scene inside it as if writing a prompt for an image generator. Keep it concise but highly descriptive.`;
+    const prompt = `Analyze this image in extreme detail. Describe the scene as if writing a comprehensive prompt for an image generator.
+
+Include ALL of the following in your description:
+- The art style (anime, photorealistic, watercolor, etc.), line quality, color palette, and rendering technique
+- Any characters or figures present: their appearance, hair, clothing, what they are doing, and where they are in the scene
+- The environment, setting, architectural style, and specific objects
+- Time of day, lighting direction, shadows, contrast, saturation, and color temperature
+- Overall atmosphere and mood
+
+Do NOT mention that this is an image or photo. Describe the scene directly.
+Do NOT omit characters or figures if they are present — they are part of the scene.
+Keep it highly descriptive but concise.`;
     
     const lastSuccess = this.lastSuccessOpenAIVisionModel;
     const ordered = this._getOpenAIModelOrder(OPENAI_VISION_MODELS, lastSuccess);
@@ -198,13 +209,14 @@ export class PanoramaEngine {
     const mappedQuality = quality === "hd" ? "high" : quality === "standard" ? "medium" : quality;
     const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality };
     // 一部のAPIプロキシでは response_format が非対応のため送信しない
+    // gpt-image-2 は生成に2〜5分かかるため、タイムアウトを300秒（5分）に設定
     const res = await callWithTimeout(
       fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
         body: JSON.stringify(payload)
       }),
-      60000
+      300000
     );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
@@ -396,11 +408,15 @@ Generate the image now.`;
 
 ${analyzedScene}
 
-=== EQUIRECTANGULAR FORMAT REQUIREMENTS ===
-1. The output MUST be a strict equirectangular panorama projection.
+=== EQUIRECTANGULAR FORMAT ===
+1. Output MUST be a strict equirectangular panorama projection (2:1 aspect ratio).
 2. The left and right edges MUST connect PERFECTLY and SEAMLESSLY when wrapped into a sphere.
 3. Natural vertical distortion at the top (zenith) and bottom (nadir).
-4. Maintain the described art style, color palette, lighting, and atmosphere.
+
+=== SCENE FIDELITY ===
+1. Reproduce the described scene FAITHFULLY. Do NOT add objects, furniture, or decorations that are not mentioned.
+2. If the description indicates a sparse space, keep it sparse.
+3. Match the described art style, lighting direction, contrast, saturation, and color temperature uniformly across the entire panorama.
 
 === QUALITY ===
 1. Highest possible resolution and rich detail.
@@ -431,11 +447,20 @@ They MUST connect PERFECTLY and SEAMLESSLY when the image is wrapped into a sphe
 5. Straight horizontal lines in 3D become curved lines in equirectangular (barrel distortion)
 
 === SCENE CONTINUITY ===
-1. Maintain the EXACT same art style, color palette, lighting direction, and atmosphere
+1. Maintain the EXACT same art style, color palette, lighting direction, and atmosphere as the reference image
 2. The scene must feel like a SINGLE CONTINUOUS SPACE, not stitched panels
 3. Extend the environment naturally in all directions (imagine standing in the center looking around)
 4. Include consistent sky/ceiling above and ground/floor below across the entire image
 5. Architectural elements (walls, floors, ceilings) must follow correct perspective for 360° projection
+6. Do NOT add objects, furniture, or decorations that are not present in the reference image
+7. If the reference shows a sparse or minimal space, preserve that sparseness
+
+=== VISUAL CONSISTENCY (match the reference image on ALL of these) ===
+1. Art style — same line quality, rendering technique, detail density, texture treatment
+2. Lighting — same direction, intensity, diffusion, and shadow characteristics
+3. Contrast — same highlight-to-shadow ratio and tonal range
+4. Saturation — same color vibrancy or muted quality
+5. Color temperature — same warm/cool/neutral bias
 
 === QUALITY ===
 1. Highest possible resolution

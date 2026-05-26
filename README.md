@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.0** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -37,6 +37,15 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 - **Time Required (処理時間)**: OpenAI API does not support native panorama outpainting. It requires a multi-step pipeline (Vision Analysis -> Prompt Generation -> DALL-E 3 Generation), taking **2 to 5 minutes** per image. / OpenAI APIはネイティブなパノラマ拡張をサポートしていないため、GPT-4oでの画像解析からDALL-E 3での再生成まで複数ステップを踏みます。そのため**完了までに約2〜5分かかります**。
 - **Re-creation vs Outpainting (近似再構築)**: When expanding an existing image with OpenAI API, the original image is NOT directly stitched or outpainted. Instead, GPT-4o describes the image in text, and DALL-E 3 generates a completely new 360° image matching that description. / 画像ドロップによる360度拡張をOpenAI APIで行う場合、元の絵を直接拡張（切り貼り）するわけではありません。AIが画像をテキスト化し、その情報をもとに**そっくりな360度画像を新規生成（近似再構築）**するため、「それっぽくなる」挙動となります。
 - **Pay-As-You-Go Cost (従量課金)**: Using the OpenAI API incurs usage-based costs. Frequent panorama generation may consume significant API credits. / OpenAI APIは従量課金です。パノラマ生成を頻繁に行うとAPI残高を大きく消費する可能性があります。
+
+#### 🎯 Engine Selection Guide / エンジン選択ガイド
+
+| Use Case / 用途 | Recommended / 推奨 | Reason / 理由 |
+|---|---|---|
+| **360° panorama from image / 画像→360°変換** | **Gemini** ★ | Direct outpainting preserves original pixel details, art style, and character integrity with minimal distortion. / 直接アウトペインティングにより元画像のピクセル・画風・キャラクターの整合性を高精度に維持。 |
+| **360° with characters / キャラクター入り360°** | **Gemini** ★ | OpenAI's text-mediated re-creation cannot accurately maintain character proportions in equirectangular projection. / OpenAIのテキスト経由再構築ではエクイレクタングラー投影でのキャラクター比率維持が困難。 |
+| **Text-to-image (Step 1) / テキスト→一枚絵** | Both OK / 両方可 | Both engines produce high-quality results for single image generation. / 一枚絵生成は両エンジンとも高品質。 |
+| **Background-only 360° / 背景のみ360°** | Both OK / 両方可 | Environmental scenes (cafés, streets, landscapes) work well with both engines. / 環境シーン（カフェ、街並み、風景等）は両エンジンとも良好。 |
 
 ### 🖼️ 2-Stage Generation (2段階生成)
 - **Text-to-Image / テキストから画像生成**: Generates a high-quality 2:1 aspect ratio base image from any scene description and style. / 任意のシーン説明とスタイルから、高品質な2:1比率のベース画像を生成。
@@ -338,8 +347,14 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v1.3.1 (2026-05-26)
+- **[Feature]** バグチェック、およびゴミファイル・個人情報・他プロジェクト固有名詞の完全な監査とクリーンアップを完了。安定性を向上させたプロダクションリリース。 / Completed final bug checks, audits, and cleanup of temp files and sensitive information. Stable production release.
+
 ### v1.3.0 (2026-05-25)
 - **[Feature]** プロダクション環境への正式デプロイ。Gemini API非推奨化対応、両APIタイムアウト動的制御、およびThree.jsビューワーのメモリ・リソースリーク（GPUテクスチャ解放漏れ、非表示時の描画ループ継続、OrbitControlsの破棄漏れ、キャプチャ時の画面チラツキ）の修正がすべて適用された安定版を公開。
+- **[Improve]** Gemini 360°パノラマ拡張プロンプトに「5点視覚統一チェック」（画風・ライティング・コントラスト・彩度・色温度）と「元画像に存在しない要素の追加禁止」ルールを導入。スパースな空間が勝手に家具で埋められる問題と、パノラマの片側だけ画風が変わる問題を改善。 / Enhanced Gemini panorama expansion with 5-point visual consistency checks and element preservation rules to prevent AI from adding unintended objects or changing art style across the panorama.
+- **[Improve]** OpenAI Vision解析プロンプトにアートスタイル分析とキャラクター描写指示を追加。画像ドロップ→360°変換時にアニメ画風がフォトリアルに変わる問題と、人物キャラクターが消失する問題を修正。 / Added art style analysis and character description instructions to OpenAI Vision prompt, fixing issues where anime art style was lost and characters were omitted during image-to-360° conversion.
+- **[Bugfix]** OpenAI画像生成（gpt-image-2）のタイムアウトが60秒に設定されていたバグを修正。公式の生成時間（2〜5分）に合わせて300秒（5分）に変更。v1.2.6で導入されたタイムアウト制御の設定値ミスが原因。 / Fixed OpenAI image generation timeout from 60s to 300s (5 minutes) to match gpt-image-2's actual generation time. The 60s value was incorrectly set when timeouts were introduced in v1.2.6.
 
 ### v1.2.9 (2026-05-25)
 - **[Bugfix]** Three.js ビューワーの破棄（`destroy()` 実行）時において、`OrbitControls` が明示的に解放（`dispose()`）されておらず、内部イベントリスナーがメモリリークを引き起こすバグを修正しました。
