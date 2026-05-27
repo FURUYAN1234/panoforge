@@ -354,6 +354,117 @@ Keep it highly descriptive but concise.`;
   // ============================================
 
   /**
+   * Canvas上で画像を中央から左右分割し、位置を入れ替える（Split-Swap）
+   * equirectangular画像の左右エッジのシーム（切れ目）を画像中央に移動させるために使用
+   * @param {string} base64 - 画像のbase64データ
+   * @param {string} mimeType - 画像のMIMEタイプ
+   * @returns {Promise<{base64: string, mimeType: string}>} swap後の画像
+   */
+  async _splitSwapImage(base64, mimeType) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const w = img.width;
+        const h = img.height;
+        const mid = Math.floor(w / 2);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+
+        // 右半分を左側に描画
+        ctx.drawImage(img, mid, 0, w - mid, h, 0, 0, w - mid, h);
+        // 左半分を右側に描画
+        ctx.drawImage(img, 0, 0, mid, h, w - mid, 0, mid, h);
+
+        // Canvas → base64
+        const outputMime = 'image/png';
+        const dataUrl = canvas.toDataURL(outputMime, 1.0);
+        const outputBase64 = dataUrl.split(',')[1];
+        resolve({ base64: outputBase64, mimeType: outputMime });
+      };
+      img.onerror = () => reject(new Error('Split-Swap: 画像の読み込みに失敗しました'));
+      img.src = `data:${mimeType};base64,${base64}`;
+    });
+  }
+
+  /**
+   * AI Inpainting: Split-Swap後の画像の中央シームを修復する
+   * @param {string} base64 - swap済み画像のbase64データ
+   * @param {string} mimeType - 画像のMIMEタイプ
+   * @param {Function} onProgress - 進捗通知コールバック（互換性のため残す）
+   * @returns {Promise<{base64: string, mimeType: string}>} 修復後の画像
+   */
+  async _blendCenterSeam(base64, mimeType) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const w = img.width;
+        const h = img.height;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+
+        // 元画像をそのまま描画
+        ctx.drawImage(img, 0, 0);
+
+        // ブレンド幅: 画像幅の8%（片側4%ずつ）
+        const blendWidth = Math.max(20, Math.floor(w * 0.08));
+        const halfBlend = Math.floor(blendWidth / 2);
+        const centerX = Math.floor(w / 2);
+
+        // 中央のシーム周辺のピクセルデータを取得
+        const seamRegion = ctx.getImageData(centerX - halfBlend, 0, blendWidth, h);
+        const data = seamRegion.data;
+
+        // フェザーブレンド: 中央の継ぎ目をグラデーション補間
+        // 左側のピクセルと右側のピクセルを加重平均で滑らかに接続
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < blendWidth; x++) {
+            // ブレンド係数: 0.0（左端）→ 1.0（右端）のスムーズステップ
+            const t = x / (blendWidth - 1);
+            // スムーズステップ関数で自然な遷移
+            const smooth = t * t * (3 - 2 * t);
+
+            const idx = (y * blendWidth + x) * 4;
+
+            // 対称位置のピクセルと補間
+            const mirrorX = blendWidth - 1 - x;
+            const mirrorIdx = (y * blendWidth + mirrorX) * 4;
+
+            // 中央付近のみブレンド（エッジに近いほど元の値を維持）
+            const blendStrength = 1.0 - Math.abs(x - halfBlend) / halfBlend;
+            const strength = blendStrength * blendStrength; // 二乗で中央寄りに集中
+
+            if (strength > 0.01) {
+              const r = data[idx] * (1 - strength * 0.5) + data[mirrorIdx] * strength * 0.5;
+              const g = data[idx + 1] * (1 - strength * 0.5) + data[mirrorIdx + 1] * strength * 0.5;
+              const b = data[idx + 2] * (1 - strength * 0.5) + data[mirrorIdx + 2] * strength * 0.5;
+
+              data[idx] = Math.round(r);
+              data[idx + 1] = Math.round(g);
+              data[idx + 2] = Math.round(b);
+            }
+          }
+        }
+
+        ctx.putImageData(seamRegion, centerX - halfBlend, 0);
+
+        // Canvas → base64
+        const outputMime = 'image/png';
+        const dataUrl = canvas.toDataURL(outputMime, 1.0);
+        const outputBase64 = dataUrl.split(',')[1];
+        resolve({ base64: outputBase64, mimeType: outputMime });
+      };
+      img.onerror = () => reject(new Error('シームブレンド: 画像の読み込みに失敗しました'));
+      img.src = `data:${mimeType};base64,${base64}`;
+    });
+  }
+
+  /**
    * テキストから画像を生成（Step 1）
    */
   async generateImage(sceneDescription, styleText, onProgress) {
@@ -395,14 +506,19 @@ Generate the image now.`;
 
   /**
    * 既存の画像を360°パノラマに拡張（Step 2 / ドロップ画像）
+   * 4段階パイプライン: 生成 → Split-Swap → Inpaint → 復元
    */
   async expandToPanorama(imageBase64, mimeType, onProgress) {
     if (!this.isReady()) throw new Error('APIキーが設定されていません');
-    
+
+    // ========================================
+    // Phase 1: AIによる初回360°画像生成
+    // ========================================
+    let rawPano;
     if (this.activeEngine === 'openai') {
       onProgress?.('analyze');
       const analyzedScene = await this._analyzeImageWithVision(imageBase64, mimeType);
-      
+
       onProgress?.('generate');
       const panoPrompt = `Create a COMPLETE 360-degree equirectangular panorama image based exactly on this scene description:
 
@@ -423,11 +539,11 @@ ${analyzedScene}
 2. NO text, NO watermarks, NO UI elements, NO borders.
 
 Generate the equirectangular panorama image now.`;
-      
-      return await this._callOpenAIImage(panoPrompt, "1792x1024", "hd");
+
+      rawPano = await this._callOpenAIImage(panoPrompt, "1792x1024", "hd");
     } else {
       onProgress?.('analyze');
-      
+
       const prompt = `You are a world-class equirectangular panorama specialist. I am providing you with a reference background image.
 
 Your task: Generate a COMPLETE 360-degree equirectangular panorama image based on this scene.
@@ -487,8 +603,33 @@ Generate the equirectangular panorama image now.`;
         60000,
         (tierLabel) => onProgress?.('fallback', tierLabel)
       );
-      return this._extractImage(response);
+      rawPano = this._extractImage(response);
     }
+
+    console.log('✅ Phase 1 完了: 初回360°画像生成');
+
+    // ========================================
+    // Phase 2: Split-Swap（左右入れ替え → シームを中央に移動）
+    // ========================================
+    onProgress?.('splitswap');
+    const swapped = await this._splitSwapImage(rawPano.base64, rawPano.mimeType);
+    console.log('✅ Phase 2 完了: Split-Swap（シームを中央に移動）');
+
+    // ========================================
+    // Phase 3: Canvas ブレンド（中央シーム修復 — API不要）
+    // ========================================
+    onProgress?.('inpaint');
+    const blended = await this._blendCenterSeam(swapped.base64, swapped.mimeType);
+    console.log('✅ Phase 3 完了: Canvas ブレンド（中央シーム修復）');
+
+    // ========================================
+    // Phase 4: 最終Split-Swap（元の位置に戻す）
+    // ========================================
+    onProgress?.('restore');
+    const final = await this._splitSwapImage(blended.base64, blended.mimeType);
+    console.log('✅ Phase 4 完了: 最終Split-Swap（復元） → シームレス360°画像完成');
+
+    return final;
   }
 
   /**

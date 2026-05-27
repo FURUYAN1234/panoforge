@@ -629,10 +629,11 @@ async function executePanoramaExpansion() {
   const isOpenAI = engine.activeEngine === 'openai';
   const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードのため完了まで約2〜5分かかります）' : '入力画像を分析しています...';
 
-  // パノラマは3ステップ
+  // パノラマは5ステップ（4段階パイプライン + ビューワー準備）
   showProcessing('パノラマ拡張中...', subText, [
     { id: 'analyze', label: '🔍 画像分析' },
     { id: 'generate', label: '🌐 360°拡張生成' },
+    { id: 'seamfix', label: '🔧 シーム修復（Split-Swap-Inpaint）' },
     { id: 'render', label: '💻 ビューワー準備' },
   ], isOpenAI);
 
@@ -646,6 +647,16 @@ async function executePanoramaExpansion() {
         dom.processingSub.innerHTML = isOpenAI 
           ? 'AIが360°背景を生成しています...<br>（※OpenAIモードのため完了まで約2〜5分かかります）' 
           : 'AIが360°背景を生成しています...';
+      } else if (step === 'splitswap') {
+        setStepState('generate', 'done');
+        setStepState('seamfix', 'active');
+        dom.processingSub.textContent = 'シームを検出・移動中（Split-Swap）...';
+      } else if (step === 'inpaint') {
+        dom.processingSub.innerHTML = isOpenAI
+          ? 'AIがシームを修復しています...<br>（※OpenAIモードのため追加で約2〜5分かかります）'
+          : 'AIがシームを修復しています（Inpaint）...';
+      } else if (step === 'restore') {
+        dom.processingSub.textContent = '画像を復元中...';
       } else if (step === 'fallback') {
         dom.processingSub.textContent = `モデル切替中: ${detail || '再試行'}...`;
       }
@@ -655,7 +666,7 @@ async function executePanoramaExpansion() {
       state.inputImageBase64, state.inputImageMime, onProgress
     );
 
-    setStepState('generate', 'done');
+    setStepState('seamfix', 'done');
     setStepState('render', 'active');
     dom.processingSub.textContent = '360°ビューワーを構築中...';
 

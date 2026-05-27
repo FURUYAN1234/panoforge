@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -346,6 +346,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.2 (2026-05-28)
+- **[Feature]** 360°画像の両端接合部における歪み・切れ目を自動修復する「Split-Swap-Blend（分割・スワップ・ピクセルブレンド）パイプライン」を実装。Geminiで生成されたパノラマ画像のシームをキャンバス上でピクセルフェザー補間することで、完全につなぎ目のない空間背景を実現。 / Implemented the "Split-Swap-Blend" pipeline to automatically repair seam distortions and cuts at the left-right edges of 360° panoramas. Ensures fully seamless spatial backgrounds by pixel-blending the seam on a canvas.
 
 ### v1.3.1 (2026-05-26)
 - **[Feature]** バグチェック、およびゴミファイル・個人情報・他プロジェクト固有名詞の完全な監査とクリーンアップを完了。安定性を向上させたプロダクションリリース。 / Completed final bug checks, audits, and cleanup of temp files and sensitive information. Stable production release.
