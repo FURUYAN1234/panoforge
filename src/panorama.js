@@ -29,10 +29,10 @@ const IMAGE_MODELS = [
 
 // テキスト専用モデル（スタイル提案等）
 const TEXT_MODELS = [
-  { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
-  { id: 'gemini-flash-latest', label: 'Tier2: Gemini Flash Latest' },
-  { id: 'gemini-1.5-pro', label: 'Tier3: Gemini 1.5 Pro' },
-  { id: 'gemini-1.5-flash', label: 'Tier4: Gemini 1.5 Flash' },
+  { id: 'gemini-2.5-flash', label: 'Tier1: Gemini 2.5 Flash' },
+  { id: 'gemini-2.5-pro', label: 'Tier2: Gemini 2.5 Pro' },
+  { id: 'gemini-1.5-flash', label: 'Tier3: Gemini 1.5 Flash' },
+  { id: 'gemini-1.5-pro', label: 'Tier4: Gemini 1.5 Pro' },
 ];
 
 // OpenAI テキスト専用モデル
