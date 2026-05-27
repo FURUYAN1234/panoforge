@@ -37,19 +37,40 @@ const TEXT_MODELS = [
 
 // OpenAI テキスト専用モデル
 const OPENAI_TEXT_MODELS = [
-  { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
-  { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
-  { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
-  { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' },
+  { id: 'gpt-4o', label: 'OpenAI Primary: gpt-4o' },
+  { id: 'gpt-4o-mini', label: 'OpenAI Backup 1: gpt-4o-mini' },
+  { id: 'gpt-4.1', label: 'OpenAI Fallback 1: gpt-4.1' },
+  { id: 'gpt-4.1-mini', label: 'OpenAI Fallback 2: gpt-4.1-mini' },
+  { id: 'gpt-4.1-nano', label: 'OpenAI Fallback 3: gpt-4.1-nano' },
 ];
 
 // OpenAI ビジョン対応モデル
 const OPENAI_VISION_MODELS = [
-  { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
-  { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
-  { id: 'gpt-4o', label: 'OpenAI Vision Fallback 1: gpt-4o' },
-  { id: 'gpt-4o-mini', label: 'OpenAI Vision Fallback 2: gpt-4o-mini' },
+  { id: 'gpt-4o', label: 'OpenAI Vision Primary: gpt-4o' },
+  { id: 'gpt-4o-mini', label: 'OpenAI Vision Backup 1: gpt-4o-mini' },
+  { id: 'gpt-4.1', label: 'OpenAI Vision Fallback 1: gpt-4.1' },
+  { id: 'gpt-4.1-mini', label: 'OpenAI Vision Fallback 2: gpt-4.1-mini' },
 ];
+
+// OpenAI 動的モデル取得 & キャッシュ
+let availableOpenAIModels = null;
+async function fetchAvailableOpenAIModels(apiKey) {
+  if (availableOpenAIModels) return availableOpenAIModels;
+  try {
+    const response = await fetch("https://api.openai.com/v1/models", {
+      headers: { "Authorization": `Bearer ${apiKey}` }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      availableOpenAIModels = data.data.map(m => m.id);
+      console.log("[OpenAI] Dynamically fetched available models:", availableOpenAIModels);
+      return availableOpenAIModels;
+    }
+  } catch (e) {
+    console.error("[OpenAI] Failed to fetch available models:", e);
+  }
+  return null;
+}
 
 export class PanoramaEngine {
   constructor() {
@@ -124,7 +145,13 @@ export class PanoramaEngine {
 
   async _callOpenAIChatWithFallback(messages, responseFormat = "text") {
     const lastSuccess = this.lastSuccessOpenAITextModel;
-    const ordered = this._getOpenAIModelOrder(OPENAI_TEXT_MODELS, lastSuccess);
+    const available = await fetchAvailableOpenAIModels(this.openAIKey);
+    const filteredModels = available
+      ? OPENAI_TEXT_MODELS.filter(m => available.includes(m.id))
+      : OPENAI_TEXT_MODELS;
+    const activeModels = filteredModels.length > 0 ? filteredModels : [{ id: 'gpt-4o-mini', label: 'OpenAI Fallback: gpt-4o-mini' }];
+    
+    const ordered = this._getOpenAIModelOrder(activeModels, lastSuccess);
     const errors = [];
     
     for (let i = 0; i < ordered.length; i++) {
@@ -167,7 +194,13 @@ Do NOT omit characters or figures if they are present — they are part of the s
 Keep it highly descriptive but concise.`;
     
     const lastSuccess = this.lastSuccessOpenAIVisionModel;
-    const ordered = this._getOpenAIModelOrder(OPENAI_VISION_MODELS, lastSuccess);
+    const available = await fetchAvailableOpenAIModels(this.openAIKey);
+    const filteredModels = available
+      ? OPENAI_VISION_MODELS.filter(m => available.includes(m.id))
+      : OPENAI_VISION_MODELS;
+    const activeModels = filteredModels.length > 0 ? filteredModels : [{ id: 'gpt-4o-mini', label: 'OpenAI Vision Fallback: gpt-4o-mini' }];
+    
+    const ordered = this._getOpenAIModelOrder(activeModels, lastSuccess);
     const errors = [];
     
     for (let i = 0; i < ordered.length; i++) {

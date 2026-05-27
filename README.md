@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -352,6 +352,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.2 (2026-05-27)
+- **[Fix & UX]** OpenAIのModels APIによる動的モデル検知機能を導入 / Introduced OpenAI dynamic model detection using Models API
 
 ### v1.3.1 (2026-05-26)
 - **[Feature]** バグチェック、およびゴミファイル・個人情報・他プロジェクト固有名詞の完全な監査とクリーンアップを完了。安定性を向上させたプロダクションリリース。 / Completed final bug checks, audits, and cleanup of temp files and sensitive information. Stable production release.
