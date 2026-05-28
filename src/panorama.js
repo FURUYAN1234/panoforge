@@ -22,14 +22,14 @@ async function callWithTimeout(promise, ms) {
 
 // 画像生成対応モデル（generateContent + responseModalities IMAGE）
 const IMAGE_MODELS = [
-  { id: 'gemini-3.1-flash-image-preview', label: 'Tier1: Gemini 3.1 Flash Image Preview' },
-  { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image' },
-  { id: 'imagen-3.0-generate-002', label: 'Tier3: Imagen 3.0 Generate' },
+  { id: 'imagen-3.0-generate-002', label: 'Tier1: Imagen 3.0 Generate' },
+  { id: 'gemini-2.0-flash', label: 'Tier2: Gemini 2.0 Flash' },
+  { id: 'gemini-1.5-flash', label: 'Tier3: Gemini 1.5 Flash' },
 ];
 
 // テキスト専用モデル（スタイル提案等）
 const TEXT_MODELS = [
-  { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
+  { id: 'gemini-2.0-flash', label: 'Tier1: Gemini 2.0 Flash' },
   { id: 'gemini-flash-latest', label: 'Tier2: Gemini Flash Latest' },
   { id: 'gemini-1.5-pro', label: 'Tier3: Gemini 1.5 Pro' },
   { id: 'gemini-1.5-flash', label: 'Tier4: Gemini 1.5 Flash' },
@@ -37,18 +37,14 @@ const TEXT_MODELS = [
 
 // OpenAI テキスト専用モデル
 const OPENAI_TEXT_MODELS = [
-  { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
-  { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
-  { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
-  { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' },
+  { id: 'gpt-4o', label: 'OpenAI Primary: gpt-4o' },
+  { id: 'gpt-4o-mini', label: 'OpenAI Backup 1: gpt-4o-mini' },
 ];
 
 // OpenAI ビジョン対応モデル
 const OPENAI_VISION_MODELS = [
-  { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
-  { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
-  { id: 'gpt-4o', label: 'OpenAI Vision Fallback 1: gpt-4o' },
-  { id: 'gpt-4o-mini', label: 'OpenAI Vision Fallback 2: gpt-4o-mini' },
+  { id: 'gpt-4o', label: 'OpenAI Vision Primary: gpt-4o' },
+  { id: 'gpt-4o-mini', label: 'OpenAI Vision Backup 1: gpt-4o-mini' },
 ];
 
 export class PanoramaEngine {

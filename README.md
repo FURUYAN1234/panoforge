@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.3** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -74,27 +74,23 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `gemini-3.1-flash-image-preview` (Primary / 安定画像生成)
-2. `gemini-2.5-flash-image` (Backup 1 / 次世代モデル)
-3. `imagen-3.0-generate-002` (Fallback 1 / レガシー生成)
+1. `imagen-3.0-generate-002` (Primary / 安定画像生成)
+2. `gemini-2.0-flash` (Backup 1 / 次世代モデル)
+3. `gemini-1.5-flash` (Fallback 1 / 保険)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
 - **Gemini**:
-  1. `gemini-3.5-flash` (Primary / 高速・高精度)
+  1. `gemini-2.0-flash` (Primary / 最新高速)
   2. `gemini-flash-latest` (Backup 1 / 安定)
   3. `gemini-1.5-pro` (Backup 2 / 高度推論)
   4. `gemini-1.5-flash` (Fallback 1 / 保険)
 - **OpenAI**:
-  1. `gpt-4.1` (Primary / 高速・高精度)
-  2. `gpt-4.1-mini` (Backup 1 / 高速・安価)
-  3. `gpt-4.1-nano` (Backup 2 / 極小・最速)
-  4. `gpt-4o` (Fallback / 安定フォールバック)
+  1. `gpt-4o` (Primary / 安定高品質)
+  2. `gpt-4o-mini` (Backup 1 / 高速・安価)
 
 **画像解析ビジョン / Vision Analysis Fallback Pipeline (OpenAI)**:
-1. `gpt-4.1` (Primary / 高速・高精度)
-2. `gpt-4.1-mini` (Backup 1 / 高速・安価)
-3. `gpt-4o` (Fallback 1 / 安定フォールバック)
-4. `gpt-4o-mini` (Fallback 2 / 軽量ビジョン)
+1. `gpt-4o` (Primary / 安定高品質)
+2. `gpt-4o-mini` (Backup 1 / 高速・安価)
 
 ---
 
@@ -131,12 +127,12 @@ Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super A
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
 **画像生成 / Image Generation Fallback Pipeline**:
-1. `gemini-3.1-flash-image-preview` (Primary / 安定画像生成)
-2. `gemini-2.5-flash-image` (Backup 1 / 次世代モデル)
-3. `imagen-3.0-generate-002` (Fallback 1 / レガシー生成)
+1. `imagen-3.0-generate-002` (Primary / 安定画像生成)
+2. `gemini-2.0-flash` (Backup 1 / 次世代モデル)
+3. `gemini-1.5-flash` (Fallback 1 / 保険)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
-1. `gemini-3.5-flash` (Primary / 高速・高精度)
+1. `gemini-2.0-flash` (Primary / 最新高速)
 2. `gemini-flash-latest` (Backup 1 / 安定)
 3. `gemini-1.5-pro` (Backup 2 / 高度推論)
 4. `gemini-1.5-flash` (Fallback 1 / 保険)
@@ -346,6 +342,9 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.3 (2026-05-28)
+- **[Model Sanitization]** 過去の自動化・実験の痕跡として残存していた「実在しない架空のプレビューモデル名（gemini-3.1, gemini-2.5, gpt-4.1 等）」をコードおよびドキュメントから完全に排除し、現在実在する安定モデル（gemini-2.0-flash, gpt-4o 等）に正常化。 / Completely cleaned up and standardized model list configurations by removing hallucinated model names (e.g. gemini-3.1, gemini-2.5, gpt-4.1) and syncing to stable production models.
 
 ### v1.3.2 (2026-05-28)
 - **[Feature]** 360°画像の両端接合部における歪み・切れ目を自動修復する「Split-Swap-Blend（分割・スワップ・ピクセルブレンド）パイプライン」を実装。Geminiで生成されたパノラマ画像のシームをキャンバス上でピクセルフェザー補間することで、完全につなぎ目のない空間背景を実現。 / Implemented the "Split-Swap-Blend" pipeline to automatically repair seam distortions and cuts at the left-right edges of 360° panoramas. Ensures fully seamless spatial backgrounds by pixel-blending the seam on a canvas.
