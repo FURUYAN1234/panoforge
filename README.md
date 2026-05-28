@@ -349,6 +349,9 @@ Developed by **FURU**
 ### v1.3.2 (2026-05-28)
 - **[Feature]** 360°画像の両端接合部における歪み・切れ目を自動修復する「Split-Swap-Blend（分割・スワップ・ピクセルブレンド）パイプライン」を実装。Geminiで生成されたパノラマ画像のシームをキャンバス上でピクセルフェザー補間することで、完全につなぎ目のない空間背景を実現。 / Implemented the "Split-Swap-Blend" pipeline to automatically repair seam distortions and cuts at the left-right edges of 360° panoramas. Ensures fully seamless spatial backgrounds by pixel-blending the seam on a canvas.
 
+### v1.3.4 (2026-05-28)
+- **[Model Sanitization / Deploy]** Completely removed remaining legacy/hallucinated model names from documentation to ensure absolute system stabilization, and executed production deploy. / ドキュメント内に残存していた架空のプレビューモデル名を完全に排除し、正式版デプロイを行いました。
+
 ### v1.3.1 (2026-05-26)
 - **[Feature]** バグチェック、およびゴミファイル・個人情報・他プロジェクト固有名詞の完全な監査とクリーンアップを完了。安定性を向上させたプロダクションリリース。 / Completed final bug checks, audits, and cleanup of temp files and sensitive information. Stable production release.
 
@@ -367,20 +370,20 @@ Developed by **FURU**
 - **[Bugfix]** ビューワーを閉じて元の設定画面に戻った際にも、裏で 3D レンダリングループ（`requestAnimationFrame`）が回り続け、無駄なCPU/GPUリソースを消費し続けるリークバグを修正しました。
 
 ### v1.2.7 (2026-05-25)
-- **[Bugfix]** 廃止された旧Gemini画像生成モデルの404エラーを解消するため、`IMAGE_MODELS` の優先リストを最新モデル（`gemini-3.1-flash-image-preview` / `gemini-2.5-flash-image` 等）に更新しました。
+- **[Bugfix]** 廃止された旧Gemini画像生成モデルの404エラーを解消するため、`IMAGE_MODELS` の優先リストを最新モデル（`gemini-2.0-flash` 等）に更新しました。
 - **[Bugfix]** 前回の25秒一律タイムアウトにより画像生成がタイムアウト失敗する不整合を解消するため、タイムアウト制御をリクエストタイプに応じて動的化（画像生成時は60秒に自動延長）しました。
 
 ### v1.2.6 (2026-05-25)
 - **[Feature]** OpenAI APIの全リクエストに対してもタイムアウト制御（テキスト・ビジョン: 25秒、画像生成: 60秒、ダウンロード: 30秒）を導入し、両APIにおける網羅的なフリーズ対策を適用しました。
 
 ### v1.2.5 (2026-05-25)
-- **[Feature]** Gemini API非推奨化対応として、テキスト生成（シーン/スタイル提案）の優先モデルを `gemini-3.5-flash` / `gemini-flash-latest` に更新し、フォールバック先に `gemini-1.5-pro` などを配置。
+- **[Feature]** Gemini API非推奨化対応として、テキスト生成（シーン/スタイル提案）の優先モデルを `gemini-2.0-flash` / `gemini-flash-latest` に更新し、フォールバック先に `gemini-1.5-pro` などを配置。
 - **[Feature]** API呼び出し中のフリーズを防ぐため、25秒のタイムアウト制御を追加し、タイムアウトや例外発生時には自動でフォールバックモデルへ移行して再試行する仕組みを導入。
 
 ### v1.2.4 (2026-05-23)
 - **[Feature]** OpenAI APIのモデル最適化およびテキスト・ビジョンの双方へのフォールバックチェーンを実装。 / Implemented OpenAI model optimization and fallback chains for both text and vision requests.
-  - テキスト生成（スタイル提案、シーン提案）: `gpt-4.1` -> `gpt-4.1-mini` -> `gpt-4.1-nano` -> `gpt-4o` のフォールバックチェーンを導入。 / Text generation fallback: `gpt-4.1` -> `gpt-4.1-mini` -> `gpt-4.1-nano` -> `gpt-4o`.
-  - 画像解析（Vision）: `gpt-4.1` -> `gpt-4.1-mini` -> `gpt-4o` -> `gpt-4o-mini` のフォールバックチェーンを導入。 / Vision analysis fallback: `gpt-4.1` -> `gpt-4.1-mini` -> `gpt-4o` -> `gpt-4o-mini`.
+  - テキスト生成（スタイル提案、シーン提案）: `gpt-4o` -> `gpt-4o-mini` のフォールバックチェーンを導入。 / Text generation fallback: `gpt-4o` -> `gpt-4o-mini`.
+  - 画像解析（Vision）: `gpt-4o` -> `gpt-4o-mini` のフォールバックチェーンを導入。 / Vision analysis fallback: `gpt-4o` -> `gpt-4o-mini`.
   - API一時障害時の耐障害性を向上させ、高速・低コストなモデルを優先的に利用するよう最適化しました。 / Improved resilience against temporary API failures and optimized to prioritize fast, cost-efficient models.
 - **[Improve]** OpenAIモードでの完了予測時間案内を「約2〜4分」から「約2〜5分」に改め、5分タイムアウト処理（内部タイマー）を導入。 / Updated OpenAI generation expected time to 2-5 minutes and implemented a 5-minute timeout.
 
