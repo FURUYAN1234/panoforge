@@ -22,17 +22,17 @@ async function callWithTimeout(promise, ms) {
 
 // 画像生成対応モデル（generateContent + responseModalities IMAGE）
 const IMAGE_MODELS = [
-  { id: 'imagen-3.0-generate-002', label: 'Tier1: Imagen 3.0 Generate' },
-  { id: 'gemini-2.0-flash', label: 'Tier2: Gemini 2.0 Flash' },
-  { id: 'gemini-1.5-flash', label: 'Tier3: Gemini 1.5 Flash' },
+  { id: 'gemini-3.1-flash-image-preview', label: 'Tier1: Gemini 3.1 Flash Image' },
+  { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image' },
 ];
 
 // テキスト専用モデル（スタイル提案等）
 const TEXT_MODELS = [
-  { id: 'gemini-2.0-flash', label: 'Tier1: Gemini 2.0 Flash' },
-  { id: 'gemini-flash-latest', label: 'Tier2: Gemini Flash Latest' },
-  { id: 'gemini-1.5-pro', label: 'Tier3: Gemini 1.5 Pro' },
-  { id: 'gemini-1.5-flash', label: 'Tier4: Gemini 1.5 Flash' },
+  { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
+  { id: 'gemini-2.5-flash', label: 'Tier2: Gemini 2.5 Flash' },
+  { id: 'gemini-2.5-pro', label: 'Tier3: Gemini 2.5 Pro' },
+  { id: 'gemini-flash-latest', label: 'Tier4: Gemini Flash Latest' },
+  { id: 'gemini-pro-latest', label: 'Tier5: Gemini Pro Latest' },
 ];
 
 // OpenAI テキスト専用モデル
@@ -416,29 +416,22 @@ Keep it highly descriptive but concise.`;
         const seamRegion = ctx.getImageData(centerX - halfBlend, 0, blendWidth, h);
         const data = seamRegion.data;
 
+        const originalData = new Uint8ClampedArray(data);
+
         // フェザーブレンド: 中央の継ぎ目をグラデーション補間
-        // 左側のピクセルと右側のピクセルを加重平均で滑らかに接続
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < blendWidth; x++) {
-            // ブレンド係数: 0.0（左端）→ 1.0（右端）のスムーズステップ
-            const t = x / (blendWidth - 1);
-            // スムーズステップ関数で自然な遷移
-            const smooth = t * t * (3 - 2 * t);
-
             const idx = (y * blendWidth + x) * 4;
-
-            // 対称位置のピクセルと補間
             const mirrorX = blendWidth - 1 - x;
             const mirrorIdx = (y * blendWidth + mirrorX) * 4;
 
-            // 中央付近のみブレンド（エッジに近いほど元の値を維持）
             const blendStrength = 1.0 - Math.abs(x - halfBlend) / halfBlend;
-            const strength = blendStrength * blendStrength; // 二乗で中央寄りに集中
+            const strength = blendStrength * blendStrength;
 
             if (strength > 0.01) {
-              const r = data[idx] * (1 - strength * 0.5) + data[mirrorIdx] * strength * 0.5;
-              const g = data[idx + 1] * (1 - strength * 0.5) + data[mirrorIdx + 1] * strength * 0.5;
-              const b = data[idx + 2] * (1 - strength * 0.5) + data[mirrorIdx + 2] * strength * 0.5;
+              const r = originalData[idx] * (1 - strength * 0.5) + originalData[mirrorIdx] * strength * 0.5;
+              const g = originalData[idx + 1] * (1 - strength * 0.5) + originalData[mirrorIdx + 1] * strength * 0.5;
+              const b = originalData[idx + 2] * (1 - strength * 0.5) + originalData[mirrorIdx + 2] * strength * 0.5;
 
               data[idx] = Math.round(r);
               data[idx + 1] = Math.round(g);
@@ -447,7 +440,7 @@ Keep it highly descriptive but concise.`;
           }
         }
 
-        ctx.putImageData(seamRegion, centerX - halfBlend, 0);
+        ctx.putImageData(seamRegion, centerX - Math.floor(blendWidth / 2), 0);
 
         // Canvas → base64
         const outputMime = 'image/png';
@@ -485,7 +478,7 @@ Requirements:
 Generate the image now.`;
 
     if (this.activeEngine === 'openai') {
-      return await this._callOpenAIImage(prompt, "1792x1024", "hd");
+      return await this._callOpenAIImage(prompt, "1536x1024", "hd");
     } else {
       const response = await this._callWithFallback(
         IMAGE_MODELS, 'image',
@@ -536,7 +529,7 @@ ${analyzedScene}
 
 Generate the equirectangular panorama image now.`;
 
-      rawPano = await this._callOpenAIImage(panoPrompt, "1792x1024", "hd");
+      rawPano = await this._callOpenAIImage(panoPrompt, "1536x1024", "hd");
     } else {
       onProgress?.('analyze');
 

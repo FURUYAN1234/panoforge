@@ -343,6 +343,9 @@ Developed by **FURU**
 
 ## 📋 ChangeLog
 
+### v1.3.5 (2026-05-28)
+- **[Fix / Deploy]** OpenAIでのつなぎ目修正およびGeminiでのオリジナル画像維持機能の復元を完了し、ゴミファイルや固有名詞等の最終監査に合格した正式版をデプロイしました。 / Finalized fix for panorama seams, restored original image preservation in Gemini mode, and passed all junk file and proper noun audits. Deployed production version.
+
 ### v1.3.3 (2026-05-28)
 - **[Model Sanitization]** 過去の自動化・実験の痕跡として残存していた「実在しない架空のプレビューモデル名（gemini-3.1, gemini-2.5, gpt-4.1 等）」をコードおよびドキュメントから完全に排除し、現在実在する安定モデル（gemini-2.0-flash, gpt-4o 等）に正常化。 / Completely cleaned up and standardized model list configurations by removing hallucinated model names (e.g. gemini-3.1, gemini-2.5, gpt-4.1) and syncing to stable production models.
 
