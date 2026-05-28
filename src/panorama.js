@@ -200,12 +200,12 @@ Keep it highly descriptive but concise.`;
   }
 
   async _callOpenAIImage(prompt, size = "1024x1024", quality = "high") {
-    // ユーザー環境のAPIプロキシ仕様に合わせて、dall-e-3のエイリアスとして gpt-image-2 を使用
+    // ユーザー環境のAPIプロキシ仕様に合わせて、dall-e-3を使用
     // quality も 'hd' ではなく 'high' 等を指定する仕様のため変換
     const mappedQuality = quality === "hd" ? "high" : quality === "standard" ? "medium" : quality;
-    const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality };
+    const payload = { model: "dall-e-3", prompt, n: 1, size, quality: mappedQuality };
     // 一部のAPIプロキシでは response_format が非対応のため送信しない
-    // gpt-image-2 は生成に2〜5分かかるため、タイムアウトを300秒（5分）に設定
+    // dall-e-3 は生成に2〜5分かかるため、タイムアウトを300秒（5分）に設定
     const res = await callWithTimeout(
       fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
