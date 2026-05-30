@@ -6,6 +6,7 @@
 import './style.css';
 import { PanoramaEngine } from './panorama.js';
 import { PanoramaViewer } from './viewer.js';
+import { FallbackChainViewer } from './components/FallbackChainViewer.js';
 
 const engine = new PanoramaEngine();
 let viewer = null;
@@ -97,6 +98,29 @@ const state = {
   isDirectView: false, // 既存360°画像を直接表示中（保存ボタン非表示）
   generatedDataUrl: null, // 生成画像のDataURL保持
 };
+
+// ============================
+// Fallback Chain Viewer 初期化
+// ============================
+const viewerBtn = document.createElement('a');
+viewerBtn.href = '#';
+viewerBtn.textContent = '⚙ Model Chain';
+viewerBtn.className = 'model-chain-btn';
+viewerBtn.style.fontSize = '0.75rem';
+viewerBtn.style.color = 'var(--text-dim)';
+viewerBtn.style.textDecoration = 'none';
+viewerBtn.style.marginLeft = '12px';
+
+viewerBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  const chainViewer = new FallbackChainViewer();
+  chainViewer.open();
+});
+
+const headerLeft = document.querySelector('.header-left');
+if (headerLeft) {
+  headerLeft.appendChild(viewerBtn);
+}
 
 // ============================
 // 起動時: APIモーダル自動表示 + autocomplete汚染クリア

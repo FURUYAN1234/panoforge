@@ -441,3 +441,112 @@ body{
   .scene-ai-btn{min-height:auto;padding:10px 14px}
   .viewer-bottom-bar{flex-direction:column}.capture-btn{width:100%}
 }
+
+/* =========================================
+   Fallback Chain Viewer
+   ========================================= */
+.fallback-chain-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+.fallback-chain-modal {
+  background: #111318;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.fallback-chain-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fallback-chain-header h3 {
+  font-size: 1.1rem;
+  color: var(--text-bright);
+  margin: 0;
+}
+
+.fallback-chain-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  transition: all var(--transition);
+}
+
+.fallback-chain-close:hover {
+  color: var(--text-bright);
+  background: rgba(255,255,255,0.06);
+}
+
+.fallback-chain-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.fallback-chain-pre {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: var(--radius-xs);
+  color: #e2e8f0;
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.fallback-chain-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fallback-chain-copy-btn {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.fallback-chain-copy-btn:hover {
+  background: #00b3cc;
+  transform: translateY(-1px);
+}
+
+.model-chain-btn:hover {
+  color: var(--text-bright) !important;
+}

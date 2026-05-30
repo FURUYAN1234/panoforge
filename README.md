@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.3** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.6** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -74,16 +74,16 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `imagen-3.0-generate-002` (Primary / 安定画像生成)
-2. `gemini-2.0-flash` (Backup 1 / 次世代モデル)
-3. `gemini-1.5-flash` (Fallback 1 / 保険)
+1. `gemini-3.1-flash-image-preview` (Tier1 / ネイティブ画像生成 最高品質)
+2. `gemini-2.5-flash-image` (Tier2 / 安定版)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
 - **Gemini**:
-  1. `gemini-2.0-flash` (Primary / 最新高速)
-  2. `gemini-flash-latest` (Backup 1 / 安定)
-  3. `gemini-1.5-pro` (Backup 2 / 高度推論)
-  4. `gemini-1.5-flash` (Fallback 1 / 保険)
+  1. `gemini-3.5-flash` (Tier1 / Next-Gen 最高品質)
+  2. `gemini-2.5-flash` (Tier2 / 安定・高速)
+  3. `gemini-2.5-pro` (Tier3 / 高品質)
+  4. `gemini-flash-latest` (Tier4 / 最新安定版)
+  5. `gemini-pro-latest` (Tier5 / 最新Pro版)
 - **OpenAI**:
   1. `gpt-4o` (Primary / 安定高品質)
   2. `gpt-4o-mini` (Backup 1 / 高速・安価)
@@ -126,16 +126,16 @@ This system is not merely an image generation tool. It is a **spatial rendering 
 Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
-**画像生成 / Image Generation Fallback Pipeline**:
-1. `imagen-3.0-generate-002` (Primary / 安定画像生成)
-2. `gemini-2.0-flash` (Backup 1 / 次世代モデル)
-3. `gemini-1.5-flash` (Fallback 1 / 保険)
+**画像生成 / Image Generation Fallback Pipeline (Gemini)**:
+1. `gemini-3.1-flash-image-preview` (Tier1 / ネイティブ画像生成 最高品質)
+2. `gemini-2.5-flash-image` (Tier2 / 安定版)
 
-**テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
-1. `gemini-2.0-flash` (Primary / 最新高速)
-2. `gemini-flash-latest` (Backup 1 / 安定)
-3. `gemini-1.5-pro` (Backup 2 / 高度推論)
-4. `gemini-1.5-flash` (Fallback 1 / 保険)
+**テキスト生成・スタイル提案 / Text Generation Fallback Pipeline (Gemini)**:
+1. `gemini-3.5-flash` (Tier1 / Next-Gen 最高品質)
+2. `gemini-2.5-flash` (Tier2 / 安定・高速)
+3. `gemini-2.5-pro` (Tier3 / 高品質)
+4. `gemini-flash-latest` (Tier4 / 最新安定版)
+5. `gemini-pro-latest` (Tier5 / 最新Pro版)
 
 ---
 
@@ -342,6 +342,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.6 (2026-05-30)
+- **[Feature]** AIモデルフォールバックチェーンビューア機能を追加。ヘッダーの「⚙ Model Chain」ボタンからモーダルを開き、全APIモデルの構成・優先順位をプレーンテキストで表示・クリップボードにコピー可能。更新履歴セクションも搭載。 / Added AI Model Fallback Chain Viewer. Click "⚙ Model Chain" in the header to view all API model configurations and priorities in plain text, with clipboard copy support and revision history.
+- **[Docs]** README内のZenith Protocolセクションのモデル名を現在の panorama.js の構成に同期し、最新化しました。 / Synced Zenith Protocol model names in README to the current panorama.js configuration.
 
 ### v1.3.5 (2026-05-28)
 - **[Fix / Deploy]** OpenAIでのつなぎ目修正およびGeminiでのオリジナル画像維持機能の復元を完了し、ゴミファイルや固有名詞等の最終監査に合格した正式版をデプロイしました。 / Finalized fix for panorama seams, restored original image preservation in Gemini mode, and passed all junk file and proper noun audits. Deployed production version.
