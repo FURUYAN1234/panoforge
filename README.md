@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.6** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.7** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -342,6 +342,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.7 (2026-05-31)
+- **[Bugfix]** API接続後、ヘッダーのステータスドットの表示（title / aria-label）が「未接続」のまま残る不整合を修正し、Gemini/OpenAIそれぞれの接続状態が正しく反映されるように改善しました。 / Fixed a synchronization bug where the header status dot's title and aria-label remained "Unconnected" after a successful API connection. It now accurately reflects Gemini or OpenAI connection states.
+- **[Bugfix]** APIキー入力欄をform内に移動し、表示トグルボタンに `type="button"` を追加。またEnterキー送信時のハンドラーを追加し、ブラウザおよびPlaywrightでのDOM警告を解消しました。 / Moved the API key input inside a form, added `type="button"` to the toggle button, and added an Enter key submit handler to resolve browser and Playwright DOM warnings.
 
 ### v1.3.6 (2026-05-30)
 - **[Feature]** AIモデルフォールバックチェーンビューア機能を追加。ヘッダーの「⚙ Model Chain」ボタンからモーダルを開き、全APIモデルの構成・優先順位をプレーンテキストで表示・クリップボードにコピー可能。更新履歴セクションも搭載。 / Added AI Model Fallback Chain Viewer. Click "⚙ Model Chain" in the header to view all API model configurations and priorities in plain text, with clipboard copy support and revision history.

@@ -20,6 +20,7 @@ const dom = {
   apiKeyStatus: $('#api-key-status'),
   apiModalOverlay: $('#api-modal-overlay'),
   apiModalClose: $('#api-modal-close'),
+  apiKeyForm: $('#api-key-form'),
   apiKeyInput: $('#api-key-input'),
   apiKeyToggle: $('#api-key-toggle'),
   iconEyeOff: $('#icon-eye-off'),
@@ -180,6 +181,13 @@ dom.apiKeyToggle.addEventListener('click', () => {
   dom.iconEyeOn.classList.toggle('hidden', !isPassword);
 });
 
+dom.apiKeyForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!dom.apiModalApply.disabled) {
+    dom.apiModalApply.click();
+  }
+});
+
 dom.apiModalApply.addEventListener('click', () => {
   const key = dom.apiKeyInput.value.trim();
   if (!key) return;
@@ -193,12 +201,16 @@ dom.apiModalApply.addEventListener('click', () => {
       dom.apiKeyStatus.classList.add('openai');
       dom.apiKeyFeedback.textContent = '✓ OpenAI API に接続しました';
       dom.apiStatusText.textContent = 'Engine: OpenAI';
+      dom.apiKeyStatus.title = 'OpenAI API 接続済み';
+      dom.apiKeyStatus.setAttribute('aria-label', 'OpenAI API 接続済み');
       state.appLocked = false;
       dom.openaiVisionNote.classList.remove('hidden');
     } else {
       dom.apiKeyStatus.classList.remove('openai');
       dom.apiKeyFeedback.textContent = '✓ Gemini API に接続しました';
       dom.apiStatusText.textContent = 'Engine: Gemini';
+      dom.apiKeyStatus.title = 'Gemini API 接続済み';
+      dom.apiKeyStatus.setAttribute('aria-label', 'Gemini API 接続済み');
       state.appLocked = false;
       dom.openaiVisionNote.classList.add('hidden');
     }
@@ -217,6 +229,8 @@ dom.apiModalApply.addEventListener('click', () => {
     dom.apiKeyStatus.classList.remove('connected', 'openai');
     dom.apiSettingsBtn.classList.remove('connected');
     dom.apiStatusText.textContent = '未接続';
+    dom.apiKeyStatus.title = '未接続';
+    dom.apiKeyStatus.setAttribute('aria-label', '未接続');
     dom.apiKeyFeedback.textContent = '✕ APIキーの初期化に失敗しました';
     dom.apiKeyFeedback.className = 'api-feedback error';
   }
