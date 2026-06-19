@@ -22,8 +22,10 @@ export const FALLBACK_CHAINS = [
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gpt-4o', label: 'OpenAI Primary: gpt-4o' },
-      { id: 'gpt-4o-mini', label: 'OpenAI Backup 1: gpt-4o-mini' }
+      { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
+      { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
+      { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
+      { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' }
     ]
   },
   {
@@ -49,8 +51,10 @@ export const FALLBACK_CHAINS = [
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gpt-4o', label: 'OpenAI Primary: gpt-4o' },
-      { id: 'gpt-4o-mini', label: 'OpenAI Backup 1: gpt-4o-mini' }
+      { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
+      { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
+      { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
+      { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' }
     ]
   },
   {
@@ -61,8 +65,8 @@ export const FALLBACK_CHAINS = [
     provider: 'Gemini',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gemini-3.1-flash-image-preview', label: 'Tier1: Gemini 3.1 Flash Image' },
-      { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image' }
+      { id: 'gemini-3.1-flash-image', label: 'Tier1: Gemini 3.1 Flash Image (Nano Banana 2)' },
+      { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image (Compatibility)' }
     ]
   },
   {
@@ -84,8 +88,10 @@ export const FALLBACK_CHAINS = [
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gpt-4o', label: 'OpenAI Vision Primary: gpt-4o' },
-      { id: 'gpt-4o-mini', label: 'OpenAI Vision Backup 1: gpt-4o-mini' }
+      { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
+      { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
+      { id: 'gpt-4.1-nano', label: 'OpenAI Vision Backup 2: gpt-4.1-nano' },
+      { id: 'gpt-4o', label: 'OpenAI Vision Fallback: gpt-4o' }
     ]
   },
   {
@@ -96,8 +102,8 @@ export const FALLBACK_CHAINS = [
     provider: 'Gemini',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gemini-3.1-flash-image-preview', label: 'Tier1: Gemini 3.1 Flash Image' },
-      { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image' }
+      { id: 'gemini-3.1-flash-image', label: 'Tier1: Gemini 3.1 Flash Image (Nano Banana 2)' },
+      { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image (Compatibility)' }
     ]
   },
   {
@@ -114,6 +120,19 @@ export const FALLBACK_CHAINS = [
 ];
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: '1.3.8',
+    date: '2026-06-19 21:29 JST',
+    note: 'Nano Banana Pro v4.7.1の最新Fallback Chainを360度アプリ向けに反映。360度生成は互換性のためGemini画像フォールバックを維持。',
+    changes: [
+      { step: 'AI Suggestion (OpenAI)', detail: 'gpt-4.1 -> 4.1-mini -> 4.1-nano -> 4o' },
+      { step: 'STEP 1 (Gemini)', detail: 'gemini-3.1-flash-image -> 2.5-flash-image (compatibility fallback)' },
+      { step: 'STEP 2 Analyze (OpenAI)', detail: 'gpt-4.1 -> 4.1-mini -> 4.1-nano -> 4o (Vision)' },
+      { step: 'STEP 2 Generate (Gemini)', detail: 'gemini-3.1-flash-image -> 2.5-flash-image (compatibility fallback)' },
+      { step: 'STEP 1/2 (OpenAI Image)', detail: 'gpt-image-2 fixed / output_format=png / 600s timeout' },
+      { step: 'Timeout', detail: 'Gemini image generation 120s / OpenAI vision 60s' }
+    ]
+  },
   {
     version: '1.3.5',
     date: '2026-05-30 14:02 JST',

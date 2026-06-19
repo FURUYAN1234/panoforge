@@ -22,8 +22,8 @@ async function callWithTimeout(promise, ms) {
 
 // 画像生成対応モデル（generateContent + responseModalities IMAGE）
 const IMAGE_MODELS = [
-  { id: 'gemini-3.1-flash-image-preview', label: 'Tier1: Gemini 3.1 Flash Image' },
-  { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image' },
+  { id: 'gemini-3.1-flash-image', label: 'Tier1: Gemini 3.1 Flash Image (Nano Banana 2)' },
+  { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image (Compatibility)' },
 ];
 
 // テキスト専用モデル（スタイル提案等）
@@ -37,15 +37,23 @@ const TEXT_MODELS = [
 
 // OpenAI テキスト専用モデル
 const OPENAI_TEXT_MODELS = [
-  { id: 'gpt-4o', label: 'OpenAI Primary: gpt-4o' },
-  { id: 'gpt-4o-mini', label: 'OpenAI Backup 1: gpt-4o-mini' },
+  { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
+  { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
+  { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
+  { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' },
 ];
 
 // OpenAI ビジョン対応モデル
 const OPENAI_VISION_MODELS = [
-  { id: 'gpt-4o', label: 'OpenAI Vision Primary: gpt-4o' },
-  { id: 'gpt-4o-mini', label: 'OpenAI Vision Backup 1: gpt-4o-mini' },
+  { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
+  { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
+  { id: 'gpt-4.1-nano', label: 'OpenAI Vision Backup 2: gpt-4.1-nano' },
+  { id: 'gpt-4o', label: 'OpenAI Vision Fallback: gpt-4o' },
 ];
+
+const OPENAI_TEXT_TIMEOUT_MS = 25000;
+const OPENAI_VISION_TIMEOUT_MS = 60000;
+const GEMINI_IMAGE_TIMEOUT_MS = 120000;
 
 export class PanoramaEngine {
   constructor() {
@@ -89,7 +97,7 @@ export class PanoramaEngine {
   // ============================================
   // OpenAI Utilities
   // ============================================
-  async _callOpenAIChat(messages, model = "gpt-4o-mini", responseFormat = "text") {
+  async _callOpenAIChat(messages, model = "gpt-4.1-mini", responseFormat = "text", timeoutMs = OPENAI_TEXT_TIMEOUT_MS) {
     const payload = { model, messages, temperature: 0.7 };
     if (responseFormat === "json_object") payload.response_format = { type: "json_object" };
     
@@ -99,7 +107,7 @@ export class PanoramaEngine {
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
         body: JSON.stringify(payload)
       }),
-      25000
+      timeoutMs
     );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
@@ -183,7 +191,7 @@ Keep it highly descriptive but concise.`;
           ]
         }];
         
-        const text = await this._callOpenAIChat(messages, tier.id);
+        const text = await this._callOpenAIChat(messages, tier.id, "text", OPENAI_VISION_TIMEOUT_MS);
         
         this.lastSuccessOpenAIVisionModel = tier.id;
         console.log(`✅ OpenAI Vision ${tier.label} で処理成功`);
@@ -200,19 +208,17 @@ Keep it highly descriptive but concise.`;
   }
 
   async _callOpenAIImage(prompt, size = "1024x1024", quality = "high") {
-    // ユーザー環境のAPIプロキシ仕様に合わせて、dall-e-3のエイリアスとして gpt-image-2 を使用
-    // quality も 'hd' ではなく 'high' 等を指定する仕様のため変換
+    // gpt-image-2 は quality に 'high' 等を使い、出力形式は output_format で指定する。
     const mappedQuality = quality === "hd" ? "high" : quality === "standard" ? "medium" : quality;
-    const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality };
-    // 一部のAPIプロキシでは response_format が非対応のため送信しない
-    // gpt-image-2 は生成に2〜5分かかるため、タイムアウトを300秒（5分）に設定
+    const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality, output_format: "png" };
+    // response_format は送信しない。gpt-image-2 は混雑時に長引くため、タイムアウトを600秒（10分）に設定。
     const res = await callWithTimeout(
       fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
         body: JSON.stringify(payload)
       }),
-      300000
+      600000
     );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
@@ -486,7 +492,7 @@ Generate the image now.`;
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           config: { responseModalities: ['IMAGE', 'TEXT'] },
         },
-        60000,
+        GEMINI_IMAGE_TIMEOUT_MS,
         (tierLabel) => onProgress?.('fallback', tierLabel)
       );
       return this._extractImage(response);
@@ -589,7 +595,7 @@ Generate the equirectangular panorama image now.`;
           }],
           config: { responseModalities: ['IMAGE', 'TEXT'] },
         },
-        60000,
+        GEMINI_IMAGE_TIMEOUT_MS,
         (tierLabel) => onProgress?.('fallback', tierLabel)
       );
       rawPano = this._extractImage(response);

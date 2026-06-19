@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.7** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.8** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -30,12 +30,12 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 ### 🧠 Dual-API Architecture (デュアルAPIアーキテクチャ)
 本システムは、Gemini API と OpenAI API の両方をサポートし、用途に応じて切り替えて使用できるデュアルエンジン構造を採用しています。
 
-- **Gemini API (Google)**: High-speed, natively multimodal panorama generation using `gemini-2.0-flash-preview-image-generation`. Perfect for expanding existing 1-shot images while retaining original pixel details. Generation takes only 10-20 seconds. / Geminiの高速かつネイティブなマルチモーダル生成によるパノラマ拡張。手持ちの画像のディテールを維持したままのアウトペインティングに最適。**生成時間は約10〜20秒と高速です。**
-- **OpenAI API (DALL-E 3 & GPT-4o)**: Unmatched prompt adherence and ultra-high-quality image generation. Generates stunning panoramas from text, and utilizes GPT-4o's vision capabilities to intelligently "re-create" an existing image as a seamless 360° environment. **Note: Generation takes 2-5 minutes and is billed on a pay-as-you-go basis.** / 圧倒的なプロンプト忠実度と超高画質。テキストからの生成や、GPT-4oの画像解析による「既存画像の360度化（近似再構築）」に威力を発揮。**※生成には約2〜5分かかり、従量課金となります。**
+- **Gemini API (Google)**: High-speed, natively multimodal panorama generation using `gemini-3.1-flash-image` (Nano Banana 2), with `gemini-2.5-flash-image` retained as a compatibility fallback for 360° generation. Perfect for expanding existing 1-shot images while retaining original pixel details. / `gemini-3.1-flash-image`（Nano Banana 2）をPrimaryにし、360度生成の互換性確保のため `gemini-2.5-flash-image` をフォールバックとして保持します。手持ち画像のディテールを維持したパノラマ拡張に最適です。
+- **OpenAI API (gpt-image-2 & GPT-4.1)**: Unmatched prompt adherence and ultra-high-quality image generation. Generates stunning panoramas from text using `gpt-image-2`, and uses GPT-4.1-series vision fallback to intelligently "re-create" an existing image as a seamless 360° environment. **Note: Generation takes 2-5 minutes and is billed on a pay-as-you-go basis.** / `gpt-image-2` による高画質生成と、GPT-4.1系Visionフォールバックによる「既存画像の360度化（近似再構築）」に対応します。**※生成には約2〜5分かかり、従量課金となります。**
 
 #### ⚠️ OpenAI API Limitations / OpenAI APIモードの限界と注意事項
-- **Time Required (処理時間)**: OpenAI API does not support native panorama outpainting. It requires a multi-step pipeline (Vision Analysis -> Prompt Generation -> DALL-E 3 Generation), taking **2 to 5 minutes** per image. / OpenAI APIはネイティブなパノラマ拡張をサポートしていないため、GPT-4oでの画像解析からDALL-E 3での再生成まで複数ステップを踏みます。そのため**完了までに約2〜5分かかります**。
-- **Re-creation vs Outpainting (近似再構築)**: When expanding an existing image with OpenAI API, the original image is NOT directly stitched or outpainted. Instead, GPT-4o describes the image in text, and DALL-E 3 generates a completely new 360° image matching that description. / 画像ドロップによる360度拡張をOpenAI APIで行う場合、元の絵を直接拡張（切り貼り）するわけではありません。AIが画像をテキスト化し、その情報をもとに**そっくりな360度画像を新規生成（近似再構築）**するため、「それっぽくなる」挙動となります。
+- **Time Required (処理時間)**: OpenAI API does not support native panorama outpainting. It requires a multi-step pipeline (Vision Analysis -> Prompt Generation -> gpt-image-2 Generation), taking **2 to 5 minutes** per image. / OpenAI APIはネイティブなパノラマ拡張をサポートしていないため、GPT-4.1系での画像解析から `gpt-image-2` での再生成まで複数ステップを踏みます。そのため**完了までに約2〜5分かかります**。
+- **Re-creation vs Outpainting (近似再構築)**: When expanding an existing image with OpenAI API, the original image is NOT directly stitched or outpainted. Instead, GPT-4.1-series vision describes the image in text, and `gpt-image-2` generates a completely new 360° image matching that description. / 画像ドロップによる360度拡張をOpenAI APIで行う場合、元の絵を直接拡張（切り貼り）するわけではありません。AIが画像をテキスト化し、その情報をもとに**そっくりな360度画像を新規生成（近似再構築）**するため、「それっぽくなる」挙動となります。
 - **Pay-As-You-Go Cost (従量課金)**: Using the OpenAI API incurs usage-based costs. Frequent panorama generation may consume significant API credits. / OpenAI APIは従量課金です。パノラマ生成を頻繁に行うとAPI残高を大きく消費する可能性があります。
 
 #### 🎯 Engine Selection Guide / エンジン選択ガイド
@@ -74,8 +74,8 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `gemini-3.1-flash-image-preview` (Tier1 / ネイティブ画像生成 最高品質)
-2. `gemini-2.5-flash-image` (Tier2 / 安定版)
+1. `gemini-3.1-flash-image` (Tier1 / Nano Banana 2)
+2. `gemini-2.5-flash-image` (Tier2 / 360度生成の互換フォールバック)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
 - **Gemini**:
@@ -85,12 +85,16 @@ Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super A
   4. `gemini-flash-latest` (Tier4 / 最新安定版)
   5. `gemini-pro-latest` (Tier5 / 最新Pro版)
 - **OpenAI**:
-  1. `gpt-4o` (Primary / 安定高品質)
-  2. `gpt-4o-mini` (Backup 1 / 高速・安価)
+  1. `gpt-4.1` (Primary / 高品質)
+  2. `gpt-4.1-mini` (Backup 1 / 高速・低コスト)
+  3. `gpt-4.1-nano` (Backup 2 / 最軽量)
+  4. `gpt-4o` (Fallback / 安定実績)
 
 **画像解析ビジョン / Vision Analysis Fallback Pipeline (OpenAI)**:
-1. `gpt-4o` (Primary / 安定高品質)
-2. `gpt-4o-mini` (Backup 1 / 高速・安価)
+1. `gpt-4.1` (Primary / 高品質)
+2. `gpt-4.1-mini` (Backup 1 / 高速・低コスト)
+3. `gpt-4.1-nano` (Backup 2 / 最軽量)
+4. `gpt-4o` (Fallback / 安定実績)
 
 ---
 
@@ -127,8 +131,8 @@ Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super A
 Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `gemini-3.1-flash-image-preview` (Tier1 / ネイティブ画像生成 最高品質)
-2. `gemini-2.5-flash-image` (Tier2 / 安定版)
+1. `gemini-3.1-flash-image` (Tier1 / Nano Banana 2)
+2. `gemini-2.5-flash-image` (Tier2 / 360度生成の互換フォールバック)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline (Gemini)**:
 1. `gemini-3.5-flash` (Tier1 / Next-Gen 最高品質)
@@ -342,6 +346,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.8 (2026-06-19)
+- **[Fallback Chain]** Gemini画像生成を `gemini-3.1-flash-image` Primary + `gemini-2.5-flash-image` 互換フォールバックに更新しました。360度生成は最新モデルだけでは安定しない可能性があるため、互換フォールバックは維持しています。 / Updated Gemini image generation to `gemini-3.1-flash-image` Primary with `gemini-2.5-flash-image` compatibility fallback. Because 360° generation may not always be stable on the newest model alone, the compatibility fallback remains.
+- **[OpenAI]** テキスト提案・画像解析を `gpt-4.1` -> `gpt-4.1-mini` -> `gpt-4.1-nano` -> `gpt-4o` に更新し、`gpt-image-2` 生成は `output_format: png` と600秒タイムアウトに同期しました。 / Updated text suggestion and vision analysis to `gpt-4.1` -> `gpt-4.1-mini` -> `gpt-4.1-nano` -> `gpt-4o`, and synced `gpt-image-2` generation with `output_format: png` and a 600-second timeout.
 
 ### v1.3.7 (2026-05-31)
 - **[Bugfix]** API接続後、ヘッダーのステータスドットの表示（title / aria-label）が「未接続」のまま残る不整合を修正し、Gemini/OpenAIそれぞれの接続状態が正しく反映されるように改善しました。 / Fixed a synchronization bug where the header status dot's title and aria-label remained "Unconnected" after a successful API connection. It now accurately reflects Gemini or OpenAI connection states.
