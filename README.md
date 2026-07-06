@@ -4,7 +4,7 @@
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
-> **[[Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
+> **[[Super FURU AI 4-koma System](https://github.com/FURUYAN1234/nano-banana-pro)](https://github.com/FURUYAN1234/nano-banana-pro) Integration / 連携対応**
 > The generated 360° spatial images provide overwhelming immersion as manga backgrounds and video assets. / 生成された360度空間画像は、漫画の背景や動画素材として圧倒的な没入感を提供します。
 
 ---
@@ -14,8 +14,8 @@
 360° AI Panorama Generator is an experimental tool that generates "360-degree equirectangular panoramic images" from text or a single image, allowing interactive viewing and capturing via an integrated 3D viewer.
 360° AI Panorama Generatorは、テキストや1枚の画像から「360度エクイレクタングラー（正距円筒図法）パノラマ画像」を生成し、内蔵の3Dビューワーでインタラクティブに確認・キャプチャできる実験的ツールです。
 
-It provides seamless 360-degree environments as background assets for manga and video production tools like Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, supporting highly immersive expressions.
-Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫画・動画制作ツールにおいて、背景素材としてシームレスな360度空間を提供し、没入感のある表現をサポートします。
+It provides seamless 360-degree environments as background assets for manga and video production tools like Super FURU AI 4-koma System, supporting highly immersive expressions.
+Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて、背景素材としてシームレスな360度空間を提供し、没入感のある表現をサポートします。
 
 ---
 
@@ -71,7 +71,7 @@ Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System などの漫
 
 ## 🧠 Zenith Protocol（AIモデル自動切替 / Auto AI Model Fallback）
 
-Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
+Following the philosophy of Super FURU AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
 1. `gemini-3.1-flash-image` (Tier1 / Nano Banana 2)
@@ -127,8 +127,8 @@ This system is not merely an image generation tool. It is a **spatial rendering 
 
 ## 🧠 Zenith Protocol（AIモデル自動切替 / Auto AI Model Fallback）
 
-Following the philosophy of Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
-Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
+Following the philosophy of Super FURU AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
+Super FURU AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
 1. `gemini-3.1-flash-image` (Tier1 / Nano Banana 2)
@@ -305,7 +305,7 @@ This project is part of an integrated ecosystem designed to support AI-powered m
 
 ### Ecosystem Components / 構成システム
 
-#### 1. Nano Banana 2 and ChatGPT Images 2.0 Powered Super AI 4-koma System
+#### 1. Super FURU AI 4-koma System
 A system specialized in creating 4-panel manga with AI. / AIを活用した4コマ漫画制作に特化したシステムです。
 - [Explanation / 解説](https://note.com/happy_duck780/n/ndf063558c1f5)
 - [Demo / デモ](https://furuyan1234.github.io/nano-banana-pro/)
