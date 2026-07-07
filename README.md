@@ -17,6 +17,18 @@
 It provides seamless 360-degree environments as background assets for manga and video production tools like Super FURU AI 4-koma System, supporting highly immersive expressions.
 Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて、背景素材としてシームレスな360度空間を提供し、没入感のある表現をサポートします。
 
+## Current Release Line / 現行仕様
+
+The current public line is **v1.3.8**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.3.8** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+
+* **Gemini image path / Gemini画像生成**: `gemini-3.1-flash-image` is the primary image model. `gemini-2.5-flash-image` remains as a 360-degree compatibility fallback for cases where the newer image model cannot complete the panorama request.
+  画像生成の主系統は `gemini-3.1-flash-image` です。新しい画像モデルで360度化が完了しない場合に備えて、`gemini-2.5-flash-image` を互換フォールバックとして保持しています。
+* **OpenAI image path / OpenAI画像生成**: OpenAI uses a text-mediated recreation pipeline: GPT-4.1-series vision analysis prepares the prompt, then `gpt-image-2` generates PNG output with a long timeout. This is high-quality recreation, not pixel-preserving outpainting.
+  OpenAIはテキスト媒介の再構成パイプラインです。GPT-4.1系のVision解析でプロンプトを作り、`gpt-image-2` が長めのタイムアウトでPNGを生成します。これは高品質な再生成であり、元画像ピクセルをそのまま延長するアウトペイントではありません。
+* **Viewer and metadata / ビューワーとメタデータ**: The generated equirectangular image can be checked in the built-in Three.js viewer and exported with GPano metadata for 360-degree viewers.
+  生成された正距円筒図法画像は内蔵Three.jsビューワーで確認でき、360度ビューア向けにGPanoメタデータ付きで保存できます。
+
 ---
 
 ## 🌍 Demo Site / デモサイト
@@ -176,8 +188,8 @@ This project is developed in full compliance with **Article 30-4 of the Japanese
 
 ### Official API Usage
 
-All generations are performed through the **official Google Gemini API**. This system adheres strictly to Google's "Generative AI Forbidden Use Policy" and Terms of Service.
-本システムはGoogle公式のGemini APIを介して動作しており、Googleが定める「生成AI禁止事項」および利用規約を厳格に遵守しています。
+All generations are performed through official provider APIs: **Google Gemini API** or **OpenAI API**, depending on the selected key. The system is designed to respect each provider's applicable usage policy, safety behavior, and Terms of Service.
+本システムの生成処理は、入力されたキーに応じて **Google Gemini API** または **OpenAI API** の公式APIを介して行われます。各プロバイダーの利用ポリシー、安全フィルター、利用規約に従う設計です。
 
 ### Original Background Generation
 
