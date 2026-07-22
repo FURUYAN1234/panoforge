@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.8** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.3.9** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -19,8 +19,29 @@ Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて�
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.3.8**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
-現行公開系統は **v1.3.8** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.3.9**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.3.9** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+
+### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
+
+The panorama path is not a blind request to "extend in every direction." Before creating a panorama, the selected provider produces a bounded JSON spatial ledger for the source image: major objects, doors/windows and other openings, architectural structure, lighting, and scene density. The panorama prompt carries that ledger forward, so furniture placement, empty areas, structure, and light have an explicit continuity contract instead of relying only on a style description.
+
+パノラマ拡張は、単に「360度に広げる」と依頼する処理ではありません。拡張前に選択中のプロバイダが、主要物体・ドアや窓などの開口部・建築構造・照明・情報量を限定JSONの空間台帳として抽出します。生成プロンプトにはこの台帳を引き継ぐため、家具の配置、余白、構造、光について明示的な連続性の契約を渡します。
+
+1. **Base image / 元画像** — Create a text-to-image seed or accept a dropped image.
+2. **Spatial ledger / 空間台帳** — Extract only the scene facts needed for continuity. Duplicate entries are removed and malformed model JSON fails closed.
+3. **Panorama generation / パノラマ生成** — Generate an equirectangular environment using the ledger plus the source-image description and selected style.
+4. **Semantic QA / 意味的QA** — Check major-object duplication or loss, opening and architecture continuity, lighting consistency, density, and semantic seam issues. A malformed or rejected QA result is not presented as success.
+5. **One bounded correction / 最大1回の補正** — If QA identifies an issue, the app performs one ledger-guided regeneration. A second rejection stops with an error instead of silently shipping an unverified image.
+6. **Seam repair and viewer / シーム修復と確認** — Only an accepted result proceeds through the existing Split-Swap-Inpaint/Blend seam stage and the Three.js viewer.
+
+This routine improves scene-level continuity, but it is not a 3D reconstruction or a mathematical guarantee that every object is identical around the entire sphere. The viewer remains the final human inspection surface; rotate it to inspect multiple directions before exporting.
+
+このルーチンはシーン全体の整合性を高めますが、3D復元や、球全周で全物体が完全一致することの数学的保証ではありません。書き出し前にビューワーを回転し、複数方向を人間が確認することが最終確認になります。
+
+For OpenAI, GPT-4.1-series Vision first describes the source image, the spatial ledger is produced from that analysis, and `gpt-image-2` recreates the panorama from the resulting contract. This is deliberately a semantic re-creation path, not pixel-preserving outpainting. The UI and image request both allow up to **600 seconds (10 minutes)** for an OpenAI image job; long-running work is not treated as an error before that shared limit.
+
+OpenAIでは、まずGPT-4.1系Visionが元画像を説明し、その解析から空間台帳を作成して `gpt-image-2` がパノラマを再生成します。これはピクセル保持型のアウトペイントではなく、意味的な再生成経路です。UIの待機時間と画像リクエストはともに **600秒（10分）** にそろえており、その共通上限までは長時間ジョブを失敗扱いにしません。
 
 * **Gemini image path / Gemini画像生成**: `gemini-3.1-flash-image` is the primary image model. `gemini-2.5-flash-image` remains as a 360-degree compatibility fallback for cases where the newer image model cannot complete the panorama request.
   画像生成の主系統は `gemini-3.1-flash-image` です。新しい画像モデルで360度化が完了しない場合に備えて、`gemini-2.5-flash-image` を互換フォールバックとして保持しています。
@@ -358,6 +379,12 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.3.9 (2026-07-22)
+
+- **[Feature / Verified API Flow]** Added the spatial-ledger panorama routine: bounded scene inventory, ledger-guided panorama prompting, semantic continuity QA, one fail-closed regeneration, and the existing seam repair/viewer handoff. Gemini and OpenAI completed real browser/API runs; the OpenAI route completed Vision analysis, `gpt-image-2` panorama generation, seam repair, and a 1536x1024 viewer check. / 空間台帳、意味的QA、最大1回のフェイルクローズ補正、既存シーム修復・ビューワー連携を追加。GeminiとOpenAIの実APIブラウザ実行で確認済みです。
+- **[Reliability]** Aligned the OpenAI overlay timeout with the `gpt-image-2` request timeout at 600 seconds (10 minutes), so the UI no longer preempts a still-valid long-running image job. / OpenAI画像ジョブのUI待機上限をリクエスト上限と同じ600秒（10分）に統一しました。
+- **[Docs]** Documented the routine, its scene-continuity contract, QA boundary, OpenAI re-creation limitation, and required final viewer inspection. / 連続性の契約、QA境界、OpenAI再生成の制約、最終ビューワー確認をREADMEに明記しました。
 
 ### v1.3.8 (2026-06-19)
 - **[Fallback Chain]** Gemini画像生成を `gemini-3.1-flash-image` Primary + `gemini-2.5-flash-image` 互換フォールバックに更新しました。360度生成は最新モデルだけでは安定しない可能性があるため、互換フォールバックは維持しています。 / Updated Gemini image generation to `gemini-3.1-flash-image` Primary with `gemini-2.5-flash-image` compatibility fallback. Because 360° generation may not always be stable on the newest model alone, the compatibility fallback remains.

@@ -7,6 +7,7 @@ import './style.css';
 import { PanoramaEngine } from './panorama.js';
 import { PanoramaViewer } from './viewer.js';
 import { FallbackChainViewer } from './components/FallbackChainViewer.js';
+import { OPENAI_IMAGE_TIMEOUT_SECONDS } from './lib/processing-timeout.js';
 
 const engine = new PanoramaEngine();
 let viewer = null;
@@ -608,7 +609,7 @@ async function executeImageGeneration() {
   if (!prompt || !style) return;
 
   const isOpenAI = engine.activeEngine === 'openai';
-  const subText = isOpenAI ? '画像を生成しています...\n（※OpenAIモードのため完了まで約2〜5分かかります）' : 'AIがシーンを描画しています...';
+  const subText = isOpenAI ? '画像を生成しています...\n（※OpenAIモードでは最大10分かかることがあります）' : 'AIがシーンを描画しています...';
 
   state.lastAction = () => executeImageGeneration();
   // 画像生成は1ステップのみ
@@ -665,7 +666,7 @@ async function executePanoramaExpansion() {
   if (!state.inputImageBase64) return;
   state.lastAction = () => executePanoramaExpansion();
   const isOpenAI = engine.activeEngine === 'openai';
-  const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードのため完了まで約2〜5分かかります）' : '入力画像を分析しています...';
+  const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードでは最大10分かかることがあります）' : '入力画像を分析しています...';
 
   // パノラマは5ステップ（4段階パイプライン + ビューワー準備）
   showProcessing('パノラマ拡張中...', subText, [
@@ -683,7 +684,7 @@ async function executePanoramaExpansion() {
         setStepState('analyze', 'done');
         setStepState('generate', 'active');
         dom.processingSub.innerHTML = isOpenAI 
-          ? 'AIが360°背景を生成しています...<br>（※OpenAIモードのため完了まで約2〜5分かかります）' 
+          ? 'AIが360°背景を生成しています...<br>（※OpenAIモードでは最大10分かかることがあります）'
           : 'AIが360°背景を生成しています...';
       } else if (step === 'splitswap') {
         setStepState('generate', 'done');
@@ -691,7 +692,7 @@ async function executePanoramaExpansion() {
         dom.processingSub.textContent = 'シームを検出・移動中（Split-Swap）...';
       } else if (step === 'inpaint') {
         dom.processingSub.innerHTML = isOpenAI
-          ? 'AIがシームを修復しています...<br>（※OpenAIモードのため追加で約2〜5分かかります）'
+          ? 'AIがシームを修復しています...<br>（※OpenAIモードでは最大10分かかることがあります）'
           : 'AIがシームを修復しています（Inpaint）...';
       } else if (step === 'restore') {
         dom.processingSub.textContent = '画像を復元中...';
@@ -827,11 +828,11 @@ function showProcessing(title, sub, steps, showTimer = false) {
     processingStartTime = Date.now();
     processingTimerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - processingStartTime) / 1000);
-      if (elapsed >= 300) { // 5分 (300秒) タイムアウト
+      if (elapsed >= OPENAI_IMAGE_TIMEOUT_SECONDS) {
         clearInterval(processingTimerInterval);
         processingTimerInterval = null;
         hideProcessing();
-        showError('⏳ タイムアウトエラー', '生成処理が制限時間の5分を超過しました。しばらく時間をおいてから再度お試しください。');
+        showError('⏳ タイムアウトエラー', '生成処理が制限時間の10分を超過しました。しばらく時間をおいてから再度お試しください。');
         return;
       }
       const m = String(Math.floor(elapsed / 60)).padStart(2, '0');

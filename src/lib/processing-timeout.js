@@ -1,0 +1,1 @@
+export const OPENAI_IMAGE_TIMEOUT_SECONDS = 600;

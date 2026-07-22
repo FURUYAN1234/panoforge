@@ -4,6 +4,14 @@
 // ============================================
 
 import { GoogleGenAI } from '@google/genai';
+import {
+  buildSpatialLedgerPrompt,
+  buildSpatialQaPrompt,
+  formatSpatialLedger,
+  parseSpatialLedger,
+  parseSpatialQa,
+} from './lib/spatial-ledger.js';
+import { normalizeApiKey } from './lib/api-key.js';
 
 // タイムアウト付きでPromiseを実行するヘルパー関数
 async function callWithTimeout(promise, ms) {
@@ -73,7 +81,7 @@ export class PanoramaEngine {
       this.activeEngine = null;
       return null;
     }
-    const key = apiKey.trim();
+    const key = normalizeApiKey(apiKey);
     if (key.startsWith('sk-')) {
       this.openAIKey = key;
       this.geminiClient = null;
@@ -258,6 +266,70 @@ Keep it highly descriptive but concise.`;
 
   async _analyzeImageWithVision(base64Image, mimeType) {
     return await this._callOpenAIVisionWithFallback(base64Image, mimeType);
+  }
+
+  async _createSpatialLedger(imageBase64, mimeType) {
+    const prompt = buildSpatialLedgerPrompt();
+    let responseText;
+    if (this.activeEngine === 'openai') {
+      const description = await this._analyzeImageWithVision(imageBase64, mimeType);
+      responseText = await this._callOpenAIChatWithFallback([{
+        role: 'user', content: `${prompt}\n\nREFERENCE DESCRIPTION:\n${description}`,
+      }], 'json_object');
+    } else {
+      const response = await this._callWithFallback(TEXT_MODELS, 'text', {
+        contents: [{ role: 'user', parts: [
+          { inlineData: { mimeType, data: imageBase64 } },
+          { text: prompt },
+        ] }],
+        config: { responseModalities: ['TEXT'] },
+      }, OPENAI_VISION_TIMEOUT_MS);
+      responseText = response.candidates?.[0]?.content?.parts?.find(part => part.text)?.text || '';
+    }
+    return parseSpatialLedger(responseText);
+  }
+
+  async _runSpatialQa(panorama, ledger) {
+    const prompt = buildSpatialQaPrompt(ledger);
+    let responseText;
+    if (this.activeEngine === 'openai') {
+      const description = await this._analyzeImageWithVision(panorama.base64, panorama.mimeType);
+      responseText = await this._callOpenAIChatWithFallback([{
+        role: 'user', content: `${prompt}\n\nPANORAMA DESCRIPTION:\n${description}`,
+      }], 'json_object');
+    } else {
+      const response = await this._callWithFallback(TEXT_MODELS, 'text', {
+        contents: [{ role: 'user', parts: [
+          { inlineData: { mimeType: panorama.mimeType, data: panorama.base64 } },
+          { text: prompt },
+        ] }],
+        config: { responseModalities: ['TEXT'] },
+      }, OPENAI_VISION_TIMEOUT_MS);
+      responseText = response.candidates?.[0]?.content?.parts?.find(part => part.text)?.text || '';
+    }
+    return parseSpatialQa(responseText);
+  }
+
+  async _regenerateForSpatialIssues(imageBase64, mimeType, ledger, issues, onProgress) {
+    const correction = `Regenerate the complete 360-degree equirectangular panorama from the reference image.
+
+SPATIAL INVENTORY:
+${formatSpatialLedger(ledger)}
+
+CORRECT THESE MATERIAL DEFECTS:
+${issues.map(issue => `- ${issue}`).join('\n')}
+
+Keep one continuous, physically coherent space. Do not add furniture, openings, or decorations beyond the reference inventory. The left and right edges must join seamlessly when wrapped into a sphere. Output a strict 2:1 equirectangular panorama with no text, watermark, UI, or borders.`;
+    onProgress?.('generate');
+    if (this.activeEngine === 'openai') return await this._callOpenAIImage(correction, '1536x1024', 'hd');
+    const response = await this._callWithFallback(IMAGE_MODELS, 'image', {
+      contents: [{ role: 'user', parts: [
+        { inlineData: { mimeType, data: imageBase64 } },
+        { text: correction },
+      ] }],
+      config: { responseModalities: ['IMAGE', 'TEXT'] },
+    }, GEMINI_IMAGE_TIMEOUT_MS, tierLabel => onProgress?.('fallback', tierLabel));
+    return this._extractImage(response);
   }
 
   // ============================================
@@ -504,7 +576,9 @@ Generate the image now.`;
    * 4段階パイプライン: 生成 → Split-Swap → Inpaint → 復元
    */
   async expandToPanorama(imageBase64, mimeType, onProgress) {
-    if (!this.isReady()) throw new Error('APIキーが設定されていません');
+    if (!this.isReady()) throw new Error('API key is not configured.');
+    const spatialLedger = await this._createSpatialLedger(imageBase64, mimeType);
+    const spatialInventory = formatSpatialLedger(spatialLedger);
 
     // ========================================
     // Phase 1: AIによる初回360°画像生成
@@ -518,6 +592,9 @@ Generate the image now.`;
       const panoPrompt = `Create a COMPLETE 360-degree equirectangular panorama image based exactly on this scene description:
 
 ${analyzedScene}
+
+=== SPATIAL INVENTORY ===
+${spatialInventory}
 
 === EQUIRECTANGULAR FORMAT ===
 1. Output MUST be a strict equirectangular panorama projection (2:1 aspect ratio).
@@ -542,6 +619,9 @@ Generate the equirectangular panorama image now.`;
       const prompt = `You are a world-class equirectangular panorama specialist. I am providing you with a reference background image.
 
 Your task: Generate a COMPLETE 360-degree equirectangular panorama image based on this scene.
+
+=== SPATIAL INVENTORY ===
+${spatialInventory}
 
 === ABSOLUTE TOP PRIORITY: SEAMLESS LEFT-RIGHT EDGE CONNECTION ===
 The LEFT EDGE and RIGHT EDGE of the output image represent the SAME POINT in 3D space.
@@ -602,6 +682,17 @@ Generate the equirectangular panorama image now.`;
     }
 
     console.log('✅ Phase 1 完了: 初回360°画像生成');
+    const spatialQa = await this._runSpatialQa(rawPano, spatialLedger);
+    if (spatialQa.verdict === 'retry') {
+      console.warn('Spatial QA requested one regeneration:', spatialQa.issues);
+      rawPano = await this._regenerateForSpatialIssues(
+        imageBase64, mimeType, spatialLedger, spatialQa.issues, onProgress,
+      );
+      const retryQa = await this._runSpatialQa(rawPano, spatialLedger);
+      if (retryQa.verdict !== 'pass') {
+        throw new Error(`Spatial QA rejected the regenerated panorama: ${retryQa.issues.join('; ') || 'unspecified defect'}`);
+      }
+    }
 
     // ========================================
     // Phase 2: Split-Swap（左右入れ替え → シームを中央に移動）

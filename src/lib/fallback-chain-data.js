@@ -121,6 +121,17 @@ export const FALLBACK_CHAINS = [
 
 export const FALLBACK_CHAIN_HISTORY = [
   {
+    version: '1.3.9',
+    date: '2026-07-22 JST',
+    note: 'Spatial-ledger panorama routine added: bounded scene inventory, semantic QA, one fail-closed correction, and aligned OpenAI 600-second processing limit.',
+    changes: [
+      { step: 'Spatial Ledger', detail: 'major objects, openings, architecture, lighting, density' },
+      { step: 'Semantic QA', detail: 'object, opening, architecture, lighting, density, and seam checks' },
+      { step: 'Correction', detail: 'one ledger-guided regeneration; second rejection fails closed' },
+      { step: 'OpenAI Timeout', detail: 'UI processing limit aligned with gpt-image-2 at 600 seconds' }
+    ]
+  },
+  {
     version: '1.3.8',
     date: '2026-06-19 21:29 JST',
     note: 'Nano Banana Pro v4.7.1の最新Fallback Chainを360度アプリ向けに反映。360度生成は互換性のためGemini画像フォールバックを維持。',
