@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.4.0** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -19,8 +19,8 @@ Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて�
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.0**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
-現行公開系統は **v1.4.0** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.1**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.4.1** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -385,6 +385,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.4.1 (2026-07-22)
+
+- **[Release Guard / リリースガード]** The standard `npm run deploy` path now runs the release preflight first, and the preflight derives the required bilingual notes from the current package version. A Pages deployment therefore stops before publication when the version badge, current README wording, provider-isolation guard, or the corresponding bilingual release notes are missing. / 標準の `npm run deploy` は必ず先にリリース事前検査を実行し、事前検査は現在の package version から必要な英日併記リリースノートを導出します。そのため、版表示・現行READMEの表記・プロバイダ分離ガード・対応する英日リリースノートのいずれかが欠ける場合、Pages公開前に停止します。
 
 ### v1.4.0 (2026-07-22)
 

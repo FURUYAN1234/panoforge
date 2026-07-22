@@ -1,13 +1,14 @@
 {
   "name": "background",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=./",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "deploy": "npm run release:preflight && gh-pages -d dist",
+    "release:preflight": "node scripts/release_preflight.mjs"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
