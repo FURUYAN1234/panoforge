@@ -121,6 +121,15 @@ export const FALLBACK_CHAINS = [
 
 export const FALLBACK_CHAIN_HISTORY = [
   {
+    version: '1.4.0',
+    date: '2026-07-22 JST',
+    note: 'Provider isolation hardened: provider changes discard generated state and model-chain display labels every fallback as provider-local.',
+    changes: [
+      { step: 'Provider Change', detail: 'clear source, panorama, viewer, and retry state' },
+      { step: 'Fallback Boundary', detail: 'Gemini only -> Gemini models; OpenAI only -> OpenAI models' }
+    ]
+  },
+  {
     version: '1.3.9',
     date: '2026-07-22 JST',
     note: 'Spatial-ledger panorama routine added: bounded scene inventory, semantic QA, one fail-closed correction, and aligned OpenAI 600-second processing limit.',

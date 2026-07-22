@@ -10,35 +10,20 @@ export class FallbackChainViewer {
     const pad = (n) => String(n).padStart(2, '0');
     const jstStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
     
-    let text = `=== AI Model Fallback Chain (${jstStr} JST) ===\n\n`;
+    let text = `=== AI Model Fallback Chain (${jstStr} JST) ===\n`;
+    text += `Each provider falls back only within its own provider family. Gemini never calls OpenAI, and OpenAI never calls Gemini.\n\n`;
 
     const steps = [];
-    const stepMap = new Map();
-    
-    FALLBACK_CHAINS.forEach(chain => {
-      const key = `${chain.step}: ${chain.label}`;
-      if (!stepMap.has(key)) {
-        stepMap.set(key, {
-          step: chain.step,
-          label: chain.label,
-          description: chain.description,
-          providers: []
-        });
-        steps.push(stepMap.get(key));
-      }
-      stepMap.get(key).providers.push(chain);
-    });
+    FALLBACK_CHAINS.forEach(chain => steps.push(chain));
 
-    steps.forEach(s => {
-      text += `--- ${s.step}: ${s.label} ---\n`;
-      text += `${s.description}\n\n`;
-      s.providers.forEach(p => {
-        text += `  [${p.provider}] (${p.sourceFile})\n`;
-        p.models.forEach((model, index) => {
-          text += `    ${index + 1}. ${model.id} - ${model.label}\n`;
-        });
-        text += '\n';
+    steps.forEach(chain => {
+      text += `--- [${chain.provider} only] ${chain.step}: ${chain.label} ---\n`;
+      text += `${chain.description}\n`;
+      text += `  Source: ${chain.sourceFile}\n`;
+      chain.models.forEach((model, index) => {
+        text += `  ${index + 1}. ${model.id} - ${model.label}\n`;
       });
+      text += '\n';
     });
 
     text += '=== Update History ===\n\n';

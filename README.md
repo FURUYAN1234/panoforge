@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.3.9** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.0** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['AI_Creative_Studio'](https://github.com/user-attachments/assets/d9b97ee9-5051-4f99-8bd3-fb82967d5c12)](https://youtu.be/Ik59dL_zG1s?si=VduXBkmCTGfz51aJ)
 
@@ -19,8 +19,8 @@ Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて�
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.3.9**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
-現行公開系統は **v1.3.9** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.0**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.4.0** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -42,6 +42,12 @@ This routine improves scene-level continuity, but it is not a 3D reconstruction 
 For OpenAI, GPT-4.1-series Vision first describes the source image, the spatial ledger is produced from that analysis, and `gpt-image-2` recreates the panorama from the resulting contract. This is deliberately a semantic re-creation path, not pixel-preserving outpainting. The UI and image request both allow up to **600 seconds (10 minutes)** for an OpenAI image job; long-running work is not treated as an error before that shared limit.
 
 OpenAIでは、まずGPT-4.1系Visionが元画像を説明し、その解析から空間台帳を作成して `gpt-image-2` がパノラマを再生成します。これはピクセル保持型のアウトペイントではなく、意味的な再生成経路です。UIの待機時間と画像リクエストはともに **600秒（10分）** にそろえており、その共通上限までは長時間ジョブを失敗扱いにしません。
+
+### Provider Isolation / プロバイダ分離
+
+Gemini and OpenAI are independent execution paths. A Gemini request can retry only Gemini models, and an OpenAI request can retry only OpenAI models; neither provider is ever used as the other provider's fallback. Changing the configured provider clears the source image, generated panorama, viewer, and retry state. To continue after switching, create or upload a new source image under the newly selected provider.
+
+GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトライ先はGeminiモデルだけ、OpenAIのリトライ先はOpenAIモデルだけであり、相互にフォールバックすることはありません。設定プロバイダを切り替えた瞬間、元画像・生成済みパノラマ・ビューワー・再試行状態をすべて消去します。切替後に続ける場合は、新しく選択したプロバイダで元画像を生成またはアップロードしてください。
 
 * **Gemini image path / Gemini画像生成**: `gemini-3.1-flash-image` is the primary image model. `gemini-2.5-flash-image` remains as a 360-degree compatibility fallback for cases where the newer image model cannot complete the panorama request.
   画像生成の主系統は `gemini-3.1-flash-image` です。新しい画像モデルで360度化が完了しない場合に備えて、`gemini-2.5-flash-image` を互換フォールバックとして保持しています。
@@ -379,6 +385,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.4.0 (2026-07-22)
+
+- **[Fix / Provider Isolation]** A provider change now clears every image, panorama, viewer, and retry reference, so a Gemini-created image cannot be continued through OpenAI or the reverse. Model Chain now labels each fallback as provider-local and states explicitly that Gemini and OpenAI never cross-fallback. / プロバイダ変更時に素材・パノラマ・ビューワー・再試行参照をすべて消去し、Geminiで作成した画像をOpenAIで継続する、またはその逆を防止しました。Model Chainもプロバイダ内フォールバックであることを明示します。
 
 ### v1.3.9 (2026-07-22)
 

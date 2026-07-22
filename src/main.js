@@ -8,6 +8,7 @@ import { PanoramaEngine } from './panorama.js';
 import { PanoramaViewer } from './viewer.js';
 import { FallbackChainViewer } from './components/FallbackChainViewer.js';
 import { OPENAI_IMAGE_TIMEOUT_SECONDS } from './lib/processing-timeout.js';
+import { resetGenerationStateForProviderChange } from './lib/provider-session.js';
 
 const engine = new PanoramaEngine();
 let viewer = null;
@@ -99,6 +100,7 @@ const state = {
   pendingPanoFile: null,
   isDirectView: false, // 既存360°画像を直接表示中（保存ボタン非表示）
   generatedDataUrl: null, // 生成画像のDataURL保持
+  activeProvider: null,
 };
 
 // ============================
@@ -192,8 +194,13 @@ dom.apiKeyForm.addEventListener('submit', (event) => {
 dom.apiModalApply.addEventListener('click', () => {
   const key = dom.apiKeyInput.value.trim();
   if (!key) return;
+  const previousProvider = state.activeProvider;
   const engineType = engine.setApiKey(key);
   if (engineType) {
+    if (previousProvider && previousProvider !== engineType) {
+      resetProviderGenerationSession();
+    }
+    state.activeProvider = engineType;
     dom.apiKeyStatus.classList.add('connected');
     dom.apiSettingsBtn.classList.add('connected');
     
@@ -237,6 +244,22 @@ dom.apiModalApply.addEventListener('click', () => {
   }
   updateButtons();
 });
+
+function resetProviderGenerationSession() {
+  resetGenerationStateForProviderChange(state);
+  dom.previewImage.src = '';
+  dom.previewSection.classList.add('hidden');
+  dom.panoPreviewImage.src = '';
+  dom.panoPreviewSection.classList.add('hidden');
+  dom.fileInput.value = '';
+  dom.viewerSection.classList.add('hidden');
+  dom.inputCard.classList.remove('hidden');
+  if (viewer) {
+    viewer.destroy();
+    viewer = null;
+  }
+  updateButtons();
+}
 
 
 // ============================
