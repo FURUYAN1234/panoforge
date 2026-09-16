@@ -1,14 +1,16 @@
 {
   "name": "background",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=./",
     "preview": "vite preview",
-    "deploy": "npm run release:preflight && gh-pages -d dist",
-    "release:preflight": "node scripts/release_preflight.mjs"
+    "deploy": "gh-pages -d dist",
+    "release:preflight": "powershell -ExecutionPolicy Bypass -File ..\\scripts\\release_app_preflight.ps1 -App background",
+    "release:app-preflight": "node scripts/release_preflight.mjs",
+    "predeploy": "npm run release:preflight && npm run release:app-preflight && npm run build"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",

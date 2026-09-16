@@ -5,27 +5,33 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
+const versionBadge = `v${version}`;
+const currentNotesPath = `docs/releases/${versionBadge}.md`;
+
 test('the standard deploy path runs release preflight with the current version notes', () => {
   const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
-  assert.match(packageJson.scripts['release:preflight'], /release_preflight\.mjs/);
-  assert.match(packageJson.scripts.deploy, /^npm run release:preflight && gh-pages -d dist$/);
+  assert.match(packageJson.scripts['release:preflight'], /release_app_preflight\.ps1 -App background/);
+  assert.match(packageJson.scripts['release:app-preflight'], /release_preflight\.mjs/);
+  assert.match(packageJson.scripts.predeploy, /^npm run release:preflight && npm run release:app-preflight && npm run build$/);
+  assert.equal(packageJson.scripts.deploy, 'gh-pages -d dist');
 });
 
 test('release preflight defaults to the current version bilingual notes', () => {
   const result = spawnSync(process.execPath, ['scripts/release_preflight.mjs'], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /RELEASE_PREFLIGHT_OK version=v1\.4\.1/);
-  assert.match(result.stdout, /docs[\\/]releases[\\/]v1\.4\.1\.md/);
+  assert.match(result.stdout, new RegExp(`RELEASE_PREFLIGHT_OK version=${versionBadge}`));
+  assert.match(result.stdout, new RegExp(`docs[\\\\/]releases[\\\\/]${versionBadge}\\.md`));
 });
 
-test('release preflight accepts the current bilingual v1.4.1 release contract', () => {
-  const result = spawnSync(process.execPath, ['scripts/release_preflight.mjs', '--notes', 'docs/releases/v1.4.1.md'], { encoding: 'utf8' });
+test('release preflight accepts the current bilingual release contract', () => {
+  const result = spawnSync(process.execPath, ['scripts/release_preflight.mjs', '--notes', currentNotesPath], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /RELEASE_PREFLIGHT_OK version=v1\.4\.1/);
+  assert.match(result.stdout, new RegExp(`RELEASE_PREFLIGHT_OK version=${versionBadge}`));
 });
 
 test('release notes use the exact per-bullet English / Japanese public format', () => {
-  const notes = readFileSync('docs/releases/v1.4.1.md', 'utf8');
+  const notes = readFileSync(currentNotesPath, 'utf8');
   for (const line of notes.split(/\r?\n/).filter((value) => value.startsWith('- '))) {
     assert.match(line, /\/ .*?[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u, line);
   }

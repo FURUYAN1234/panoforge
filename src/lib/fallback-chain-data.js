@@ -77,7 +77,8 @@ export const FALLBACK_CHAINS = [
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gpt-image-2', label: 'OpenAI Primary: gpt-image-2' }
+      { id: 'gpt-image-2.5-sunburst', label: 'OpenAI Primary: GPT Image 2.5 Sunburst / xhigh' },
+      { id: 'gpt-image-2', label: 'OpenAI Fallback: GPT Image 2.0 / high' }
     ]
   },
   {
@@ -114,7 +115,8 @@ export const FALLBACK_CHAINS = [
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
     models: [
-      { id: 'gpt-image-2', label: 'OpenAI Primary: gpt-image-2' }
+      { id: 'gpt-image-2.5-sunburst', label: 'OpenAI Primary: GPT Image 2.5 Sunburst / xhigh' },
+      { id: 'gpt-image-2', label: 'OpenAI Fallback: GPT Image 2.0 / high' }
     ]
   }
 ];
@@ -137,7 +139,7 @@ export const FALLBACK_CHAIN_HISTORY = [
       { step: 'Spatial Ledger', detail: 'major objects, openings, architecture, lighting, density' },
       { step: 'Semantic QA', detail: 'object, opening, architecture, lighting, density, and seam checks' },
       { step: 'Correction', detail: 'one ledger-guided regeneration; second rejection fails closed' },
-      { step: 'OpenAI Timeout', detail: 'UI processing limit aligned with gpt-image-2 at 600 seconds' }
+      { step: 'OpenAI Timeout', detail: 'GPT Image 2.5 -> 2.0 shares one 600-second processing limit' }
     ]
   },
   {
@@ -149,7 +151,7 @@ export const FALLBACK_CHAIN_HISTORY = [
       { step: 'STEP 1 (Gemini)', detail: 'gemini-3.1-flash-image -> 2.5-flash-image (compatibility fallback)' },
       { step: 'STEP 2 Analyze (OpenAI)', detail: 'gpt-4.1 -> 4.1-mini -> 4.1-nano -> 4o (Vision)' },
       { step: 'STEP 2 Generate (Gemini)', detail: 'gemini-3.1-flash-image -> 2.5-flash-image (compatibility fallback)' },
-      { step: 'STEP 1/2 (OpenAI Image)', detail: 'gpt-image-2 fixed / output_format=png / 600s timeout' },
+      { step: 'STEP 1/2 (OpenAI Image)', detail: 'GPT Image 2.5 Sunburst/xhigh -> GPT Image 2.0/high / output_format=png / shared 600s timeout' },
       { step: 'Timeout', detail: 'Gemini image generation 120s / OpenAI vision 60s' }
     ]
   },
@@ -161,9 +163,9 @@ export const FALLBACK_CHAIN_HISTORY = [
       { step: 'AI Suggestion (Gemini)', detail: 'gemini-3.5-flash -> 2.5-flash -> 2.5-pro -> flash-latest -> pro-latest' },
       { step: 'AI Suggestion (OpenAI)', detail: 'gpt-4o -> 4o-mini' },
       { step: 'STEP 1 (Gemini)', detail: 'gemini-3.1-flash-image-preview -> 2.5-flash-image' },
-      { step: 'STEP 1 (OpenAI)', detail: 'gpt-image-2（単一）' },
+      { step: 'STEP 1 (OpenAI)', detail: 'GPT Image 2.5 Sunburst/xhigh -> GPT Image 2.0/high' },
       { step: 'STEP 2 (Gemini)', detail: 'gemini-3.1-flash-image-preview -> 2.5-flash-image' },
-      { step: 'STEP 2 (OpenAI)', detail: 'gpt-4o -> 4o-mini (Vision) / gpt-image-2 (単一)' }
+      { step: 'STEP 2 (OpenAI)', detail: 'gpt-4o -> 4o-mini (Vision) / GPT Image 2.5 Sunburst/xhigh -> GPT Image 2.0/high' }
     ]
   }
 ];

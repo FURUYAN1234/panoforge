@@ -12,6 +12,7 @@ import {
   parseSpatialQa,
 } from './lib/spatial-ledger.js';
 import { normalizeApiKey } from './lib/api-key.js';
+import { getOpenAIImageFallbackChain, shouldFallbackOpenAIImage } from './lib/openai-image-fallback.js';
 
 // タイムアウト付きでPromiseを実行するヘルパー関数
 async function callWithTimeout(promise, ms) {
@@ -215,53 +216,80 @@ Keep it highly descriptive but concise.`;
     throw new Error('OpenAI画像解析のすべてのモデル呼び出しに失敗しました。');
   }
 
-  async _callOpenAIImage(prompt, size = "1024x1024", quality = "high") {
-    // gpt-image-2 は quality に 'high' 等を使い、出力形式は output_format で指定する。
-    const mappedQuality = quality === "hd" ? "high" : quality === "standard" ? "medium" : quality;
-    const payload = { model: "gpt-image-2", prompt, n: 1, size, quality: mappedQuality, output_format: "png" };
-    // response_format は送信しない。gpt-image-2 は混雑時に長引くため、タイムアウトを600秒（10分）に設定。
-    const res = await callWithTimeout(
-      fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
-        body: JSON.stringify(payload)
-      }),
-      600000
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      // safety system filter
-      if (err.error?.code === "content_policy_violation") {
-        const customErr = new Error('コンテンツポリシーにより生成がブロックされました。');
-        customErr.isContentPolicy = true;
-        throw customErr;
-      }
-      throw new Error(`OpenAI Image Error: ${err.error?.message || res.status}`);
-    }
-    const data = await res.json();
-    const imgData = data.data[0];
-    
-    let base64 = "";
-    if (imgData.b64_json) {
-      base64 = imgData.b64_json;
-    } else if (imgData.url) {
-      const imgRes = await callWithTimeout(fetch(imgData.url), 30000);
-      if (!imgRes.ok) throw new Error("画像URLのダウンロードに失敗しました");
-      const blob = await imgRes.blob();
-      base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const resStr = reader.result;
-          resolve(resStr.substring(resStr.indexOf(",") + 1));
+  async _callOpenAIImage(prompt, size = "1024x1024") {
+    const deadline = Date.now() + 600000;
+    const imageModels = getOpenAIImageFallbackChain();
+    let lastError;
+
+    for (let index = 0; index < imageModels.length; index++) {
+      const imageModel = imageModels[index];
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) throw new Error('OpenAI Image Error: 600秒の生成上限に達しました。');
+
+      try {
+        const payload = {
+          model: imageModel.id,
+          prompt,
+          n: 1,
+          size,
+          quality: imageModel.quality,
+          output_format: "png",
         };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } else {
-      throw new Error("画像データが見つかりませんでした");
+        const res = await callWithTimeout(
+          fetch("https://api.openai.com/v1/images/generations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
+            body: JSON.stringify(payload),
+          }),
+          remainingMs,
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({}));
+          if (err.error?.code === "content_policy_violation") {
+            const customErr = new Error('コンテンツポリシーにより生成がブロックされました。');
+            customErr.code = 'content_policy_violation';
+            throw customErr;
+          }
+          const requestError = new Error(`OpenAI Image Error: ${err.error?.message || res.status}`);
+          requestError.status = res.status;
+          requestError.code = err.error?.code;
+          throw requestError;
+        }
+
+        const data = await res.json();
+        const imgData = data.data?.[0];
+        let base64 = "";
+        if (imgData?.b64_json) {
+          base64 = imgData.b64_json;
+        } else if (imgData?.url) {
+          const downloadRemainingMs = deadline - Date.now();
+          if (downloadRemainingMs <= 0) throw new Error('OpenAI Image Error: 600秒の生成上限に達しました。');
+          const imgRes = await callWithTimeout(fetch(imgData.url), Math.min(downloadRemainingMs, 30000));
+          if (!imgRes.ok) throw new Error("画像URLのダウンロードに失敗しました");
+          const blob = await imgRes.blob();
+          base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const resStr = reader.result;
+              resolve(resStr.substring(resStr.indexOf(",") + 1));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } else {
+          throw new Error("画像データが見つかりませんでした");
+        }
+
+        return { base64, mimeType: "image/png", usedModel: imageModel.id };
+      } catch (err) {
+        lastError = err;
+        const canFallback = index < imageModels.length - 1 && shouldFallbackOpenAIImage(err);
+        if (!canFallback) throw err;
+        console.warn(`⚠️ ${imageModel.label} 失敗 → GPT Image 2.0へフォールバック`);
+      }
     }
-    
-    return { base64, mimeType: "image/png" };
+
+    throw lastError || new Error('OpenAI Image Error: 画像生成に失敗しました。');
   }
 
   async _analyzeImageWithVision(base64Image, mimeType) {
@@ -321,7 +349,7 @@ ${issues.map(issue => `- ${issue}`).join('\n')}
 
 Keep one continuous, physically coherent space. Do not add furniture, openings, or decorations beyond the reference inventory. The left and right edges must join seamlessly when wrapped into a sphere. Output a strict 2:1 equirectangular panorama with no text, watermark, UI, or borders.`;
     onProgress?.('generate');
-    if (this.activeEngine === 'openai') return await this._callOpenAIImage(correction, '1536x1024', 'hd');
+    if (this.activeEngine === 'openai') return await this._callOpenAIImage(correction, '1536x1024');
     const response = await this._callWithFallback(IMAGE_MODELS, 'image', {
       contents: [{ role: 'user', parts: [
         { inlineData: { mimeType, data: imageBase64 } },
@@ -556,7 +584,7 @@ Requirements:
 Generate the image now.`;
 
     if (this.activeEngine === 'openai') {
-      return await this._callOpenAIImage(prompt, "1536x1024", "hd");
+      return await this._callOpenAIImage(prompt, "1536x1024");
     } else {
       const response = await this._callWithFallback(
         IMAGE_MODELS, 'image',
@@ -612,7 +640,7 @@ ${spatialInventory}
 
 Generate the equirectangular panorama image now.`;
 
-      rawPano = await this._callOpenAIImage(panoPrompt, "1536x1024", "hd");
+      rawPano = await this._callOpenAIImage(panoPrompt, "1536x1024");
     } else {
       onProgress?.('analyze');
 

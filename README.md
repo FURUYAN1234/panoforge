@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.4.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -19,8 +19,8 @@ Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて�
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.1**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
-現行公開系統は **v1.4.1** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.2**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.4.2** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -39,9 +39,9 @@ This routine improves scene-level continuity, but it is not a 3D reconstruction 
 
 このルーチンはシーン全体の整合性を高めますが、3D復元や、球全周で全物体が完全一致することの数学的保証ではありません。書き出し前にビューワーを回転し、複数方向を人間が確認することが最終確認になります。
 
-For OpenAI, GPT-4.1-series Vision first describes the source image, the spatial ledger is produced from that analysis, and `gpt-image-2` recreates the panorama from the resulting contract. This is deliberately a semantic re-creation path, not pixel-preserving outpainting. The UI and image request both allow up to **600 seconds (10 minutes)** for an OpenAI image job; long-running work is not treated as an error before that shared limit.
+For OpenAI, GPT-4.1-series Vision first describes the source image, the spatial ledger is produced from that analysis, and GPT Image 2.5 Sunburst/xhigh recreates the panorama from the resulting contract. A retry-eligible provider failure falls back to GPT Image 2.0/high within the same **600 seconds (10 minutes)** window. This is deliberately a semantic re-creation path, not pixel-preserving outpainting.
 
-OpenAIでは、まずGPT-4.1系Visionが元画像を説明し、その解析から空間台帳を作成して `gpt-image-2` がパノラマを再生成します。これはピクセル保持型のアウトペイントではなく、意味的な再生成経路です。UIの待機時間と画像リクエストはともに **600秒（10分）** にそろえており、その共通上限までは長時間ジョブを失敗扱いにしません。
+OpenAIでは、まずGPT-4.1系Visionが元画像を説明し、その解析から空間台帳を作成してGPT Image 2.5 Sunburst/xhighがパノラマを再生成します。リトライ対象のプロバイダ失敗時だけ、同じ **600秒（10分）** 枠内でGPT Image 2.0/highへフォールバックします。これはピクセル保持型のアウトペイントではなく、意味的な再生成経路です。
 
 ### Provider Isolation / プロバイダ分離
 
@@ -51,8 +51,8 @@ GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトラ�
 
 * **Gemini image path / Gemini画像生成**: `gemini-3.1-flash-image` is the primary image model. `gemini-2.5-flash-image` remains as a 360-degree compatibility fallback for cases where the newer image model cannot complete the panorama request.
   画像生成の主系統は `gemini-3.1-flash-image` です。新しい画像モデルで360度化が完了しない場合に備えて、`gemini-2.5-flash-image` を互換フォールバックとして保持しています。
-* **OpenAI image path / OpenAI画像生成**: OpenAI uses a text-mediated recreation pipeline: GPT-4.1-series vision analysis prepares the prompt, then `gpt-image-2` generates PNG output with a long timeout. This is high-quality recreation, not pixel-preserving outpainting.
-  OpenAIはテキスト媒介の再構成パイプラインです。GPT-4.1系のVision解析でプロンプトを作り、`gpt-image-2` が長めのタイムアウトでPNGを生成します。これは高品質な再生成であり、元画像ピクセルをそのまま延長するアウトペイントではありません。
+* **OpenAI image path / OpenAI画像生成**: OpenAI uses a text-mediated recreation pipeline: GPT-4.1-series vision analysis prepares the prompt, then GPT Image 2.5 Sunburst/xhigh generates PNG output. A retry-eligible provider failure falls back to GPT Image 2.0/high inside the shared timeout. This is high-quality recreation, not pixel-preserving outpainting.
+  OpenAIはテキスト媒介の再構成パイプラインです。GPT-4.1系のVision解析でプロンプトを作り、GPT Image 2.5 Sunburst/xhighがPNGを生成します。リトライ対象のプロバイダ失敗時だけ、共有タイムアウト内でGPT Image 2.0/highへフォールバックします。これは高品質な再生成であり、元画像ピクセルをそのまま延長するアウトペイントではありません。
 * **Viewer and metadata / ビューワーとメタデータ**: The generated equirectangular image can be checked in the built-in Three.js viewer and exported with GPano metadata for 360-degree viewers.
   生成された正距円筒図法画像は内蔵Three.jsビューワーで確認でき、360度ビューア向けにGPanoメタデータ付きで保存できます。
 
@@ -70,11 +70,11 @@ GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトラ�
 本システムは、Gemini API と OpenAI API の両方をサポートし、用途に応じて切り替えて使用できるデュアルエンジン構造を採用しています。
 
 - **Gemini API (Google)**: High-speed, natively multimodal panorama generation using `gemini-3.1-flash-image` (Nano Banana 2), with `gemini-2.5-flash-image` retained as a compatibility fallback for 360° generation. Perfect for expanding existing 1-shot images while retaining original pixel details. / `gemini-3.1-flash-image`（Nano Banana 2）をPrimaryにし、360度生成の互換性確保のため `gemini-2.5-flash-image` をフォールバックとして保持します。手持ち画像のディテールを維持したパノラマ拡張に最適です。
-- **OpenAI API (gpt-image-2 & GPT-4.1)**: Unmatched prompt adherence and ultra-high-quality image generation. Generates panoramas from text using `gpt-image-2`, and uses GPT-4.1-series vision analysis to re-create an existing image as a seamless 360° environment. **Note: A job may take up to 10 minutes and is billed on a pay-as-you-go basis.** / `gpt-image-2` による高画質生成と、GPT-4.1系Vision解析による「既存画像の360度化（近似再構築）」に対応します。**※生成には最大10分かかることがあり、従量課金となります。**
+- **OpenAI API (GPT Image 2.5 / 2.0 fallback & GPT-4.1)**: Generates panoramas from text using GPT Image 2.5 Sunburst/xhigh, falling back to GPT Image 2.0/high only for retry-eligible provider failures, and uses GPT-4.1-series vision analysis to re-create an existing image as a seamless 360° environment. **Note: the combined image request window is up to 10 minutes and is billed on a pay-as-you-go basis.** / GPT Image 2.5 Sunburst/xhighによる高画質生成を基本に、リトライ対象のプロバイダ失敗時だけGPT Image 2.0/highへフォールバックし、GPT-4.1系Vision解析で「既存画像の360度化（近似再構築）」に対応します。**※画像リクエスト全体は最大10分で、従量課金となります。**
 
 #### ⚠️ OpenAI API Limitations / OpenAI APIモードの限界と注意事項
-- **Time Required (処理時間)**: OpenAI API does not support native panorama outpainting. It requires a multi-step pipeline (Vision Analysis -> Prompt Generation -> gpt-image-2 Generation), and the app permits up to **10 minutes** for the image job. / OpenAI APIはネイティブなパノラマ拡張をサポートしていないため、GPT-4.1系での画像解析から `gpt-image-2` での再生成まで複数ステップを踏みます。アプリは画像ジョブに**最大10分**を許容します。
-- **Re-creation vs Outpainting (近似再構築)**: When expanding an existing image with OpenAI API, the original image is NOT directly stitched or outpainted. Instead, GPT-4.1-series vision describes the image in text, and `gpt-image-2` generates a completely new 360° image matching that description. / 画像ドロップによる360度拡張をOpenAI APIで行う場合、元の絵を直接拡張（切り貼り）するわけではありません。AIが画像をテキスト化し、その情報をもとに**そっくりな360度画像を新規生成（近似再構築）**するため、「それっぽくなる」挙動となります。
+- **Time Required (処理時間)**: OpenAI API does not support native panorama outpainting. It requires a multi-step pipeline (Vision Analysis -> Prompt Generation -> GPT Image 2.5, with GPT Image 2.0 fallback when eligible), and the app permits up to **10 minutes total** for the image job. / OpenAI APIはネイティブなパノラマ拡張をサポートしていないため、GPT-4.1系での画像解析からGPT Image 2.5での再生成（対象時はGPT Image 2.0へのフォールバック）まで複数ステップを踏みます。アプリは画像ジョブ全体に**最大10分**を許容します。
+- **Re-creation vs Outpainting (近似再構築)**: When expanding an existing image with OpenAI API, the original image is NOT directly stitched or outpainted. Instead, GPT-4.1-series vision describes the image in text, and GPT Image 2.5 (or its eligible GPT Image 2.0 fallback) generates a completely new 360° image matching that description. / 画像ドロップによる360度拡張をOpenAI APIで行う場合、元の絵を直接拡張（切り貼り）するわけではありません。AIが画像をテキスト化し、その情報をもとにGPT Image 2.5（対象時はGPT Image 2.0へのフォールバック）が**そっくりな360度画像を新規生成（近似再構築）**するため、「それっぽくなる」挙動となります。
 - **Pay-As-You-Go Cost (従量課金)**: Using the OpenAI API incurs usage-based costs. Frequent panorama generation may consume significant API credits. / OpenAI APIは従量課金です。パノラマ生成を頻繁に行うとAPI残高を大きく消費する可能性があります。
 
 #### 🎯 Engine Selection Guide / エンジン選択ガイド
@@ -385,6 +385,10 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.4.2 (2026-09-16)
+
+- **[OpenAI image fallback / OpenAI画像フォールバック]** GPT Image 2.5 Sunburst/xhigh is now the primary OpenAI image model. Retry-eligible failures fall back to GPT Image 2.0/high within the existing shared 600-second limit. / OpenAI画像生成の優先モデルをGPT Image 2.5 Sunburst/xhighに変更しました。リトライ対象の失敗時は、従来の共有600秒上限内でGPT Image 2.0/highに切り替えます。
 
 ### v1.4.1 (2026-07-22)
 
