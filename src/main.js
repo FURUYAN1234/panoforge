@@ -9,6 +9,7 @@ import { PanoramaViewer } from './viewer.js';
 import { FallbackChainViewer } from './components/FallbackChainViewer.js';
 import { OPENAI_IMAGE_TIMEOUT_SECONDS } from './lib/processing-timeout.js';
 import { resetGenerationStateForProviderChange } from './lib/provider-session.js';
+import { OPENAI_MODELS, getOpenAIModel, formatOpenAIModelPrice, formatOpenAIModelRouteStatus } from './lib/openai-models.js';
 
 const engine = new PanoramaEngine();
 let viewer = null;
@@ -30,6 +31,12 @@ const dom = {
   apiKeyFeedback: $('#api-key-feedback'),
   apiKeyWarning: $('#api-key-warning'),
   apiModalApply: $('#api-modal-apply'),
+  openaiModelPanel: $('#openai-model-panel'),
+  openaiModelSelect: $('#openai-model-select'),
+  openaiModelDescription: $('#openai-model-description'),
+  openaiModelPrice: $('#openai-model-price'),
+  openaiTextModelStatus: $('#openai-text-model-status'),
+  openaiVisionModelStatus: $('#openai-vision-model-status'),
   openaiVisionNote: $('#openai-vision-note'),
   processingTimer: $('#processing-timer'),
 
@@ -106,6 +113,34 @@ const state = {
 // ============================
 // Fallback Chain Viewer 初期化
 // ============================
+for (const model of OPENAI_MODELS) {
+  const option = document.createElement('option');
+  option.value = model.id;
+  option.textContent = model.label;
+  dom.openaiModelSelect.appendChild(option);
+}
+dom.openaiModelSelect.value = engine.selectedOpenAIModelId;
+updateOpenAIModelDetails();
+dom.openaiModelSelect.addEventListener('change', () => {
+  engine.setOpenAIModel(dom.openaiModelSelect.value);
+  updateOpenAIModelDetails();
+  dom.openaiTextModelStatus.textContent = '';
+  dom.openaiVisionModelStatus.textContent = '';
+});
+engine.onOpenAIModelRoute = (event) => {
+  dom.openaiModelSelect.disabled = engine.openAIRouteCount > 0;
+  const text = formatOpenAIModelRouteStatus(event);
+  if (text) {
+    const target = event.workflow === 'vision' ? dom.openaiVisionModelStatus : dom.openaiTextModelStatus;
+    target.textContent = text;
+  }
+};
+
+function updateOpenAIModelDetails() {
+  dom.openaiModelDescription.textContent = getOpenAIModel(engine.selectedOpenAIModelId).description;
+  dom.openaiModelPrice.textContent = formatOpenAIModelPrice(engine.selectedOpenAIModelId);
+}
+
 const viewerBtn = document.createElement('a');
 viewerBtn.href = '#';
 viewerBtn.textContent = '⚙ Model Chain';
@@ -201,6 +236,11 @@ dom.apiModalApply.addEventListener('click', () => {
       resetProviderGenerationSession();
     }
     state.activeProvider = engineType;
+    dom.openaiModelPanel.classList.toggle('hidden', engineType !== 'openai');
+    if (engineType !== 'openai') {
+      dom.openaiTextModelStatus.textContent = '';
+      dom.openaiVisionModelStatus.textContent = '';
+    }
     dom.apiKeyStatus.classList.add('connected');
     dom.apiSettingsBtn.classList.add('connected');
     

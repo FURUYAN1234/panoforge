@@ -67,6 +67,11 @@ body{
   display:flex;align-items:center;justify-content:center;z-index:500;animation:fadeIn 0.2s ease;
 }
 .modal-card{max-width:480px;width:calc(100% - 32px);padding:0;animation:cardIn 0.3s ease-out}
+#openai-model-panel{padding:16px 24px;margin-bottom:18px}
+#openai-model-select{display:block;width:100%;margin:8px 0;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text)}
+#openai-model-select option{background:#151525;color:#eee}
+#openai-model-panel p{font-size:10px;font-weight:400;line-height:1.35;margin:5px 0;overflow-wrap:anywhere}
+#openai-model-price,.openai-model-boundary{color:var(--text-dim)}
 .modal-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:20px 24px 16px;border-bottom:1px solid var(--border);

@@ -1,3 +1,5 @@
+import { OPENAI_MODELS } from './openai-models.js';
+
 export const FALLBACK_CHAINS = [
   {
     id: 'suggest-scene-gemini',
@@ -21,12 +23,7 @@ export const FALLBACK_CHAINS = [
     description: 'ランダムなシーン説明を提案する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
-      { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
-      { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
-      { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' }
-    ]
+    models: OPENAI_MODELS.map((model, index) => ({ id: model.id, label: `OpenAI ${index === 0 ? 'Primary' : 'Backup'}: ${model.label}` }))
   },
   {
     id: 'suggest-style-gemini',
@@ -50,12 +47,7 @@ export const FALLBACK_CHAINS = [
     description: 'シーン説明に合う画像スタイルをAIが提案する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
-      { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
-      { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
-      { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' }
-    ]
+    models: OPENAI_MODELS.map((model, index) => ({ id: model.id, label: `OpenAI ${index === 0 ? 'Primary' : 'Backup'}: ${model.label}` }))
   },
   {
     id: 'step1-gemini',
@@ -88,12 +80,7 @@ export const FALLBACK_CHAINS = [
     description: '入力画像を解析し、360度パノラマ生成のためのプロンプトを作成する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
-      { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
-      { id: 'gpt-4.1-nano', label: 'OpenAI Vision Backup 2: gpt-4.1-nano' },
-      { id: 'gpt-4o', label: 'OpenAI Vision Fallback: gpt-4o' }
-    ]
+    models: OPENAI_MODELS.map((model, index) => ({ id: model.id, label: `OpenAI ${index === 0 ? 'Primary' : 'Backup'}: ${model.label}` }))
   },
   {
     id: 'step2-gemini',
@@ -122,6 +109,15 @@ export const FALLBACK_CHAINS = [
 ];
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: '1.4.3',
+    date: '2026-10-01 JST',
+    note: 'All 11 OpenAI text/vision models are selectable; Sol 6.1 is the default and each call starts at the selected model with downward-only fallback.',
+    changes: [
+      { step: 'Text / Vision', detail: 'selected model -> lower catalog models; actual trying/adopted status shown separately for text and vision' },
+      { step: 'Response Gate', detail: 'reject truncated/refused responses; auth and quota failures stop the chain' }
+    ]
+  },
   {
     version: '1.4.0',
     date: '2026-07-22 JST',

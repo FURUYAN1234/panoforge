@@ -12,6 +12,7 @@ import {
   parseSpatialQa,
 } from './lib/spatial-ledger.js';
 import { normalizeApiKey } from './lib/api-key.js';
+import { DEFAULT_OPENAI_MODEL_ID, getOpenAIModel, getOpenAIModelRoute } from './lib/openai-models.js';
 import { getOpenAIImageFallbackChain, shouldFallbackOpenAIImage } from './lib/openai-image-fallback.js';
 
 // タイムアウト付きでPromiseを実行するヘルパー関数
@@ -44,22 +45,6 @@ const TEXT_MODELS = [
   { id: 'gemini-pro-latest', label: 'Tier5: Gemini Pro Latest' },
 ];
 
-// OpenAI テキスト専用モデル
-const OPENAI_TEXT_MODELS = [
-  { id: 'gpt-4.1', label: 'OpenAI Primary: gpt-4.1' },
-  { id: 'gpt-4.1-mini', label: 'OpenAI Backup 1: gpt-4.1-mini' },
-  { id: 'gpt-4.1-nano', label: 'OpenAI Backup 2: gpt-4.1-nano' },
-  { id: 'gpt-4o', label: 'OpenAI Fallback: gpt-4o' },
-];
-
-// OpenAI ビジョン対応モデル
-const OPENAI_VISION_MODELS = [
-  { id: 'gpt-4.1', label: 'OpenAI Vision Primary: gpt-4.1' },
-  { id: 'gpt-4.1-mini', label: 'OpenAI Vision Backup 1: gpt-4.1-mini' },
-  { id: 'gpt-4.1-nano', label: 'OpenAI Vision Backup 2: gpt-4.1-nano' },
-  { id: 'gpt-4o', label: 'OpenAI Vision Fallback: gpt-4o' },
-];
-
 const OPENAI_TEXT_TIMEOUT_MS = 25000;
 const OPENAI_VISION_TIMEOUT_MS = 60000;
 const GEMINI_IMAGE_TIMEOUT_MS = 120000;
@@ -71,8 +56,9 @@ export class PanoramaEngine {
     this.activeEngine = null; // 'gemini' | 'openai'
     this.lastSuccessImageModel = null;
     this.lastSuccessTextModel = null;
-    this.lastSuccessOpenAITextModel = null;
-    this.lastSuccessOpenAIVisionModel = null;
+    this.selectedOpenAIModelId = DEFAULT_OPENAI_MODEL_ID;
+    this.openAIRouteCount = 0;
+    this.onOpenAIModelRoute = null;
   }
 
   setApiKey(apiKey) {
@@ -103,11 +89,24 @@ export class PanoramaEngine {
 
   isReady() { return this.activeEngine !== null; }
 
+  setOpenAIModel(modelId) {
+    if (this.openAIRouteCount > 0) throw new Error('OpenAI処理中はモデルを変更できません。');
+    this.selectedOpenAIModelId = getOpenAIModel(modelId).id;
+    return this.selectedOpenAIModelId;
+  }
+
+  _notifyOpenAIModelRoute(workflow, phase, modelId, route = {}) {
+    this.onOpenAIModelRoute?.({ workflow, phase, modelId, ...route });
+  }
+
   // ============================================
   // OpenAI Utilities
   // ============================================
-  async _callOpenAIChat(messages, model = "gpt-4.1-mini", responseFormat = "text", timeoutMs = OPENAI_TEXT_TIMEOUT_MS) {
-    const payload = { model, messages, temperature: 0.7 };
+  async _callOpenAIChat(messages, model = this.selectedOpenAIModelId, responseFormat = "text", timeoutMs = OPENAI_TEXT_TIMEOUT_MS) {
+    const reasoningModel = /^gpt-(?:6(?:\.|-)|5\.6-)/.test(model);
+    const payload = { model, messages, ...(reasoningModel
+      ? { max_completion_tokens: 32768 }
+      : { temperature: 0.7 }) };
     if (responseFormat === "json_object") payload.response_format = { type: "json_object" };
     
     const res = await callWithTimeout(
@@ -116,53 +115,65 @@ export class PanoramaEngine {
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
         body: JSON.stringify(payload)
       }),
-      timeoutMs
+      reasoningModel ? Math.max(timeoutMs, 120000) : timeoutMs
     );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
-      throw new Error(`OpenAI Chat Error: ${err.error?.message || res.status}`);
+      const error = new Error(`OpenAI Chat Error: HTTP ${res.status} ${err.error?.message || ''}`);
+      error.terminal = [401, 403, 429].includes(res.status) || /quota|content_policy|safety|refusal/i.test(err.error?.code || '');
+      throw error;
     }
     const data = await res.json();
-    return data.choices[0].message.content;
-  }
-
-  _getOpenAIModelOrder(models, lastSuccess) {
-    if (lastSuccess) {
-      const preferred = models.find(m => m.id === lastSuccess);
-      const rest = models.filter(m => m.id !== lastSuccess);
-      return preferred ? [preferred, ...rest] : [...models];
+    const choice = data.choices?.[0];
+    if (choice?.finish_reason === 'length' || choice?.finish_reason === 'content_filter' || choice?.message?.refusal) {
+      const error = new Error(`OpenAI response incomplete or refused: ${choice?.finish_reason}`);
+      error.terminal = true;
+      throw error;
     }
-    return [...models];
+    const text = choice?.message?.content;
+    if (choice?.finish_reason !== 'stop' || typeof text !== 'string' || !text.trim()) throw new Error('Empty or incomplete OpenAI response');
+    return text;
   }
 
   async _callOpenAIChatWithFallback(messages, responseFormat = "text") {
-    const lastSuccess = this.lastSuccessOpenAITextModel;
-    const ordered = this._getOpenAIModelOrder(OPENAI_TEXT_MODELS, lastSuccess);
-    const errors = [];
+    const ordered = getOpenAIModelRoute(this.selectedOpenAIModelId);
+    const attemptedModels = [];
+    const route = () => ({ selectedModelId: ordered[0].id, attemptedModels: [...attemptedModels] });
+    this.openAIRouteCount += 1;
+    try {
+      const errors = [];
     
-    for (let i = 0; i < ordered.length; i++) {
-      const tier = ordered[i];
-      try {
-        if (i > 0) {
-          console.warn(`⚠️ OpenAI Text ${ordered[i-1].label} 失敗 → ${tier.label} にフォールバック`);
-        } else {
-          console.log(`🎯 OpenAI Text ${tier.label} で処理開始`);
+      for (let i = 0; i < ordered.length; i++) {
+        const tier = ordered[i];
+        try {
+          if (i > 0) {
+            console.warn(`⚠️ OpenAI Text ${ordered[i-1].label} 失敗 → ${tier.label} にフォールバック`);
+          } else {
+            console.log(`🎯 OpenAI Text ${tier.label} で処理開始`);
+          }
+        
+          attemptedModels.push(tier.id);
+          this._notifyOpenAIModelRoute('text', 'trying', tier.id, route());
+          const text = await this._callOpenAIChat(messages, tier.id, responseFormat);
+        
+          this._notifyOpenAIModelRoute('text', 'adopted', tier.id, route());
+          console.log(`✅ OpenAI Text ${tier.label} で処理成功`);
+          return text;
+        } catch (err) {
+          const msg = err?.message || String(err);
+          this._notifyOpenAIModelRoute('text', 'failed', tier.id, route());
+          console.error(`❌ OpenAI Text ${tier.label} エラー:`, msg);
+          errors.push({ label: tier.label, msg });
+          if (err.terminal) throw err;
         }
-        
-        const text = await this._callOpenAIChat(messages, tier.id, responseFormat);
-        
-        this.lastSuccessOpenAITextModel = tier.id;
-        console.log(`✅ OpenAI Text ${tier.label} で処理成功`);
-        return text;
-      } catch (err) {
-        const msg = err?.message || String(err);
-        console.error(`❌ OpenAI Text ${tier.label} エラー:`, msg);
-        errors.push({ label: tier.label, msg });
       }
-    }
     
-    console.error('OpenAI全テキストモデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
-    throw new Error('OpenAIテキスト生成のすべてのモデル呼び出しに失敗しました。');
+      console.error('OpenAI全テキストモデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
+      throw new Error('OpenAIテキスト生成のすべてのモデル呼び出しに失敗しました。');
+    } finally {
+      this.openAIRouteCount -= 1;
+      this._notifyOpenAIModelRoute('text', 'idle', this.selectedOpenAIModelId);
+    }
   }
 
   async _callOpenAIVisionWithFallback(base64Image, mimeType) {
@@ -179,41 +190,52 @@ Do NOT mention that this is an image or photo. Describe the scene directly.
 Do NOT omit characters or figures if they are present — they are part of the scene.
 Keep it highly descriptive but concise.`;
     
-    const lastSuccess = this.lastSuccessOpenAIVisionModel;
-    const ordered = this._getOpenAIModelOrder(OPENAI_VISION_MODELS, lastSuccess);
-    const errors = [];
+    const ordered = getOpenAIModelRoute(this.selectedOpenAIModelId);
+    const attemptedModels = [];
+    const route = () => ({ selectedModelId: ordered[0].id, attemptedModels: [...attemptedModels] });
+    this.openAIRouteCount += 1;
+    try {
+      const errors = [];
     
-    for (let i = 0; i < ordered.length; i++) {
-      const tier = ordered[i];
-      try {
-        if (i > 0) {
-          console.warn(`⚠️ OpenAI Vision ${ordered[i-1].label} 失敗 → ${tier.label} にフォールバック`);
-        } else {
-          console.log(`🎯 OpenAI Vision ${tier.label} で処理開始`);
+      for (let i = 0; i < ordered.length; i++) {
+        const tier = ordered[i];
+        try {
+          if (i > 0) {
+            console.warn(`⚠️ OpenAI Vision ${ordered[i-1].label} 失敗 → ${tier.label} にフォールバック`);
+          } else {
+            console.log(`🎯 OpenAI Vision ${tier.label} で処理開始`);
+          }
+        
+          const messages = [{
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}`, detail: "high" } }
+            ]
+          }];
+        
+          attemptedModels.push(tier.id);
+          this._notifyOpenAIModelRoute('vision', 'trying', tier.id, route());
+          const text = await this._callOpenAIChat(messages, tier.id, "text", OPENAI_VISION_TIMEOUT_MS);
+        
+          this._notifyOpenAIModelRoute('vision', 'adopted', tier.id, route());
+          console.log(`✅ OpenAI Vision ${tier.label} で処理成功`);
+          return text;
+        } catch (err) {
+          const msg = err?.message || String(err);
+          this._notifyOpenAIModelRoute('vision', 'failed', tier.id, route());
+          console.error(`❌ OpenAI Vision ${tier.label} エラー:`, msg);
+          errors.push({ label: tier.label, msg });
+          if (err.terminal) throw err;
         }
-        
-        const messages = [{
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}`, detail: "high" } }
-          ]
-        }];
-        
-        const text = await this._callOpenAIChat(messages, tier.id, "text", OPENAI_VISION_TIMEOUT_MS);
-        
-        this.lastSuccessOpenAIVisionModel = tier.id;
-        console.log(`✅ OpenAI Vision ${tier.label} で処理成功`);
-        return text;
-      } catch (err) {
-        const msg = err?.message || String(err);
-        console.error(`❌ OpenAI Vision ${tier.label} エラー:`, msg);
-        errors.push({ label: tier.label, msg });
       }
-    }
     
-    console.error('OpenAI全ビジョンモデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
-    throw new Error('OpenAI画像解析のすべてのモデル呼び出しに失敗しました。');
+      console.error('OpenAI全ビジョンモデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
+      throw new Error('OpenAI画像解析のすべてのモデル呼び出しに失敗しました。');
+    } finally {
+      this.openAIRouteCount -= 1;
+      this._notifyOpenAIModelRoute('vision', 'idle', this.selectedOpenAIModelId);
+    }
   }
 
   async _callOpenAIImage(prompt, size = "1024x1024") {

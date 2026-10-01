@@ -1,5 +1,14 @@
 # HANDOFF
 
+Live candidate evidence 2026-10-01: scene proposal completed with selected/tried/adopted GPT-6.1 Sol, no fallback; screenshot preserved in ignored `output_sol61/api-complete.png`. Model helper text is 10px and final production build passes. Root PLAN owns remaining authorized release/social/backup stages.
+
+## GPT-6.1 Sol v1.4.3 — 2026-10-01
+
+- Local changes add the full 11-model OpenAI text/vision dropdown: Astra first, Sol 6.1 selected by default in development and production, app-specific descriptions and canonical input/output prices from a local catalog snapshot. The shipped app has no runtime import from the Nano Banana repository.
+- Every scene/style suggestion, input-image analysis and spatial check starts at the selected model and falls back only downward; remembered OpenAI successes no longer override the selection. Independent text/vision statuses show selected, attempted and adopted models. Selection is mechanically locked while any OpenAI route is active. Gemini and image-generation routes remain separate and unchanged.
+- Shared Chat Completions boundary supports GPT-6 and GPT-5.6 with max_completion_tokens=32768, no temperature and 120 seconds; legacy payloads are retained. Truncation/refusal/content filtering and authentication/access/quota failures stop the chain.
+- Local evidence: all 26 Node tests, updated production build, app release preflight and diff whitespace check pass. Coverage includes all 11 models’ text/vision payloads, default/descending routes, selection locking, status, Gemini isolation and response rejection. Existing Vite bundle-size warning remains. Browser/live API verification and official release belong to root and remain pending for the expanded selector scope. Existing screenshots and browser artifacts are preserved. Release notes: `docs/releases/v1.4.3.md`.
+
 ## Last Updated
 2026-06-19 21:45 JST
 
