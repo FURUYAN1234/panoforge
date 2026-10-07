@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.4.5** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.6** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -19,8 +19,8 @@ Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて�
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.5**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
-現行公開系統は **v1.4.5** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.6**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.4.6** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -365,7 +365,18 @@ Developed by **FURU**
 
 ---
 
+
+## Browser security / ブラウザーの安全対策
+
+The app limits script execution and API connections with Content Security Policy, disables embedded frames and form submissions, and sends no referrer. Open the app directly in its own tab. API keys remain sensitive while in memory; these protections do not guarantee the absence of every vulnerability. Every deployment checks dependencies, source safeguards and the built policy.
+
+CSPでスクリプト実行・API接続先を制限し、埋め込み表示とフォーム送信を禁止、参照元情報を送信しません。アプリは直接タブで開いてください。メモリー内のAPIキーも機密情報であり、すべての脆弱性がないことを保証するものではありません。毎回のデプロイで依存ライブラリ・ソースの防御・ビルド後の設定を検査します。
+
 ## 📋 ChangeLog
+
+### v1.4.6 (2026-10-07)
+
+- Security: CSP and frame protection, dependency updates, and mandatory release checks. / CSP・埋め込み防御・依存更新・公開前検査を追加。
 
 ### v1.4.5 (2026-10-07)
 

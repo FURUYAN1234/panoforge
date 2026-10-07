@@ -1,7 +1,7 @@
 {
   "license": "SEE LICENSE IN LICENSE",
   "name": "background",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,10 +11,11 @@
     "deploy": "gh-pages -d dist",
     "release:preflight": "powershell -ExecutionPolicy Bypass -File ..\\scripts\\release_app_preflight.ps1 -App background",
     "release:app-preflight": "node scripts/release_preflight.mjs",
-    "predeploy": "npm run release:preflight && npm run release:app-preflight && npm run build"
+    "predeploy": "npm run release:preflight && npm run release:app-preflight && npm run build",
+    "postbuild": "node scripts/web-security.mjs --verify-dist"
   },
   "devDependencies": {
-    "gh-pages": "^6.3.0",
+    "gh-pages": "6.1.1",
     "vite": "^8.0.12"
   },
   "dependencies": {

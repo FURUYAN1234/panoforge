@@ -381,6 +381,7 @@ dom.styleChips.forEach(chip => {
 });
 
 // スタイル入力窓の変更時にチップの選択を解除
+dom.styleInput.addEventListener('focus', () => dom.styleInput.removeAttribute('readonly'));
 dom.styleInput.addEventListener('input', () => {
   const val = dom.styleInput.value.trim();
   dom.styleChips.forEach(c => {
