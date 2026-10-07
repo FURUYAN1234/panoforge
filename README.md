@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator
 
-**v1.4.4** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.5** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -19,8 +19,8 @@ Super FURU AI 4-koma System などの漫画・動画制作ツールにおいて�
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.4**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
-現行公開系統は **v1.4.4** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.5**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment.
+現行公開系統は **v1.4.5** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -49,8 +49,8 @@ Gemini and OpenAI are independent execution paths. A Gemini request can retry on
 
 GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトライ先はGeminiモデルだけ、OpenAIのリトライ先はOpenAIモデルだけであり、相互にフォールバックすることはありません。設定プロバイダを切り替えた瞬間、元画像・生成済みパノラマ・ビューワー・再試行状態をすべて消去します。切替後に続ける場合は、新しく選択したプロバイダで元画像を生成またはアップロードしてください。
 
-* **Gemini image path / Gemini画像生成**: `gemini-3.1-flash-image` is the primary image model. `gemini-2.5-flash-image` remains as a 360-degree compatibility fallback for cases where the newer image model cannot complete the panorama request.
-  画像生成の主系統は `gemini-3.1-flash-image` です。新しい画像モデルで360度化が完了しない場合に備えて、`gemini-2.5-flash-image` を互換フォールバックとして保持しています。
+* **Gemini image path / Gemini画像生成**: Nano Banana 2.1 (`gemini-nano-banana-2.1`) uses the Interactions API for image creation, panorama expansion and spatial repairs. The Model Chain display uses the same model configuration.
+  画像生成・360度への拡張・空間の修正は、Nano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIを使用します。Model Chain表示も実行時と同じモデル設定を参照します。
 * **OpenAI image path / OpenAI画像生成**: OpenAI uses a text-mediated recreation pipeline: the selected OpenAI vision model (default GPT-6.1 Sol) analysis prepares the prompt, then GPT Image 2.5 Sunburst/xhigh generates PNG output. A retry-eligible provider failure falls back to GPT Image 2.0/high inside the shared timeout. This is high-quality recreation, not pixel-preserving outpainting.
   OpenAIはテキスト媒介の再構成パイプラインです。選択したOpenAIモデル（既定GPT-6.1 Sol）のVision解析でプロンプトを作り、GPT Image 2.5 Sunburst/xhighがPNGを生成します。リトライ対象のプロバイダ失敗時だけ、共有タイムアウト内でGPT Image 2.0/highへフォールバックします。これは高品質な再生成であり、元画像ピクセルをそのまま延長するアウトペイントではありません。
 * **Viewer and metadata / ビューワーとメタデータ**: The generated equirectangular image can be checked in the built-in Three.js viewer and exported with GPano metadata for 360-degree viewers.
@@ -69,7 +69,7 @@ GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトラ�
 ### 🧠 Dual-API Architecture (デュアルAPIアーキテクチャ)
 本システムは、Gemini API と OpenAI API の両方をサポートし、用途に応じて切り替えて使用できるデュアルエンジン構造を採用しています。
 
-- **Gemini API (Google)**: High-speed, natively multimodal panorama generation using `gemini-3.1-flash-image` (Nano Banana 2), with `gemini-2.5-flash-image` retained as a compatibility fallback for 360° generation. Perfect for expanding existing 1-shot images while retaining original pixel details. / `gemini-3.1-flash-image`（Nano Banana 2）をPrimaryにし、360度生成の互換性確保のため `gemini-2.5-flash-image` をフォールバックとして保持します。手持ち画像のディテールを維持したパノラマ拡張に最適です。
+- **Gemini API (Google)**: Nano Banana 2.1 (`gemini-nano-banana-2.1`) generates images and expands source images through the Interactions API. / Nano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIで、画像生成と参照画像からのパノラマ拡張を行います。
 - **OpenAI API (GPT Image 2.5 / 2.0 fallback & selectable text/vision models)**: Generates panoramas from text using GPT Image 2.5 Sunburst/xhigh, falling back to GPT Image 2.0/high only for retry-eligible provider failures, and uses the selected OpenAI vision model (default GPT-6.1 Sol) analysis to re-create an existing image as a seamless 360° environment. **Note: the combined image request window is up to 10 minutes and is billed on a pay-as-you-go basis.** / GPT Image 2.5 Sunburst/xhighによる高画質生成を基本に、リトライ対象のプロバイダ失敗時だけGPT Image 2.0/highへフォールバックし、選択したOpenAIモデル（既定GPT-6.1 Sol）のVision解析で「既存画像の360度化（近似再構築）」に対応します。**※画像リクエスト全体は最大10分で、従量課金となります。**
 
 #### ⚠️ OpenAI API Limitations / OpenAI APIモードの限界と注意事項
@@ -113,8 +113,7 @@ GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトラ�
 Following the philosophy of Super FURU AI 4-koma System, this system features a robust fallback mechanism (Zenith Protocol) that automatically switches to optimal alternative models upon API errors, rate limits, or safety filter blocks.
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `gemini-3.1-flash-image` (Tier1 / Nano Banana 2)
-2. `gemini-2.5-flash-image` (Tier2 / 360度生成の互換フォールバック)
+1. `gemini-nano-banana-2.1` (Nano Banana 2.1 / Interactions API)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline**:
 - **Gemini**:
@@ -167,8 +166,7 @@ Following the philosophy of Super FURU AI 4-koma System, this system features a 
 Super FURU AI 4-koma System の思想を踏襲し、APIエラー時や制限到達時、あるいは安全フィルタでのブロック時に自動的に最適な別モデルへフォールバックする仕組み（Zenith Protocol）を搭載しています。
 
 **画像生成 / Image Generation Fallback Pipeline (Gemini)**:
-1. `gemini-3.1-flash-image` (Tier1 / Nano Banana 2)
-2. `gemini-2.5-flash-image` (Tier2 / 360度生成の互換フォールバック)
+1. `gemini-nano-banana-2.1` (Nano Banana 2.1 / Interactions API)
 
 **テキスト生成・スタイル提案 / Text Generation Fallback Pipeline (Gemini)**:
 1. `gemini-3.5-flash` (Tier1 / Next-Gen 最高品質)
@@ -368,6 +366,11 @@ Developed by **FURU**
 ---
 
 ## 📋 ChangeLog
+
+### v1.4.5 (2026-10-07)
+
+- Gemini images, panorama expansion and Model Chain now use Nano Banana 2.1 / Interactions. Browser requests omit the unsupported SDK revision header. / Gemini画像生成・パノラマ拡張・Model ChainをNano Banana 2.1へ更新し、ブラウザー通信を妨げるSDKヘッダーを除きました。
+- API key entry and dialog changes reset visibility to masked; the reveal button remains available. / APIキーの入力と画面開閉では伏せ字へ戻し、確認用の表示ボタンは保持します。
 
 ### v1.4.4 (2026-10-04)
 

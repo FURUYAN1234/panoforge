@@ -4,6 +4,7 @@
 // ============================================
 
 import { GoogleGenAI } from '@google/genai';
+import { GEMINI_IMAGE_MODELS as IMAGE_MODELS } from './lib/gemini-image-models.js';
 import {
   buildSpatialLedgerPrompt,
   buildSpatialQaPrompt,
@@ -29,12 +30,6 @@ async function callWithTimeout(promise, ms) {
     clearTimeout(timeoutId);
   }
 }
-
-// 画像生成対応モデル（generateContent + responseModalities IMAGE）
-const IMAGE_MODELS = [
-  { id: 'gemini-3.1-flash-image', label: 'Tier1: Gemini 3.1 Flash Image (Nano Banana 2)' },
-  { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image (Compatibility)' },
-];
 
 // テキスト専用モデル（スタイル提案等）
 const TEXT_MODELS = [
@@ -407,12 +402,30 @@ Keep one continuous, physically coherent space. Do not add furniture, openings, 
         } else {
           console.log(`🎯 ${tier.label} で生成開始`);
         }
-        const response = await callWithTimeout(
-          this.geminiClient.models.generateContent({
+        const needsImage = requestConfig.config?.responseModalities?.includes('IMAGE');
+        let response = await callWithTimeout(
+          needsImage ? this.geminiClient.interactions.create({
+            model: tier.id,
+            input: requestConfig.contents.flatMap(content => content.parts).map(part => part.inlineData
+              ? { type: 'image', mime_type: part.inlineData.mimeType, data: part.inlineData.data }
+              : { type: 'text', text: part.text }),
+            response_format: { type: 'image', mime_type: 'image/jpeg' },
+          }, {
+            // The public browser endpoint rejects this SDK default during CORS preflight.
+            headers: { 'Api-Revision': null },
+            timeout: timeoutMs,
+            maxRetries: 0,
+          }) : this.geminiClient.models.generateContent({
             model: tier.id, ...requestConfig,
           }),
           timeoutMs
         );
+
+        if (needsImage) {
+          const parts = (response.steps || []).flatMap(step => step.content || []).map(part =>
+            part.type === 'image' ? { inlineData: { data: part.data, mimeType: part.mime_type } } : { text: part.text });
+          response = { candidates: [{ content: { parts } }] };
+        }
 
         if (!response.candidates || response.candidates.length === 0) {
           throw new Error('空のレスポンス（安全フィルタの可能性）');
@@ -424,7 +437,6 @@ Keep one continuous, physically coherent space. Do not add furniture, openings, 
           throw new Error(`コンテンツブロック (finishReason: ${finishReason})`);
         }
 
-        const needsImage = requestConfig.config?.responseModalities?.includes('IMAGE');
         if (needsImage) {
           const parts = candidate.content?.parts;
           const hasImage = parts?.some(p => p.inlineData?.data);

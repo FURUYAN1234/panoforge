@@ -1,4 +1,5 @@
 import { OPENAI_MODELS } from './openai-models.js';
+import { GEMINI_IMAGE_MODELS } from './gemini-image-models.js';
 
 export const FALLBACK_CHAINS = [
   {
@@ -56,10 +57,7 @@ export const FALLBACK_CHAINS = [
     description: 'テキストプロンプトから背景イラスト画像を生成する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'Gemini',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gemini-3.1-flash-image', label: 'Tier1: Gemini 3.1 Flash Image (Nano Banana 2)' },
-      { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image (Compatibility)' }
-    ]
+    models: GEMINI_IMAGE_MODELS
   },
   {
     id: 'step1-openai',
@@ -89,10 +87,7 @@ export const FALLBACK_CHAINS = [
     description: '既存の画像を360度パノラマ画像に拡張する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'Gemini',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gemini-3.1-flash-image', label: 'Tier1: Gemini 3.1 Flash Image (Nano Banana 2)' },
-      { id: 'gemini-2.5-flash-image', label: 'Tier2: Gemini 2.5 Flash Image (Compatibility)' }
-    ]
+    models: GEMINI_IMAGE_MODELS
   },
   {
     id: 'step2-openai',
@@ -109,6 +104,13 @@ export const FALLBACK_CHAINS = [
 ];
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: '1.4.5', date: '2026-10-07 JST',
+    note: '画像生成・360度拡張・修正をNano Banana 2.1のInteractions APIへ更新。Model Chainも同じ定義に統一。',
+    changes: [
+      { step: 'STEP 1 / STEP 2 (Gemini)', detail: 'gemini-nano-banana-2.1。廃止された2.5画像モデルへの自動切替を終了。' },
+    ],
+  },
   {
     version: '1.4.3',
     date: '2026-10-01 JST',

@@ -181,30 +181,46 @@ function setAppLocked(locked) {
 // ============================
 // APIキー管理
 // ============================
+function setApiKeyVisible(visible = false) {
+  dom.apiKeyInput.type = visible ? 'text' : 'password';
+  dom.iconEyeOff.classList.toggle('hidden', visible);
+  dom.iconEyeOn.classList.toggle('hidden', !visible);
+  dom.apiKeyToggle.setAttribute('aria-pressed', String(visible));
+  dom.apiKeyToggle.setAttribute('aria-label', visible ? 'APIキーを隠す' : 'APIキーを表示');
+}
+
 dom.apiSettingsBtn.addEventListener('click', () => {
+  setApiKeyVisible();
   dom.apiModalOverlay.classList.remove('hidden');
   dom.apiKeyInput.focus();
 });
 
 dom.apiModalClose.addEventListener('click', () => {
+  setApiKeyVisible();
   if (!engine.isReady()) return;
   dom.apiModalOverlay.classList.add('hidden');
 });
 
 dom.apiModalOverlay.addEventListener('click', (e) => {
   if (e.target !== dom.apiModalOverlay) return;
+  setApiKeyVisible();
   if (!engine.isReady()) return;
   dom.apiModalOverlay.classList.add('hidden');
 });
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !dom.apiModalOverlay.classList.contains('hidden')) {
+    setApiKeyVisible();
     if (!engine.isReady()) return;
     dom.apiModalOverlay.classList.add('hidden');
   }
 });
 
+// Reset before native insertion, with input as a fallback for autofill and IME.
+dom.apiKeyInput.addEventListener('paste', () => setApiKeyVisible());
+dom.apiKeyInput.addEventListener('beforeinput', () => setApiKeyVisible());
 dom.apiKeyInput.addEventListener('input', () => {
+  setApiKeyVisible();
   const val = dom.apiKeyInput.value.trim();
   dom.apiModalApply.disabled = val.length === 0;
   dom.apiKeyFeedback.textContent = '';
@@ -213,10 +229,7 @@ dom.apiKeyInput.addEventListener('input', () => {
 });
 
 dom.apiKeyToggle.addEventListener('click', () => {
-  const isPassword = dom.apiKeyInput.type === 'password';
-  dom.apiKeyInput.type = isPassword ? 'text' : 'password';
-  dom.iconEyeOff.classList.toggle('hidden', isPassword);
-  dom.iconEyeOn.classList.toggle('hidden', !isPassword);
+  setApiKeyVisible(dom.apiKeyInput.type === 'password');
 });
 
 dom.apiKeyForm.addEventListener('submit', (event) => {
@@ -227,6 +240,7 @@ dom.apiKeyForm.addEventListener('submit', (event) => {
 });
 
 dom.apiModalApply.addEventListener('click', () => {
+  setApiKeyVisible();
   const key = dom.apiKeyInput.value.trim();
   if (!key) return;
   const previousProvider = state.activeProvider;
@@ -268,9 +282,7 @@ dom.apiModalApply.addEventListener('click', () => {
     setTimeout(() => {
       dom.apiModalOverlay.classList.add('hidden');
       dom.apiKeyInput.value = '';
-      dom.apiKeyInput.type = 'password';
-      dom.iconEyeOff.classList.remove('hidden');
-      dom.iconEyeOn.classList.add('hidden');
+      setApiKeyVisible();
       dom.apiKeyWarning.classList.add('hidden');
     }, 800);
   } else {
