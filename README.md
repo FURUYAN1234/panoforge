@@ -7,7 +7,7 @@
 Demo URL / デモサイト: [https://furuyan1234.github.io/panoforge/](https://furuyan1234.github.io/panoforge/)
 
 
-**v1.4.6** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.7** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -24,7 +24,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.6**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment. / 現行公開系統は **v1.4.6** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.7**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment. / 現行公開系統は **v1.4.7** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -415,6 +415,10 @@ Developed by **FURU** / 開発：**FURU**
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [gemini-narration-studio](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 📋 更新履歴
+
+### v1.4.7 (2026-10-27)
+
+- Added GPT-6.1 Terra to the OpenAI text and image analysis selector and Model Chain with standard input/output prices of $1/$5 per million tokens. GPT-6.1 Sol remains the default. / OpenAIの文章・画像解析の選択肢とModel ChainにGPT-6.1 Terraを追加し、通常の入力／出力単価を100万トークン当たり$1／$5と表示します。初期選択はGPT-6.1 Solのままです。
 
 ### v1.4.6 (2026-10-07)
 

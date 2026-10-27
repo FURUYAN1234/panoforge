@@ -29,7 +29,7 @@ test('Sol text/vision requests and legacy fallback preserve their parameters', a
   } finally { globalThis.fetch = original; globalThis.setTimeout = originalSetTimeout; }
 });
 
-test('unavailable Sol falls back to 6 Sol and retries the selection on every new call', async () => {
+test('unavailable Sol falls back to Terra and retries the selection on every new call', async () => {
   const original = globalThis.fetch;
   try {
     for (const operation of ['text', 'vision']) {
@@ -43,10 +43,10 @@ test('unavailable Sol falls back to 6 Sol and retries the selection on every new
       const engine = new PanoramaEngine(); engine.setApiKey('sk-test');
       const run = () => operation === 'text' ? engine._callOpenAIChatWithFallback([]) : engine._callOpenAIVisionWithFallback('sample', 'image/png');
       assert.equal(await run(), 'legacy result');
-      assert.deepEqual(calls, ['gpt-6.1-sol', 'gpt-6-sol']);
+      assert.deepEqual(calls, ['gpt-6.1-sol', 'gpt-6.1-terra']);
       calls.length = 0;
       await run();
-      assert.deepEqual(calls, ['gpt-6.1-sol', 'gpt-6-sol']);
+      assert.deepEqual(calls, ['gpt-6.1-sol', 'gpt-6.1-terra']);
     }
   } finally { globalThis.fetch = original; }
 });
@@ -75,6 +75,6 @@ test('truncation, refusal, content filtering, auth and quota fail closed without
 test('displayed text and vision fallback chains match the Sol-first runtime', () => {
   for (const id of ['suggest-scene-openai', 'suggest-style-openai', 'step2-analyze-openai']) {
     const ids = FALLBACK_CHAINS.find((chain) => chain.id === id).models.map((model) => model.id);
-    assert.deepEqual(ids, ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6-sol', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-6-luna', 'gpt-5.6-luna', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o']);
+    assert.deepEqual(ids, ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-sol', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-6-luna', 'gpt-5.6-luna', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o']);
   }
 });
