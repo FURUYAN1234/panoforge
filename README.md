@@ -1,5 +1,7 @@
 # 360° AI Panorama Generator / 360度AIパノラマ生成ツール
 
+**Gemini model route / Geminiモデル候補**: `gemini-3.8-flash` → `gemini-3.6-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite`. Explicit stable IDs avoid the December 1, 2026 redirects; image-generation models keep their dedicated routes. / 2026年12月1日の旧モデル自動転送に依存しないよう、現行GAモデルを明示します。画像生成は専用のモデル経路を使います。
+
 > **Source code available; free to use.** Ordinary use, free integration and free provision require no application, prior contact or permission from FURU. You may sell and monetize your own works. External API costs and third-party terms are separate. See Terms & Output Rights below. / **ソースコード公開・利用無料。** 通常利用と無料の組み込み・無料提供に、申請・事前連絡・FURUの許可は不要です。自分の作品は販売・収益化できます。外部API料金と第三者の条件は別です。詳しくは「利用条件・作品の権利」をご確認ください。
 
 [![360° AI Panorama Generator デモサイトを開く。リンク先: https://furuyan1234.github.io/panoforge/](docs/assets/demo-site-button.png)](https://furuyan1234.github.io/panoforge/)
@@ -7,7 +9,7 @@
 Demo URL / デモサイト: [https://furuyan1234.github.io/panoforge/](https://furuyan1234.github.io/panoforge/)
 
 
-**v1.4.7** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.8** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -24,7 +26,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.7**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment. / 現行公開系統は **v1.4.7** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.8**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment. / 現行公開系統は **v1.4.8** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -110,11 +112,10 @@ Image Generation Fallback Pipeline (Gemini)**: / **画像生成
 
 Text Generation Fallback Pipeline**: / **テキスト生成・スタイル提案
 - **Gemini**:
-  1. `gemini-3.5-flash` (Tier1 / Next-Gen 最高品質)
-  2. `gemini-2.5-flash` (Tier2 / 安定・高速)
-  3. `gemini-2.5-pro` (Tier3 / 高品質)
-  4. `gemini-flash-latest` (Tier4 / 最新安定版)
-  5. `gemini-pro-latest` (Tier5 / 最新Pro版)
+  1. `gemini-3.8-flash` (Primary / 第一候補)
+  2. `gemini-3.6-flash` (Backup / 代替候補)
+  3. `gemini-3.5-flash-lite` (Lower-cost fallback / 低コスト候補)
+  4. `gemini-3.1-flash-lite` (Fallback / 最終候補)
 - **OpenAI**:
   `gpt-6-astra` → `gpt-6.1-sol` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o`
 
@@ -155,11 +156,10 @@ Image Generation Fallback Pipeline (Gemini)**: / **画像生成
 1. `gemini-nano-banana-2.1` (Nano Banana 2.1 / Interactions API)
 
 Text Generation Fallback Pipeline (Gemini)**: / **テキスト生成・スタイル提案
-1. `gemini-3.5-flash` (Tier1 / Next-Gen 最高品質)
-2. `gemini-2.5-flash` (Tier2 / 安定・高速)
-3. `gemini-2.5-pro` (Tier3 / 高品質)
-4. `gemini-flash-latest` (Tier4 / 最新安定版)
-5. `gemini-pro-latest` (Tier5 / 最新Pro版)
+1. `gemini-3.8-flash` (Primary / 第一候補)
+2. `gemini-3.6-flash` (Backup / 代替候補)
+3. `gemini-3.5-flash-lite` (Lower-cost fallback / 低コスト候補)
+4. `gemini-3.1-flash-lite` (Fallback / 最終候補)
 
 ---
 

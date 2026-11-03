@@ -5,6 +5,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { GEMINI_IMAGE_MODELS as IMAGE_MODELS } from './lib/gemini-image-models.js';
+import { GEMINI_TEXT_MODELS as TEXT_MODELS } from './lib/fallback-chain-data.js';
 import {
   buildSpatialLedgerPrompt,
   buildSpatialQaPrompt,
@@ -30,15 +31,6 @@ async function callWithTimeout(promise, ms) {
     clearTimeout(timeoutId);
   }
 }
-
-// テキスト専用モデル（スタイル提案等）
-const TEXT_MODELS = [
-  { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
-  { id: 'gemini-2.5-flash', label: 'Tier2: Gemini 2.5 Flash' },
-  { id: 'gemini-2.5-pro', label: 'Tier3: Gemini 2.5 Pro' },
-  { id: 'gemini-flash-latest', label: 'Tier4: Gemini Flash Latest' },
-  { id: 'gemini-pro-latest', label: 'Tier5: Gemini Pro Latest' },
-];
 
 const OPENAI_TEXT_TIMEOUT_MS = 25000;
 const OPENAI_VISION_TIMEOUT_MS = 60000;

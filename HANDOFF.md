@@ -1,3 +1,10 @@
+## Gemini December migration candidate v1.4.8 — 2026-11-03
+
+- Current task: update Gemini fallback candidates and displays, verify real API behavior, and deploy through the established release transaction. No new backup or social publication.
+- Root PLAN points to the private task ledger. Full 32 tests, production build and shared security check (production/development audit 0) pass.
+- Both changed Gemini text surfaces completed through the normal UI: scene suggestion and style suggestion. Console success records identify Gemini 3.8 Flash for both calls. The resulting scene and style were inspected. Dedicated image-generation routes are unchanged. Official delivery remains pending.
+- Preserve existing feature contracts and dedicated image-generation routes.
+
 # HANDOFF
 
 Live candidate evidence 2026-10-01: scene proposal completed with selected/tried/adopted GPT-6.1 Sol, no fallback; screenshot preserved in ignored `output_sol61/api-complete.png`. Model helper text is 10px and final production build passes. Root PLAN owns remaining authorized release/social/backup stages.

@@ -1,21 +1,23 @@
 import { OPENAI_MODELS } from './openai-models.js';
 import { GEMINI_IMAGE_MODELS } from './gemini-image-models.js';
 
+// 実行と表示が同じ現行GAモデル順を使う。
+export const GEMINI_TEXT_MODELS = [
+  { id: 'gemini-3.8-flash', label: 'Tier1: Gemini 3.8 Flash' },
+  { id: 'gemini-3.6-flash', label: 'Tier2: Gemini 3.6 Flash' },
+  { id: 'gemini-3.5-flash-lite', label: 'Tier3: Gemini 3.5 Flash-Lite' },
+  { id: 'gemini-3.1-flash-lite', label: 'Tier4: Gemini 3.1 Flash-Lite' },
+];
+
 export const FALLBACK_CHAINS = [
   {
     id: 'suggest-scene-gemini',
     step: 'AI Suggestion',
     label: 'Scene Suggestion / シーン提案',
-    description: 'ランダムなシーン説明を提案する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
+    description: 'ランダムなシーン説明を提案する。Gemini 3.8 Flashから、表示された現行GAモデルの順に試行します。',
     provider: 'Gemini',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
-      { id: 'gemini-2.5-flash', label: 'Tier2: Gemini 2.5 Flash' },
-      { id: 'gemini-2.5-pro', label: 'Tier3: Gemini 2.5 Pro' },
-      { id: 'gemini-flash-latest', label: 'Tier4: Gemini Flash Latest' },
-      { id: 'gemini-pro-latest', label: 'Tier5: Gemini Pro Latest' }
-    ]
+    models: GEMINI_TEXT_MODELS
   },
   {
     id: 'suggest-scene-openai',
@@ -30,16 +32,10 @@ export const FALLBACK_CHAINS = [
     id: 'suggest-style-gemini',
     step: 'AI Suggestion',
     label: 'Style Suggestion / スタイル提案',
-    description: 'シーン説明に合う画像スタイルをAIが提案する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
+    description: 'シーン説明に合う画像スタイルをAIが提案する。Gemini 3.8 Flashから、表示された現行GAモデルの順に試行します。',
     provider: 'Gemini',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gemini-3.5-flash', label: 'Tier1: Gemini 3.5 Flash' },
-      { id: 'gemini-2.5-flash', label: 'Tier2: Gemini 2.5 Flash' },
-      { id: 'gemini-2.5-pro', label: 'Tier3: Gemini 2.5 Pro' },
-      { id: 'gemini-flash-latest', label: 'Tier4: Gemini Flash Latest' },
-      { id: 'gemini-pro-latest', label: 'Tier5: Gemini Pro Latest' }
-    ]
+    models: GEMINI_TEXT_MODELS
   },
   {
     id: 'suggest-style-openai',
@@ -104,6 +100,13 @@ export const FALLBACK_CHAINS = [
 ];
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: '1.4.8', date: '2026-11-03 JST',
+    note: 'Geminiの文章提案から終了予定モデルと移動する別名を除き、実行と表示で候補一覧を共有しました。',
+    changes: [
+      { step: 'AI Suggestion (Gemini)', detail: 'gemini-3.8-flash -> gemini-3.6-flash -> gemini-3.5-flash-lite -> gemini-3.1-flash-lite' },
+    ],
+  },
   {
     version: '1.4.5', date: '2026-10-07 JST',
     note: '画像生成・360度拡張・修正をNano Banana 2.1のInteractions APIへ更新。Model Chainも同じ定義に統一。',
