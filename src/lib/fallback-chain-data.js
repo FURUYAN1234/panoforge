@@ -1,4 +1,5 @@
 import { OPENAI_MODELS } from './openai-models.js';
+import { getOpenAIImageFallbackChain } from './openai-image-fallback.js';
 import { GEMINI_IMAGE_MODELS } from './gemini-image-models.js';
 
 // 実行と表示が同じ現行GAモデル順を使う。
@@ -62,10 +63,7 @@ export const FALLBACK_CHAINS = [
     description: 'テキストプロンプトから背景イラスト画像を生成する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gpt-image-2.5-sunburst', label: 'OpenAI Primary: GPT Image 2.5 Sunburst / xhigh' },
-      { id: 'gpt-image-2', label: 'OpenAI Fallback: GPT Image 2.0 / high' }
-    ]
+    models: getOpenAIImageFallbackChain()
   },
   {
     id: 'step2-analyze-openai',
@@ -89,17 +87,19 @@ export const FALLBACK_CHAINS = [
     id: 'step2-openai',
     step: 'STEP 2',
     label: 'Panorama Expansion / パノラマ拡張',
-    description: '既存の画像を360度パノラマ画像に拡張する。※注記: 現在のアプリのAPIは、最新APIの対応状況や安定稼働を考慮し、あえて古い世代のモデルをPrimaryに設定している場合があります。',
+    description: '元画像とマスクで2:1の360°画像を生成・補正し、継ぎ目を正面から見た視野も検査します。',
     provider: 'OpenAI',
     sourceFile: 'src/panorama.js',
-    models: [
-      { id: 'gpt-image-2.5-sunburst', label: 'OpenAI Primary: GPT Image 2.5 Sunburst / xhigh' },
-      { id: 'gpt-image-2', label: 'OpenAI Fallback: GPT Image 2.0 / high' }
-    ]
+    models: getOpenAIImageFallbackChain()
   }
 ];
 
 export const FALLBACK_CHAIN_HISTORY = [
+  {
+    version: '1.4.9', date: '2026-11-05 JST',
+    note: 'OpenAI画像生成・360°拡張・部分編集をGPT Image 2.6 Sunburst優先に更新。元画像の保持と継ぎ目の検査・補正を改善しました。',
+    changes: [{ step: 'STEP 1 / STEP 2 (OpenAI)', detail: 'gpt-image-2.6-sunburst / xhigh -> eligible provider errors only: gpt-image-2 / high' }],
+  },
   {
     version: '1.4.8', date: '2026-11-03 JST',
     note: 'Geminiの文章提案から終了予定モデルと移動する別名を除き、実行と表示で候補一覧を共有しました。',

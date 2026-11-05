@@ -1,3 +1,25 @@
+## GPT Image 2.6 candidate v1.4.9 — 2026-11-05
+
+### Accepted candidate, publication pending
+
+- The final normal-UI STEP2 used GPT Image 2.6 Sunburst/xhigh at 2048×1024. At 11:02:07Z, perspective QA rejected a rear rail/path discontinuity and correctly selected a masked seam edit. The edited result passed the same QA at 11:04:34Z. Visual inspection confirmed continuous rails, ballast and tactile paving across the repaired seam, the retained reference station/postbox, and the roof/floor views.
+- Normal JPEG export and reimport through the file chooser succeeded. JPEG SHA256: 9153231f0f068f685abb6f635902d6b73f688018daa00bedb77970aee6a78044. GPano XMP declares equirectangular, 2048×1024, no crop. These are checks of this real test case, not a guarantee that every scene passes.
+- Final model route, Model Chain, screen and README are synchronized to 2.6/xhigh with eligible-provider-error fallback to 2.0/high. Final tests45/45 and production build (index-CT8cuSsA.js) pass. No extra API regeneration is needed for the display synchronization. Remaining work: official release transaction and public readback, then the authorized existing-note update and X/Facebook announcement as part of the four-app release.
+- The owned development listener PID40280/session40077 was stopped after generation ended and the export was preserved, to avoid a hot reload while synchronizing UI modules. IAB browser2/tab1 still contains the saved panorama; tab2 is the authenticated existing Pano note, with no edit made. Private evidence and current operation state are under /home/furu/Codex/work/gpt-image-2.6-20261105.
+
+### Investigation history
+
+- Source pixels now reach Images edits via a 90° level-camera spherical projection and PNG alpha mask. Known source pixels are restored before QA; at most one correction is allowed. Diagnostic images are retained on quality rejection.
+- After the PC reboot, the normal STEP1 produced a 1536×1024 image with 2.6/xhigh. STEP2 with 2.0 duplicated the postbox. STEP2 with 2.6 generated 2048×1024 and passed automated QA at 10:43:44Z, but full-sphere visual inspection found disconnected rear tracks/tactile strips. This is a QA false negative, not release acceptance. The exported normal JPEG is retained in the private task work directory as pano-20261105-104344-false-pass.jpg.
+- QA now compares the original reference, full sphere, centered seam, and a true 90° perspective view of the wrap seam. Partial-reference counts are not treated as global counts of ordinary repeating architecture. New perspective/transport tests: red 2 failures, green 7/7. Full checks and final route/display/docs synchronization are pending.
+- Current dev server is exec session40077 at http://127.0.0.3:5175/, IAB browser2/tab1, OpenAI connected. Old pre-reboot sessions/tabs are gone. Engine HMR preserves the in-memory key and source. A new normal STEP2 run started at about 10:54Z with the perspective QA; observe its actual UI/log state before claiming it is running. The engine currently uses 2.6/xhigh with eligible 2.0/high fallback; the old STEP2-only 2.0 display definition must be synchronized before release. Do not reload the connected page or edit shared UI modules until its result/source are preserved.
+- No public writes yet. User has authorized necessary paid bugfix retries and, conditional on quality acceptance, all four GitHub/Pages releases, updates to the four existing note articles and normal X/Facebook announcements. No renewed approval is needed within that scope. Private source-of-truth: /home/furu/Codex/work/gpt-image-2.6-20261105/task.md and contract-ledger.json.
+
+- The real OpenAI STEP1 run produced a 1536×1024 station image. The first STEP2 run reached the viewer, but the result was 3:2 and the track ended abruptly at the wrap seam.
+- Sunburst 2.6 passed STEP1. At STEP2, real generation and masked editing succeeded at the API boundary, but the result still broke track continuity and lost the red postbox. The Vision gate rejected it before display.
+- The temporary 2.0-only STEP2 trial also failed quality. The current engine has returned to 2.6 on the corrected source-aware editing route. It requests 2048×1024 and rejects other dimensions. One correction is allowed: a masked seam edit for a local defect or another reference-based edit for a wider defect. The Gemini pipeline remains unchanged.
+- The corrected STEP2 still requires a live OpenAI run, visual inspection and a save/reopen check. The four-app release and announcements are gated on that result.
+
 ## Gemini December migration candidate v1.4.8 — 2026-11-03
 
 - Current task: update Gemini fallback candidates and displays, verify real API behavior, and deploy through the established release transaction. No new backup or social publication.

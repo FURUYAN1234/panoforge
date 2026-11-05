@@ -9,7 +9,7 @@
 Demo URL / デモサイト: [https://furuyan1234.github.io/panoforge/](https://furuyan1234.github.io/panoforge/)
 
 
-**v1.4.8** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.4.9** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -26,7 +26,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.4.8**. The app is now a dual-provider panorama tool rather than a Gemini-only experiment. / 現行公開系統は **v1.4.8** です。現在はGemini専用の実験ではなく、Gemini / OpenAI の両方に対応したパノラマ生成ツールです。
+The current public line is **v1.4.9**. Both Gemini and OpenAI can generate panoramas. / 現行の公開版は **v1.4.9** です。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -34,21 +34,21 @@ The panorama path is not a blind request to "extend in every direction." Before 
 
 1. **Base image / 元画像** — Create a text-to-image seed or accept a dropped image.
 2. **Spatial ledger / 空間台帳** — Extract only the scene facts needed for continuity. Duplicate entries are removed and malformed model JSON fails closed.
-3. **Panorama generation / パノラマ生成** — Generate an equirectangular environment using the ledger plus the source-image description and selected style.
-4. **Semantic QA / 意味的QA** — Check major-object duplication or loss, opening and architecture continuity, lighting consistency, density, and semantic seam issues. A malformed or rejected QA result is not presented as success.
-5. **One bounded correction / 最大1回の補正** — If QA identifies an issue, the app performs one ledger-guided regeneration. A second rejection stops with an error instead of silently shipping an unverified image.
-6. **Seam repair and viewer / シーム修復と確認** — Only an accepted result proceeds through the existing Split-Swap-Inpaint/Blend seam stage and the Three.js viewer.
+3. **Panorama generation / パノラマ生成** — OpenAI projects the source onto a 2048×1024 sphere texture and sends those pixels and an edit mask to the image API. It restores the known central region before inspection. / OpenAIでは元画像を2048×1024の球面用画像へ投影し、画像と編集マスクをAPIへ渡します。見えている中央部分を保持したうえで検査します。
+4. **Semantic QA / 意味的QA** — Check objects, openings, structure, lighting and continuity. OpenAI compares the original reference, the full panorama, the centered seam and a 90° perspective view facing the seam. Ordinary repeating features outside the partial reference are not treated as duplicates solely by count. Gemini checks the generated image before blending. / 物体、開口部、構造、光、つなぎ目を確認します。OpenAIでは元画像、全周画像、中央へ移したつなぎ目、つなぎ目を正面から見た90°の視野を比較します。元画像に写らない範囲の通常の反復構造は、個数だけで重複と判定しません。Geminiではブレンド前に検査します。
+5. **One bounded correction / 最大1回の補正** — OpenAI edits a local seam defect or repeats outpainting from the same fixed reference for wider defects. Gemini retains its single regeneration. A second rejection stops processing and makes the inspected image available as an unverified diagnostic. / OpenAIでは、つなぎ目だけの不具合は部分編集し、広い範囲の不具合は同じ元画像を保持して周囲を再生成します。Geminiの再生成も最大1回です。再検査で不合格なら停止し、理由と検査対象の未合格画像を確認できます。
+6. **Viewer / ビューワー** — An accepted image opens in the Three.js viewer. Rotate through the seam before exporting. / 検査を通った画像はThree.jsビューワーで開けます。書き出す前に回転させ、つなぎ目を確認してください。
 
 This routine improves scene-level continuity, but it is not a 3D reconstruction or a mathematical guarantee that every object is identical around the entire sphere. The viewer remains the final human inspection surface; rotate it to inspect multiple directions before exporting. / このルーチンはシーン全体の整合性を高めますが、3D復元や、球全周で全物体が完全一致することの数学的保証ではありません。書き出し前にビューワーを回転し、複数方向を人間が確認することが最終確認になります。
 
-For OpenAI, the selected OpenAI vision model (default GPT-6.1 Sol) first describes the source image, the spatial ledger is produced from that analysis, and GPT Image 2.5 Sunburst/xhigh recreates the panorama from the resulting contract. A retry-eligible provider failure falls back to GPT Image 2.0/high within the same **600 seconds (10 minutes)** window. This is deliberately a semantic re-creation path, not pixel-preserving outpainting. / OpenAIでは、まず選択したOpenAIモデル（既定GPT-6.1 Sol）のVisionが元画像を説明し、その解析から空間台帳を作成してGPT Image 2.5 Sunburst/xhighがパノラマを再生成します。リトライ対象のプロバイダ失敗時だけ、同じ **600秒（10分）** 枠内でGPT Image 2.0/highへフォールバックします。これはピクセル保持型のアウトペイントではなく、意味的な再生成経路です。
+For OpenAI, the selected vision model (default GPT-6.1 Sol) extracts the inventory directly from the source image. GPT Image 2.6 Sunburst/xhigh fills the unseen directions using the projected image and mask. With no lens calibration, projection assumes a level camera and a 90° horizontal field of view; the narrow source boundary is feathered. The unseen space is generated, not recovered from measured 3D geometry. Each OpenAI image request has a **600-second (10-minute)** limit. / OpenAIでは選択したVisionモデル（既定GPT-6.1 Sol）が元画像から直接台帳を抽出し、GPT Image 2.6 Sunburst/xhighが投影画像とマスクを使って見えていない方向を補います。レンズの校正情報がないため、水平なカメラと水平画角90°を仮定し、元画像の狭い境界だけをなじませます。見えない空間はAIによる生成であり、実測した3D形状の復元ではありません。OpenAI画像リクエストは1回につき **600秒（10分）** が上限です。
 
 ### Provider Isolation / プロバイダ分離
 
 Gemini and OpenAI are independent execution paths. A Gemini request can retry only Gemini models, and an OpenAI request can retry only OpenAI models; neither provider is ever used as the other provider's fallback. Changing the configured provider clears the source image, generated panorama, viewer, and retry state. To continue after switching, create or upload a new source image under the newly selected provider. / GeminiとOpenAIは完全に独立した実行経路です。Geminiのリトライ先はGeminiモデルだけ、OpenAIのリトライ先はOpenAIモデルだけであり、相互にフォールバックすることはありません。設定プロバイダを切り替えた瞬間、元画像・生成済みパノラマ・ビューワー・再試行状態をすべて消去します。切替後に続ける場合は、新しく選択したプロバイダで元画像を生成またはアップロードしてください。
 
 * **Gemini image path / Gemini画像生成**: Nano Banana 2.1 (`gemini-nano-banana-2.1`) uses the Interactions API for image creation, panorama expansion and spatial repairs. The Model Chain display uses the same model configuration. / 画像生成・360度への拡張・空間の修正は、Nano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIを使用します。Model Chain表示も実行時と同じモデル設定を参照します。
-* **OpenAI image path / OpenAI画像生成**: OpenAI uses a text-mediated recreation pipeline: the selected OpenAI vision model (default GPT-6.1 Sol) analysis prepares the prompt, then GPT Image 2.5 Sunburst/xhigh generates PNG output. A retry-eligible provider failure falls back to GPT Image 2.0/high inside the shared timeout. This is high-quality recreation, not pixel-preserving outpainting. / OpenAIはテキスト媒介の再構成パイプラインです。選択したOpenAIモデル（既定GPT-6.1 Sol）のVision解析でプロンプトを作り、GPT Image 2.5 Sunburst/xhighがPNGを生成します。リトライ対象のプロバイダ失敗時だけ、共有タイムアウト内でGPT Image 2.0/highへフォールバックします。これは高品質な再生成であり、元画像ピクセルをそのまま延長するアウトペイントではありません。
+* **OpenAI image path / OpenAI画像生成**: The base image uses GPT Image 2.6 Sunburst/xhigh first, with GPT Image 2.0/high for eligible provider errors. Panorama expansion uses the same model route and sends the projected source pixels and mask to the editing API. / 元画像生成はGPT Image 2.6 Sunburst/xhighを優先し、対象のエラーではGPT Image 2.0/highへ切り替えます。360°拡張でも同じモデル候補を使い、球面へ投影した元画像の画素とマスクを編集APIへ渡します。
 * **Viewer and metadata / ビューワーとメタデータ**: The generated equirectangular image can be checked in the built-in Three.js viewer and exported with GPano metadata for 360-degree viewers. / 生成された正距円筒図法画像は内蔵Three.jsビューワーで確認でき、360度ビューア向けにGPanoメタデータ付きで保存できます。
 
 ---
@@ -65,11 +65,11 @@ Gemini and OpenAI are independent execution paths. A Gemini request can retry on
 The system supports both Gemini and OpenAI APIs and lets users select the engine for their task. / 本システムは、Gemini API と OpenAI API の両方をサポートし、用途に応じて切り替えて使用できるデュアルエンジン構造を採用しています。
 
 - **Gemini API (Google)**: Nano Banana 2.1 (`gemini-nano-banana-2.1`) generates images and expands source images through the Interactions API. / Nano Banana 2.1 (`gemini-nano-banana-2.1`) のInteractions APIで、画像生成と参照画像からのパノラマ拡張を行います。
-- **OpenAI API (GPT Image 2.5 / 2.0 fallback & selectable text/vision models)**: Generates panoramas from text using GPT Image 2.5 Sunburst/xhigh, falling back to GPT Image 2.0/high only for retry-eligible provider failures, and uses the selected OpenAI vision model (default GPT-6.1 Sol) analysis to re-create an existing image as a seamless 360° environment. **Note: the combined image request window is up to 10 minutes and is billed on a pay-as-you-go basis.** / GPT Image 2.5 Sunburst/xhighによる高画質生成を基本に、リトライ対象のプロバイダ失敗時だけGPT Image 2.0/highへフォールバックし、選択したOpenAIモデル（既定GPT-6.1 Sol）のVision解析で「既存画像の360度化（近似再構築）」に対応します。**※画像リクエスト全体は最大10分で、従量課金となります。**
+- **OpenAI API / OpenAIの画像生成**: GPT Image 2.6 Sunburst/xhigh creates the base image, with a GPT Image 2.0/high fallback for eligible errors. The same model route creates and corrects the 360° image. The selected Vision model analyzes the input and inspects continuity. / 元画像の生成はGPT Image 2.6 Sunburst/xhighを優先し、対象のエラーではGPT Image 2.0/highに切り替えます。360°画像の生成と補正も同じモデル候補を使います。選択したVisionモデルが元画像を解析し、つながりを検査します。
 
 #### ⚠️ OpenAI API Limitations / OpenAI APIモードの限界と注意事項
-- **Time Required (処理時間)**: OpenAI API does not support native panorama outpainting. It requires a multi-step pipeline (Vision Analysis -> Prompt Generation -> GPT Image 2.5, with GPT Image 2.0 fallback when eligible), and the app permits up to **10 minutes total** for the image job. / OpenAI APIはネイティブなパノラマ拡張をサポートしていないため、選択したOpenAIモデルでの画像解析からGPT Image 2.5での再生成（対象時はGPT Image 2.0へのフォールバック）まで複数ステップを踏みます。アプリは画像ジョブ全体に**最大10分**を許容します。
-- **Re-creation vs Outpainting (近似再構築)**: When expanding an existing image with OpenAI API, the original image is NOT directly stitched or outpainted. Instead, the selected OpenAI vision model (default GPT-6.1 Sol) describes the image in text, and GPT Image 2.5 (or its eligible GPT Image 2.0 fallback) generates a completely new 360° image matching that description. / 画像ドロップによる360度拡張をOpenAI APIで行う場合、元の絵を直接拡張（切り貼り）するわけではありません。AIが画像をテキスト化し、その情報をもとにGPT Image 2.5（対象時はGPT Image 2.0へのフォールバック）が**そっくりな360度画像を新規生成（近似再構築）**するため、「それっぽくなる」挙動となります。
+- **Processing time / 処理時間**: OpenAI expansion includes source analysis, generation, inspection and up to one correction. The app displays a 10-minute limit, and each OpenAI image request has its own **600 seconds (10 minutes)** limit. / OpenAIの拡張では元画像の解析、生成、検査と最大1回の補正を行います。画面上の待ち時間は最大10分です。画像APIの各リクエストは最大10分です。
+- **Scene reconstruction / 空間の再構成**: OpenAI Vision describes the source image and the image model draws a new 360° scene from that description. When a defect is limited to the wrap seam, a masked edit repairs that part of the new image. / OpenAIのVisionで元画像を説明し、その内容から新しい360°画像を描きます。つなぎ目だけに不具合があれば、新しい画像の該当部分を画像編集で補正します。
 - **Pay-As-You-Go Cost (従量課金)**: Using the OpenAI API incurs usage-based costs. Frequent panorama generation may consume significant API credits. / OpenAI APIは従量課金です。パノラマ生成を頻繁に行うとAPI残高を大きく消費する可能性があります。
 
 #### 🎯 Engine Selection Guide / エンジン選択ガイド
@@ -82,8 +82,8 @@ The system supports both Gemini and OpenAI APIs and lets users select the engine
 | **Background-only 360° / 背景のみ360°** | Both OK / 両方可 | Environmental scenes (cafés, streets, landscapes) work well with both engines. / 環境シーン（カフェ、街並み、風景等）は両エンジンとも良好。 |
 
 ### 🖼️ 2-Stage Generation / 2段階生成
-- **Text-to-Image / テキストから画像生成**: Generates a high-quality 2:1 aspect ratio base image from any scene description and style. / 任意のシーン説明とスタイルから、高品質な2:1比率のベース画像を生成。
-- **Image-to-360° Panorama / 画像から360°パノラマへ拡張**: Expands the generated image, or a user-dropped image, into a seamless 360-degree panorama using AI outpainting. / 生成した画像、またはユーザーがドロップした手持ちの画像を、AIアウトペインティングによってシームレスな360度パノラマに拡張。
+- **Text-to-Image / テキストから画像生成**: Generates a base image from a scene description and style. The OpenAI base image is 1536×1024. / シーンと画風を指定して元画像を生成します。OpenAIで生成する元画像は1536×1024です。
+- **Image-to-360° Panorama / 画像から360°パノラマへ拡張**: Uses a generated or dropped reference image to create and inspect a 360° panorama. / 生成画像やドロップした画像をもとに360°パノラマを作り、つながりを検査します。
 
 ### 🎬 Massive Scene Presets / 大規模シーンプリセット
 - Over **65 pre-built scene descriptions** across 7 categories, allowing one-click scene selection without manual typing. / 7カテゴリ計**65以上のシーンプリセット**を搭載し、手入力なしでワンクリックで選択可能。
@@ -140,7 +140,7 @@ GPT-6 / GPT-5.6 text/vision calls allow up to 120 seconds and use reasoning-comp
 This system is not merely an image generation tool. It is a **spatial rendering engine** designed to correct spatial distortions and build/provide seamless 360-degree environments in real time. / 本システムは単なる画像生成ツールではありません。空間の歪みを補正し、シームレスな360度環境をリアルタイムで構築・提供するための**空間レンダリングエンジン**です。
 
 * **2-Stage Image Expansion Pipeline / 2段階拡張パイプライン**:
-  Instead of directly generating a panorama from text, it first generates a high-resolution seed image, then uses AI outpainting to expand the edges so they connect seamlessly in equirectangular projection, minimizing structural collapse. / テキストから直接パノラマを生成するのではなく、まず高解像度のシード画像を生成し、そのシード画像を中心としてAIのアウトペインティング（外側拡張）機能を用いて左右の端がシームレスに繋がる正距円筒図法に拡張します。これにより、破綻の少ないパノラマを生成します。
+  Generate or upload a reference image, then use the selected provider to build an equirectangular panorama. Inspect the wrap seam in the viewer before export. / 参考画像を生成するかアップロードし、選んだAPIで正距円筒のパノラマを作ります。書き出す前にビューワーで左右のつながりを確認できます。
 * **Strict Autocomplete Contamination Prevention / 自動入力汚染の完全排除**:
   Implements multi-layered defenses (dynamic `readonly` removal, randomized `name` attributes, delayed DOM clearing) to prevent unwanted strings from mixing into prompts via browser autocomplete. / ブラウザの自動補完によって予期せぬ文字列がプロンプトに混入する問題（UI汚染）を防ぐため、`readonly`属性の動的解除、ランダムな`name`属性、および遅延評価によるDOM強制クリアの多段防御壁を実装しています。
 * **Robust Content Policy Handling / コンテンツポリシーのスマート検知**:
@@ -415,6 +415,11 @@ Developed by **FURU** / 開発：**FURU**
 | Narration Video Maker / ナレーション動画メーカー | Video generation with narration, subtitles, and BGM / ナレーション・字幕・BGM付き動画生成 | [gemini-narration-studio](https://github.com/FURUYAN1234/gemini-narration-studio) |
 
 ## 📋 ChangeLog / 📋 更新履歴
+
+### v1.4.9 (2026-11-05)
+- OpenAI base-image generation starts with GPT Image 2.6 Sunburst / xhigh. The same model route handles OpenAI 360° expansion and edits. / OpenAIの元画像生成ではGPT Image 2.6 Sunburst / xhighを優先します。360°拡張と部分編集も同じモデル候補を使います。
+- OpenAI 360° expansion requests 2048×1024 and checks the finished image across the wrap seam before showing the result. / OpenAIの360°拡張は2048×1024で生成を依頼し、仕上げ後のつなぎ目を検査してから結果を表示します。
+- OpenAI corrects a local seam defect with a masked edit and reinspects the result. / OpenAIでつなぎ目だけに不具合があった場合は、その部分を画像編集で補正し、再検査します。
 
 ### v1.4.7 (2026-10-27)
 

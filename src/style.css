@@ -342,6 +342,12 @@ body{
 .error-icon{font-size:3rem;margin-bottom:16px}
 .error-card h3{color:var(--warning);margin-bottom:12px;font-size:1.1rem}
 #error-message{font-size:0.9rem;color:var(--text);margin-bottom:24px;line-height:1.6}
+#error-overlay .error-card{max-height:90vh;overflow:auto}
+#quality-diagnostics{margin:16px 0;text-align:left}
+#quality-diagnostics summary{cursor:pointer}
+#quality-diagnostics p,#quality-diagnostics figcaption{font-size:0.8rem;line-height:1.5}
+#quality-diagnostics figure{margin:14px 0}
+#quality-diagnostics img{display:block;width:100%;height:auto}
 .error-actions{display:flex;gap:12px;justify-content:center}
 .error-actions .primary-btn{width:auto;margin:0;padding:10px 28px;font-size:0.9rem}
 .error-actions .text-btn{padding:10px 20px;color:var(--text-dim)}

@@ -12,6 +12,20 @@ import { resetGenerationStateForProviderChange } from './lib/provider-session.js
 import { OPENAI_MODELS, getOpenAIModel, formatOpenAIModelPrice, formatOpenAIModelRouteStatus } from './lib/openai-models.js';
 
 const engine = new PanoramaEngine();
+let pendingEnginePrototype = null;
+function applyPendingEngineUpdate() {
+  if (!pendingEnginePrototype || !dom.processingOverlay.classList.contains('hidden')) return;
+  Object.setPrototypeOf(engine, pendingEnginePrototype);
+  pendingEnginePrototype = null;
+  console.info('Development engine updated; current session and source image retained.');
+}
+if (import.meta.hot) {
+  import.meta.hot.accept('./panorama.js', updated => {
+    if (!updated?.PanoramaEngine) return;
+    pendingEnginePrototype = updated.PanoramaEngine.prototype;
+    applyPendingEngineUpdate();
+  });
+}
 let viewer = null;
 
 const $ = (sel) => document.querySelector(sel);
@@ -744,11 +758,11 @@ async function executePanoramaExpansion() {
   const isOpenAI = engine.activeEngine === 'openai';
   const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードでは最大10分かかることがあります）' : '入力画像を分析しています...';
 
-  // パノラマは5ステップ（4段階パイプライン + ビューワー準備）
   showProcessing('パノラマ拡張中...', subText, [
     { id: 'analyze', label: '🔍 画像分析' },
     { id: 'generate', label: '🌐 360°拡張生成' },
-    { id: 'seamfix', label: '🔧 シーム修復（Split-Swap-Inpaint）' },
+    { id: 'seamfix', label: isOpenAI ? '🔧 つなぎ目の準備・補正' : '🔧 つなぎ目の調整（Split-Swap・ブレンド）' },
+    ...(isOpenAI ? [{ id: 'qa', label: '🔎 360°画像とつなぎ目の検査' }] : []),
     { id: 'render', label: '💻 ビューワー準備' },
   ], isOpenAI);
 
@@ -759,19 +773,27 @@ async function executePanoramaExpansion() {
       } else if (step === 'generate') {
         setStepState('analyze', 'done');
         setStepState('generate', 'active');
+        setStepState('seamfix', 'pending');
+        setStepState('qa', 'pending');
         dom.processingSub.innerHTML = isOpenAI 
           ? 'AIが360°背景を生成しています...<br>（※OpenAIモードでは最大10分かかることがあります）'
           : 'AIが360°背景を生成しています...';
       } else if (step === 'splitswap') {
         setStepState('generate', 'done');
         setStepState('seamfix', 'active');
-        dom.processingSub.textContent = 'シームを検出・移動中（Split-Swap）...';
+        dom.processingSub.textContent = '画像の左右端を中央に移動しています...';
       } else if (step === 'inpaint') {
-        dom.processingSub.innerHTML = isOpenAI
-          ? 'AIがシームを修復しています...<br>（※OpenAIモードでは最大10分かかることがあります）'
-          : 'AIがシームを修復しています（Inpaint）...';
+        dom.processingSub.textContent = 'つなぎ目の色をなじませています...';
       } else if (step === 'restore') {
         dom.processingSub.textContent = '画像を復元中...';
+      } else if (step === 'repair') {
+        setStepState('qa', 'pending');
+        setStepState('seamfix', 'active');
+        dom.processingSub.textContent = '検査で見つかったつなぎ目を画像編集で補正しています...';
+      } else if (step === 'qa') {
+        setStepState('seamfix', 'done');
+        setStepState('qa', 'active');
+        dom.processingSub.textContent = '完成画像と左右のつながりを確認しています...';
       } else if (step === 'fallback') {
         dom.processingSub.textContent = `モデル切替中: ${detail || '再試行'}...`;
       }
@@ -782,6 +804,7 @@ async function executePanoramaExpansion() {
     );
 
     setStepState('seamfix', 'done');
+    setStepState('qa', 'done');
     setStepState('render', 'active');
     dom.processingSub.textContent = '360°ビューワーを構築中...';
 
@@ -815,7 +838,17 @@ async function executePanoramaExpansion() {
   } catch (error) {
     console.error('パノラマ拡張エラー:', error);
     hideProcessing();
-    if (error.isContentPolicy || (error.message && error.message.includes('content_policy'))) {
+    if (error.code === 'panorama_quality_rejected') {
+      showError('360°画像の品質検査で停止しました', error.message);
+      if (error.panorama) {
+        $('#quality-panorama').src = `data:${error.panorama.mimeType};base64,${error.panorama.base64}`;
+        const seam = $('#quality-seam');
+        if (error.seamView) seam.src = `data:${error.seamView.mimeType};base64,${error.seamView.base64}`;
+        else seam.removeAttribute('src');
+        seam.parentElement.classList.toggle('hidden', !error.seamView);
+        $('#quality-diagnostics').classList.remove('hidden');
+      }
+    } else if (error.isContentPolicy || (error.message && error.message.includes('content_policy'))) {
       showError(
         '⛔ コンテンツポリシー制限',
         'AIの安全フィルタによりパノラマ生成がブロックされました。\n※誤検知の場合もあります。そのままリトライすると成功することがあります。'
@@ -922,6 +955,7 @@ function showProcessing(title, sub, steps, showTimer = false) {
 
 function hideProcessing() { 
   dom.processingOverlay.classList.add('hidden'); 
+  applyPendingEngineUpdate();
   if (processingTimerInterval) {
     clearInterval(processingTimerInterval);
     processingTimerInterval = null;
@@ -934,9 +968,14 @@ function setStepState(stepId, s) {
   el.classList.remove('active', 'done');
   if (s === 'active') { el.classList.add('active'); el.querySelector('.step-icon').textContent = '⏳'; }
   else if (s === 'done') { el.classList.add('done'); el.querySelector('.step-icon').textContent = '✅'; }
+  else { el.querySelector('.step-icon').textContent = '⏳'; }
 }
 
 function showError(title, message) {
+  $('#quality-diagnostics').classList.add('hidden');
+  $('#quality-diagnostics').open = false;
+  $('#quality-panorama').removeAttribute('src');
+  $('#quality-seam').removeAttribute('src');
   dom.errorTitle.textContent = title;
   // 改行と箇条書きをHTMLに変換（安全にエスケープ後）
   const escaped = (message || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -951,6 +990,10 @@ dom.errorRetry.addEventListener('click', () => {
   if (state.lastAction) state.lastAction();
 });
 dom.errorDismiss.addEventListener('click', () => { dom.errorOverlay.classList.add('hidden'); });
+$('#quality-save').addEventListener('click', () => {
+  const source = $('#quality-panorama').getAttribute('src');
+  if (source) downloadDataUrl(source, `PanoForge_unverified_${getTimestamp()}.png`);
+});
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 

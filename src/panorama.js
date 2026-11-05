@@ -16,6 +16,7 @@ import {
 import { normalizeApiKey } from './lib/api-key.js';
 import { DEFAULT_OPENAI_MODEL_ID, getOpenAIModel, getOpenAIModelRoute } from './lib/openai-models.js';
 import { getOpenAIImageFallbackChain, shouldFallbackOpenAIImage } from './lib/openai-image-fallback.js';
+import { projectPerspectiveReference, projectPanoramaView } from './lib/panorama-reference.js';
 
 // タイムアウト付きでPromiseを実行するヘルパー関数
 async function callWithTimeout(promise, ms) {
@@ -34,7 +35,44 @@ async function callWithTimeout(promise, ms) {
 
 const OPENAI_TEXT_TIMEOUT_MS = 25000;
 const OPENAI_VISION_TIMEOUT_MS = 60000;
+const OPENAI_PANORAMA_SIZE = '2048x1024';
 const GEMINI_IMAGE_TIMEOUT_MS = 120000;
+const EQUIRECTANGULAR_GEOMETRY = `Render one full spherical view from one fixed camera position. The center column faces the reference direction, the quarter columns face the two sides, and both outer edges meet in the direction behind the camera. These are continuous angles through one space. The equator is at mid-height, with the zenith at the top and nadir at the bottom. Reconstruct unseen directions with plausible continuations of the same surfaces. Place the wrap boundary on a simple continuous surface if possible. Any structure crossing it must align on both edges in position and direction.`;
+const OPENAI_SCENE_PROMPT = `Analyze this image in extreme detail. Describe the scene as if writing a comprehensive prompt for an image generator.
+
+Include ALL of the following in your description:
+- The art style (anime, photorealistic, watercolor, etc.), line quality, color palette, and rendering technique
+- Any characters or figures present: their appearance, hair, clothing, what they are doing, and where they are in the scene
+- The environment, setting, architectural style, and specific objects
+- Time of day, lighting direction, shadows, contrast, saturation, and color temperature
+- Overall atmosphere and mood
+
+Do NOT mention that this is an image or photo. Describe the scene directly.
+Do NOT omit characters or figures if they are present — they are part of the scene.
+Keep it highly descriptive but concise.`;
+
+function loadPanoramaImage({ base64, mimeType }) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('パノラマ画像の読み込みに失敗しました。'));
+    image.src = `data:${mimeType};base64,${base64}`;
+  });
+}
+
+function makeCanvas(width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
+function canvasPngBlob(canvas) {
+  return new Promise((resolve, reject) => canvas.toBlob(blob => {
+    if (blob) resolve(blob);
+    else reject(new Error('360°編集用のPNGを作成できませんでした。'));
+  }, 'image/png'));
+}
 
 export class PanoramaEngine {
   constructor() {
@@ -163,19 +201,20 @@ export class PanoramaEngine {
     }
   }
 
-  async _callOpenAIVisionWithFallback(base64Image, mimeType) {
-    const prompt = `Analyze this image in extreme detail. Describe the scene as if writing a comprehensive prompt for an image generator.
-
-Include ALL of the following in your description:
-- The art style (anime, photorealistic, watercolor, etc.), line quality, color palette, and rendering technique
-- Any characters or figures present: their appearance, hair, clothing, what they are doing, and where they are in the scene
-- The environment, setting, architectural style, and specific objects
-- Time of day, lighting direction, shadows, contrast, saturation, and color temperature
-- Overall atmosphere and mood
-
-Do NOT mention that this is an image or photo. Describe the scene directly.
-Do NOT omit characters or figures if they are present — they are part of the scene.
-Keep it highly descriptive but concise.`;
+  async _callOpenAIVisionWithFallback(base64Image, mimeType, {
+    prompt = OPENAI_SCENE_PROMPT, responseFormat = 'text', seamView, seamPerspective, referenceView,
+  } = {}) {
+    const images = [{ base64: base64Image, mimeType }];
+    if (seamView) images.push(seamView);
+    if (seamPerspective) images.push(seamPerspective);
+    if (referenceView) images.push(referenceView);
+    const messages = [{
+      role: 'user',
+      content: [{ type: 'text', text: prompt }, ...images.map(image => ({
+        type: 'image_url',
+        image_url: { url: `data:${image.mimeType};base64,${image.base64}`, detail: 'high' },
+      }))],
+    }];
     
     const ordered = getOpenAIModelRoute(this.selectedOpenAIModelId);
     const attemptedModels = [];
@@ -193,17 +232,9 @@ Keep it highly descriptive but concise.`;
             console.log(`🎯 OpenAI Vision ${tier.label} で処理開始`);
           }
         
-          const messages = [{
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}`, detail: "high" } }
-            ]
-          }];
-        
           attemptedModels.push(tier.id);
           this._notifyOpenAIModelRoute('vision', 'trying', tier.id, route());
-          const text = await this._callOpenAIChat(messages, tier.id, "text", OPENAI_VISION_TIMEOUT_MS);
+          const text = await this._callOpenAIChat(messages, tier.id, responseFormat, OPENAI_VISION_TIMEOUT_MS);
         
           this._notifyOpenAIModelRoute('vision', 'adopted', tier.id, route());
           console.log(`✅ OpenAI Vision ${tier.label} で処理成功`);
@@ -225,7 +256,7 @@ Keep it highly descriptive but concise.`;
     }
   }
 
-  async _callOpenAIImage(prompt, size = "1024x1024") {
+  async _callOpenAIImage(prompt, size = "1024x1024", { panorama = false, edit = null } = {}) {
     const deadline = Date.now() + 600000;
     const imageModels = getOpenAIImageFallbackChain();
     let lastError;
@@ -244,11 +275,23 @@ Keep it highly descriptive but concise.`;
           quality: imageModel.quality,
           output_format: "png",
         };
+        const headers = { Authorization: `Bearer ${this.openAIKey}` };
+        let body;
+        if (edit) {
+          body = new FormData();
+          for (const [key, value] of Object.entries(payload)) body.append(key, String(value));
+          body.append('image', edit.image, 'panorama.png');
+          body.append('mask', edit.mask, 'seam-mask.png');
+        } else {
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify(payload);
+        }
+        const action = edit ? 'edits' : 'generations';
         const res = await callWithTimeout(
-          fetch("https://api.openai.com/v1/images/generations", {
+          fetch(`https://api.openai.com/v1/images/${action}`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
-            body: JSON.stringify(payload),
+            headers,
+            body,
           }),
           remainingMs,
         );
@@ -289,6 +332,7 @@ Keep it highly descriptive but concise.`;
           throw new Error("画像データが見つかりませんでした");
         }
 
+        console.info(`OpenAI Images ${action}: ${imageModel.id} / ${imageModel.quality} / ${size}`);
         return { base64, mimeType: "image/png", usedModel: imageModel.id };
       } catch (err) {
         lastError = err;
@@ -309,10 +353,9 @@ Keep it highly descriptive but concise.`;
     const prompt = buildSpatialLedgerPrompt();
     let responseText;
     if (this.activeEngine === 'openai') {
-      const description = await this._analyzeImageWithVision(imageBase64, mimeType);
-      responseText = await this._callOpenAIChatWithFallback([{
-        role: 'user', content: `${prompt}\n\nREFERENCE DESCRIPTION:\n${description}`,
-      }], 'json_object');
+      responseText = await this._callOpenAIVisionWithFallback(imageBase64, mimeType, {
+        prompt, responseFormat: 'json_object',
+      });
     } else {
       const response = await this._callWithFallback(TEXT_MODELS, 'text', {
         contents: [{ role: 'user', parts: [
@@ -326,14 +369,14 @@ Keep it highly descriptive but concise.`;
     return parseSpatialLedger(responseText);
   }
 
-  async _runSpatialQa(panorama, ledger) {
-    const prompt = buildSpatialQaPrompt(ledger);
+  async _runSpatialQa(panorama, ledger, seamView, referenceView) {
+    const prompt = buildSpatialQaPrompt(ledger, Boolean(seamView), Boolean(referenceView));
     let responseText;
     if (this.activeEngine === 'openai') {
-      const description = await this._analyzeImageWithVision(panorama.base64, panorama.mimeType);
-      responseText = await this._callOpenAIChatWithFallback([{
-        role: 'user', content: `${prompt}\n\nPANORAMA DESCRIPTION:\n${description}`,
-      }], 'json_object');
+      const seamPerspective = seamView ? await this._createPanoramaSeamView(panorama) : undefined;
+      responseText = await this._callOpenAIVisionWithFallback(panorama.base64, panorama.mimeType, {
+        prompt, responseFormat: 'json_object', seamView, seamPerspective, referenceView,
+      });
     } else {
       const response = await this._callWithFallback(TEXT_MODELS, 'text', {
         contents: [{ role: 'user', parts: [
@@ -344,10 +387,26 @@ Keep it highly descriptive but concise.`;
       }, OPENAI_VISION_TIMEOUT_MS);
       responseText = response.candidates?.[0]?.content?.parts?.find(part => part.text)?.text || '';
     }
-    return parseSpatialQa(responseText);
+    const assessment = parseSpatialQa(responseText);
+    console.info(`Spatial QA assessment: ${assessment.verdict}; repair=${assessment.seamOnly ? 'seam' : 'whole'}; ${assessment.issues.join('; ')}`);
+    return assessment;
   }
 
-  async _regenerateForSpatialIssues(imageBase64, mimeType, ledger, issues, onProgress) {
+  async _createPanoramaSeamView(panorama) {
+    const image = await loadPanoramaImage(panorama);
+    const source = makeCanvas(image.naturalWidth, image.naturalHeight);
+    const context = source.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const view = projectPanoramaView(context.getImageData(0, 0, source.width, source.height));
+    const canvas = makeCanvas(view.width, view.height);
+    canvas.getContext('2d').putImageData(new ImageData(view.data, view.width, view.height), 0, 0);
+    return { base64: canvas.toDataURL('image/png').split(',')[1], mimeType: 'image/png' };
+  }
+
+  async _regenerateForSpatialIssues(imageBase64, mimeType, ledger, issues, onProgress, reference) {
+    if (this.activeEngine === 'openai') {
+      return this._outpaintOpenAIReference(reference, ledger, issues, onProgress);
+    }
     const correction = `Regenerate the complete 360-degree equirectangular panorama from the reference image.
 
 SPATIAL INVENTORY:
@@ -358,7 +417,6 @@ ${issues.map(issue => `- ${issue}`).join('\n')}
 
 Keep one continuous, physically coherent space. Do not add furniture, openings, or decorations beyond the reference inventory. The left and right edges must join seamlessly when wrapped into a sphere. Output a strict 2:1 equirectangular panorama with no text, watermark, UI, or borders.`;
     onProgress?.('generate');
-    if (this.activeEngine === 'openai') return await this._callOpenAIImage(correction, '1536x1024');
     const response = await this._callWithFallback(IMAGE_MODELS, 'image', {
       contents: [{ role: 'user', parts: [
         { inlineData: { mimeType, data: imageBase64 } },
@@ -367,6 +425,100 @@ Keep one continuous, physically coherent space. Do not add furniture, openings, 
       config: { responseModalities: ['IMAGE', 'TEXT'] },
     }, GEMINI_IMAGE_TIMEOUT_MS, tierLabel => onProgress?.('fallback', tierLabel));
     return this._extractImage(response);
+  }
+
+  async _prepareOpenAIPanoramaReference(base64, mimeType) {
+    const original = await loadPanoramaImage({ base64, mimeType });
+    const source = makeCanvas(original.naturalWidth, original.naturalHeight);
+    const context = source.getContext('2d');
+    context.drawImage(original, 0, 0);
+    const projection = projectPerspectiveReference(context.getImageData(0, 0, source.width, source.height));
+    const canvases = {};
+    for (const name of ['image', 'mask', 'anchor']) {
+      const canvas = makeCanvas(projection.width, projection.height);
+      canvas.getContext('2d').putImageData(new ImageData(projection[name], projection.width, projection.height), 0, 0);
+      canvases[name] = canvas;
+    }
+    return {
+      image: await canvasPngBlob(canvases.image), mask: await canvasPngBlob(canvases.mask),
+      anchor: canvases.anchor,
+    };
+  }
+
+  async _preservePanoramaReference(candidate, reference) {
+    const image = await loadPanoramaImage(candidate);
+    const { width, height } = reference.anchor;
+    if (image.naturalWidth !== width || image.naturalHeight !== height) {
+      throw new Error(`360°画像は2:1の${width}×${height}が必要です（実寸: ${image.naturalWidth}×${image.naturalHeight}）。`);
+    }
+    const canvas = makeCanvas(width, height);
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    // Mask guidance alone does not guarantee preservation. Restore the known pixels.
+    context.drawImage(reference.anchor, 0, 0);
+    return { ...candidate, base64: canvas.toDataURL('image/png').split(',')[1], mimeType: 'image/png' };
+  }
+
+  async _outpaintOpenAIReference(reference, ledger, issues = [], onProgress) {
+    const prompt = `Complete the missing directions in this 2:1 equirectangular panorama.
+The visible central patch is an actual perspective photograph mathematically projected onto a sphere (90-degree horizontal field of view, camera level). Its geometry and pixels are fixed. The gray area outside it is unknown space to be filled, NOT a wall, frame, fog, or an object. The transparent mask marks the area to generate.
+Continue the existing surfaces naturally out of the fixed patch in every direction. Infer the unseen sides and rear from the SAME camera position. Do not copy the front view into the rear. Do not duplicate distinctive objects or move them. Add only the plausible unseen continuation of this environment; maintain its style, lighting and density.
+${EQUIRECTANGULAR_GEOMETRY}
+The output must cover the entire sphere including above and below, with no gray unfilled area, frames, panels, text or watermarks.
+
+VISIBLE REFERENCE INVENTORY:
+${formatSpatialLedger(ledger)}
+${issues.length ? `\nCORRECT THESE OBSERVED DEFECTS IN THE GENERATED AREA:\n${issues.map(issue => `- ${issue}`).join('\n')}` : ''}`;
+    onProgress?.('generate');
+    return this._callOpenAIImage(prompt, OPENAI_PANORAMA_SIZE, { panorama: true, edit: reference });
+  }
+
+  async _repairOpenAISeam(shifted, issues, onProgress) {
+    const original = await loadPanoramaImage(shifted);
+    const { naturalWidth: width, naturalHeight: height } = original;
+    const left = Math.round(width * 0.34);
+    const stripWidth = width - 2 * left;
+    const maskCanvas = makeCanvas(width, height);
+    const maskContext = maskCanvas.getContext('2d');
+    maskContext.fillRect(0, 0, width, height);
+    maskContext.clearRect(left, 0, stripWidth, height);
+    const mask = await new Promise((resolve, reject) => maskCanvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error('つなぎ目の編集マスクを作成できませんでした。'));
+    }, 'image/png'));
+    const image = new Blob([Uint8Array.from(atob(shifted.base64), value => value.charCodeAt(0))], {
+      type: shifted.mimeType,
+    });
+    const prompt = `Repair the seam in the transparent central strip of this horizontally rotated equirectangular panorama.
+The two sides of the central cut depict adjacent directions from one camera. Bridge interrupted structures so they follow a single path at consistent heights and angles. Align the new strip to the unmasked structures on both sides. Preserve the lighting, polar projection and scene outside the strip. The left and right edges of this rotated image are already continuous.
+Visible problems:
+${issues.map(issue => `- ${issue}`).join('\n')}`;
+    onProgress?.('repair');
+    const response = await this._callOpenAIImage(prompt, `${width}x${height}`, { panorama: true, edit: { image, mask } });
+    const edited = await loadPanoramaImage(response);
+    if (edited.naturalWidth !== width || edited.naturalHeight !== height) {
+      throw new Error(`編集後の360°画像が元と同じ寸法ではありません（実寸: ${edited.naturalWidth}×${edited.naturalHeight}）。`);
+    }
+
+    // The edit mask guides the model. Composite only the strip to preserve the surrounding pixels.
+    const patch = makeCanvas(stripWidth, height);
+    const patchContext = patch.getContext('2d');
+    patchContext.drawImage(edited, left, 0, stripWidth, height, 0, 0, stripWidth, height);
+    const gradient = patchContext.createLinearGradient(0, 0, stripWidth, 0);
+    gradient.addColorStop(0, 'transparent');
+    gradient.addColorStop(0.03, 'black');
+    gradient.addColorStop(0.97, 'black');
+    gradient.addColorStop(1, 'transparent');
+    patchContext.globalCompositeOperation = 'destination-in';
+    patchContext.fillStyle = gradient;
+    patchContext.fillRect(0, 0, stripWidth, height);
+
+    const repaired = makeCanvas(width, height);
+    const context = repaired.getContext('2d');
+    context.drawImage(original, 0, 0);
+    context.drawImage(patch, left, 0);
+    const base64 = repaired.toDataURL('image/png').split(',')[1];
+    return this._splitSwapImage(base64, 'image/png', true);
   }
 
   // ============================================
@@ -488,12 +640,16 @@ Keep one continuous, physically coherent space. Do not add furniture, openings, 
    * @param {string} mimeType - 画像のMIMEタイプ
    * @returns {Promise<{base64: string, mimeType: string}>} swap後の画像
    */
-  async _splitSwapImage(base64, mimeType) {
+  async _splitSwapImage(base64, mimeType, requireTwoToOne = false) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        const w = img.width;
-        const h = img.height;
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        if (requireTwoToOne && (w < 1024 || w !== h * 2)) {
+          reject(new Error(`OpenAIの360°画像が2:1ではありません（実寸: ${w}×${h}）。`));
+          return;
+        }
         const mid = Math.floor(w / 2);
 
         const canvas = document.createElement('canvas');
@@ -631,42 +787,17 @@ Generate the image now.`;
    */
   async expandToPanorama(imageBase64, mimeType, onProgress) {
     if (!this.isReady()) throw new Error('API key is not configured.');
+    onProgress?.('analyze');
     const spatialLedger = await this._createSpatialLedger(imageBase64, mimeType);
     const spatialInventory = formatSpatialLedger(spatialLedger);
 
     // ========================================
     // Phase 1: AIによる初回360°画像生成
     // ========================================
-    let rawPano;
+    let rawPano, reference;
     if (this.activeEngine === 'openai') {
-      onProgress?.('analyze');
-      const analyzedScene = await this._analyzeImageWithVision(imageBase64, mimeType);
-
-      onProgress?.('generate');
-      const panoPrompt = `Create a COMPLETE 360-degree equirectangular panorama image based exactly on this scene description:
-
-${analyzedScene}
-
-=== SPATIAL INVENTORY ===
-${spatialInventory}
-
-=== EQUIRECTANGULAR FORMAT ===
-1. Output MUST be a strict equirectangular panorama projection (2:1 aspect ratio).
-2. The left and right edges MUST connect PERFECTLY and SEAMLESSLY when wrapped into a sphere.
-3. Natural vertical distortion at the top (zenith) and bottom (nadir).
-
-=== SCENE FIDELITY ===
-1. Reproduce the described scene FAITHFULLY. Do NOT add objects, furniture, or decorations that are not mentioned.
-2. If the description indicates a sparse space, keep it sparse.
-3. Match the described art style, lighting direction, contrast, saturation, and color temperature uniformly across the entire panorama.
-
-=== QUALITY ===
-1. Highest possible resolution and rich detail.
-2. NO text, NO watermarks, NO UI elements, NO borders.
-
-Generate the equirectangular panorama image now.`;
-
-      rawPano = await this._callOpenAIImage(panoPrompt, "1536x1024");
+      reference = await this._prepareOpenAIPanoramaReference(imageBase64, mimeType);
+      rawPano = await this._outpaintOpenAIReference(reference, spatialLedger, [], onProgress);
     } else {
       onProgress?.('analyze');
 
@@ -736,18 +867,38 @@ Generate the equirectangular panorama image now.`;
     }
 
     console.log('✅ Phase 1 完了: 初回360°画像生成');
-    const spatialQa = await this._runSpatialQa(rawPano, spatialLedger);
+    const checkCandidate = async candidate => {
+      if (this.activeEngine !== 'openai') {
+        return { spatialQa: await this._runSpatialQa(candidate, spatialLedger) };
+      }
+      candidate = await this._preservePanoramaReference(candidate, reference);
+      onProgress?.('splitswap');
+      const seamView = await this._splitSwapImage(candidate.base64, candidate.mimeType, true);
+      onProgress?.('qa');
+      return { final: candidate, seamView, spatialQa: await this._runSpatialQa(candidate, spatialLedger, seamView, {
+        base64: imageBase64, mimeType,
+      }) };
+    };
+    let { final, seamView, spatialQa } = await checkCandidate(rawPano);
     if (spatialQa.verdict === 'retry') {
-      console.warn('Spatial QA requested one regeneration:', spatialQa.issues);
-      rawPano = await this._regenerateForSpatialIssues(
-        imageBase64, mimeType, spatialLedger, spatialQa.issues, onProgress,
-      );
-      const retryQa = await this._runSpatialQa(rawPano, spatialLedger);
-      if (retryQa.verdict !== 'pass') {
-        throw new Error(`Spatial QA rejected the regenerated panorama: ${retryQa.issues.join('; ') || 'unspecified defect'}`);
+      console.warn(`Spatial QA requested one correction: ${spatialQa.issues.join('; ')}`);
+      rawPano = this.activeEngine === 'openai' && spatialQa.seamOnly
+        ? await this._repairOpenAISeam(seamView, spatialQa.issues, onProgress)
+        : await this._regenerateForSpatialIssues(imageBase64, mimeType, spatialLedger, spatialQa.issues, onProgress, reference);
+      ({ final, seamView, spatialQa } = await checkCandidate(rawPano));
+      if (spatialQa.verdict !== 'pass') {
+        const error = new Error(spatialQa.issues.join('\n') || '画像のつながりに問題が残っています。');
+        error.code = 'panorama_quality_rejected';
+        error.panorama = final ?? rawPano;
+        error.seamView = seamView;
+        throw error;
       }
     }
+    console.info('Spatial QA passed');
+    return final ?? await this._finishPanorama(rawPano, onProgress);
+  }
 
+  async _finishPanorama(rawPano, onProgress) {
     // ========================================
     // Phase 2: Split-Swap（左右入れ替え → シームを中央に移動）
     // ========================================
@@ -767,7 +918,7 @@ Generate the equirectangular panorama image now.`;
     // ========================================
     onProgress?.('restore');
     const final = await this._splitSwapImage(blended.base64, blended.mimeType);
-    console.log('✅ Phase 4 完了: 最終Split-Swap（復元） → シームレス360°画像完成');
+    console.log('✅ Phase 4 完了: 最終Split-Swap（復元）');
 
     return final;
   }

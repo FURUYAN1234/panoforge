@@ -1,7 +1,7 @@
 export const OPENAI_IMAGE_PRIMARY = Object.freeze({
-  id: 'gpt-image-2.5-sunburst',
+  id: 'gpt-image-2.6-sunburst',
   quality: 'xhigh',
-  label: 'OpenAI Primary: GPT Image 2.5 Sunburst / xhigh',
+  label: 'OpenAI Primary: GPT Image 2.6 Sunburst / xhigh',
 });
 
 export const OPENAI_IMAGE_FALLBACK = Object.freeze({
@@ -10,10 +10,7 @@ export const OPENAI_IMAGE_FALLBACK = Object.freeze({
   label: 'OpenAI Fallback: GPT Image 2.0 / high',
 });
 
-export const getOpenAIImageFallbackChain = () => [
-  OPENAI_IMAGE_PRIMARY,
-  OPENAI_IMAGE_FALLBACK,
-];
+export const getOpenAIImageFallbackChain = () => [OPENAI_IMAGE_PRIMARY, OPENAI_IMAGE_FALLBACK];
 
 export const shouldFallbackOpenAIImage = (error) => {
   const message = String(error?.message || '');

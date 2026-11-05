@@ -1,7 +1,7 @@
 {
   "license": "SEE LICENSE IN LICENSE",
   "name": "background",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "private": true,
   "type": "module",
   "scripts": {
