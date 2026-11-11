@@ -15,7 +15,7 @@ import {
 } from './lib/spatial-ledger.js';
 import { normalizeApiKey } from './lib/api-key.js';
 import { DEFAULT_OPENAI_MODEL_ID, getOpenAIModel, getOpenAIModelRoute } from './lib/openai-models.js';
-import { getOpenAIImageFallbackChain, shouldFallbackOpenAIImage } from './lib/openai-image-fallback.js';
+import { getOpenAIImageFallbackChain } from './lib/openai-image-fallback.js';
 import { projectPerspectiveReference, projectPanoramaView } from './lib/panorama-reference.js';
 
 // タイムアウト付きでPromiseを実行するヘルパー関数
@@ -336,9 +336,7 @@ export class PanoramaEngine {
         return { base64, mimeType: "image/png", usedModel: imageModel.id };
       } catch (err) {
         lastError = err;
-        const canFallback = index < imageModels.length - 1 && shouldFallbackOpenAIImage(err);
-        if (!canFallback) throw err;
-        console.warn(`⚠️ ${imageModel.label} 失敗 → GPT Image 2.0へフォールバック`);
+        throw err;
       }
     }
 

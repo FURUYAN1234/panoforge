@@ -1,3 +1,9 @@
+## GPT Image 2.0 route retirement candidate v1.5.0 — 2026-11-11
+
+- Authorized existing-app fix, official deployment and existing note/X/Facebook updates. Full backup is deferred until every app update and announcement is complete.
+- Removed active 2.0 routes while preserving the accepted 2.6 normal request/output behavior. Provider-error regression failed before correction and passes after correction. All 44 tests and the production build pass. Normal-UI GPT Image 2.6 Sunburst/xhigh created a 1536x1024 café source and edited it into 2048x1024. Spatial QA passed on the first result, without a corrective image retry. Inspected all directions in the viewer, including the wrap seam, original red pot/counter/window, tables, floor and ceiling; the room remains visually continuous. Official delivery remains pending.
+- The existing private task record owns cross-app progress; no credentials are stored in this file.
+
 ## GPT Image 2.6 candidate v1.4.9 — 2026-11-05
 
 ### Accepted candidate, publication pending

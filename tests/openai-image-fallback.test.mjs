@@ -4,48 +4,15 @@ import { PanoramaEngine } from '../src/panorama.js';
 import { FALLBACK_CHAINS } from '../src/lib/fallback-chain-data.js';
 import {
   getOpenAIImageFallbackChain,
-  shouldFallbackOpenAIImage,
 } from '../src/lib/openai-image-fallback.js';
 
-test('OpenAI panorama generation prefers GPT Image 2.6 and keeps 2.0 as fallback', () => {
+test('OpenAI panorama generation prefers GPT Image 2.6 without a retired-model fallback', () => {
   assert.deepEqual(
     getOpenAIImageFallbackChain().map(({ id, quality }) => ({ id, quality })),
     [
       { id: 'gpt-image-2.6-sunburst', quality: 'xhigh' },
-      { id: 'gpt-image-2', quality: 'high' },
     ],
   );
-});
-
-test('OpenAI panorama fallback does not retry after timeout or a policy block', () => {
-  assert.equal(shouldFallbackOpenAIImage({ name: 'AbortError' }), false);
-  assert.equal(shouldFallbackOpenAIImage(new Error('Timeout (600s)')), false);
-  assert.equal(shouldFallbackOpenAIImage({ code: 'content_policy_violation' }), false);
-  assert.equal(shouldFallbackOpenAIImage({ status: 401, message: 'invalid API key' }), false);
-  assert.equal(shouldFallbackOpenAIImage({ status: 404, message: 'model not found' }), true);
-  assert.equal(shouldFallbackOpenAIImage(new Error('model unavailable')), true);
-});
-
-test('panorama generation submits 2.6 with the displayed settings and keeps the existing 2.0 fallback', async (t) => {
-  const engine = new PanoramaEngine();
-  engine.setApiKey('sk-test');
-  const requests = [];
-  t.mock.method(globalThis, 'fetch', async (url, init) => {
-    assert.equal(url, 'https://api.openai.com/v1/images/generations');
-    requests.push(JSON.parse(init.body));
-    if (requests.length === 1) {
-      return new Response(JSON.stringify({error:{code:'model_not_found', message:'model not found'}}), {status:404});
-    }
-    return new Response(JSON.stringify({data:[{b64_json:'dGVzdA=='}]}));
-  });
-  const result = await engine._callOpenAIImage('A test panorama', '1536x1024');
-  assert.deepEqual(requests.map(({model,quality,size,output_format}) => ({model,quality,size,output_format})), [
-    {model:'gpt-image-2.6-sunburst', quality:'xhigh', size:'1536x1024', output_format:'png'},
-    {model:'gpt-image-2', quality:'high', size:'1536x1024', output_format:'png'},
-  ]);
-  assert.equal(result.usedModel, 'gpt-image-2');
-  assert.deepEqual(FALLBACK_CHAINS.find(chain => chain.id === 'step1-openai').models.map(model => model.id),
-    requests.map(request => request.model));
 });
 
 test('STEP2 sends 2.6 first and displays the same provider fallback route', async (t) => {
@@ -60,7 +27,7 @@ test('STEP2 sends 2.6 first and displays the same provider fallback route', asyn
   await engine._callOpenAIImage('panorama', '2048x1024', { panorama: true });
   assert.deepEqual(requests.map(({model,quality}) => [model,quality]), [['gpt-image-2.6-sunburst', 'xhigh']]);
   assert.deepEqual(FALLBACK_CHAINS.find(chain => chain.id === 'step2-openai').models.map(model => model.id),
-    ['gpt-image-2.6-sunburst', 'gpt-image-2']);
+    ['gpt-image-2.6-sunburst']);
 });
 
 test('STEP2 requests 2:1, sends the finished panorama and centered seam to Vision, and retries once', async (t) => {
