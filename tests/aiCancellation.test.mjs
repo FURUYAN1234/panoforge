@@ -1,3 +1,4 @@
+import {formatOpenAIModelRouteStatus} from '../src/lib/openai-models.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -30,4 +31,25 @@ test('fresh OpenAI engine context succeeds after old context was canceled',async
  const old=manager.begin(),oldContext=engine.forOperation(old);manager.stop();old.finish();const fresh=manager.begin(),context=engine.forOperation(fresh);
  const original=globalThis.fetch;globalThis.fetch=async(_url,init)=>{assert.equal(init.signal,fresh.signal);return Response.json({choices:[{finish_reason:'stop',message:{content:'normal fresh result'}}]});};
  try{await assert.rejects(oldContext._callOpenAIChat([{role:'user',content:'old'}]),e=>e.name==='AbortError');assert.equal(await context._callOpenAIChat([{role:'user',content:'new'}]),'normal fresh result');fresh.finish();}finally{globalThis.fetch=original;}
+});
+
+for (const workflow of ['text', 'vision']) test(`${workflow} route reports cancellation with model metadata, blocks late output, and fresh run can adopt`, () => {
+ const manager=createAiOperationManager(),engine=new PanoramaEngine(),events=[];
+ engine.onOpenAIModelRoute=event=>events.push(event);
+ const op=manager.begin(),api=engine.forOperation(op);
+ const route={workflow,phase:'trying',modelId:'gpt-6-luna',selectedModelId:'gpt-6-luna',attemptedModels:['gpt-6-luna']};
+ api._notifyOpenAIModelRoute(workflow,'trying',route.modelId,route);
+ manager.stop();
+ assert.deepEqual(events.at(-1),{...route,phase:'cancelled'});
+ assert.throws(()=>api._notifyOpenAIModelRoute(workflow,'adopted',route.modelId),e=>e.name==='AbortError');
+ const fresh=manager.begin(),freshApi=engine.forOperation(fresh);
+ freshApi._notifyOpenAIModelRoute(workflow,'trying',route.modelId,route);
+ freshApi._notifyOpenAIModelRoute(workflow,'adopted',route.modelId);
+ op.finish();assert.equal(manager.state().active,true);
+ assert.equal(events.at(-1).phase,'adopted');fresh.finish();
+});
+
+test('cancelled route display preserves selected and attempted models and does not say trying',()=>{
+ const text=formatOpenAIModelRouteStatus({workflow:'text',phase:'cancelled',modelId:'gpt-6-luna',selectedModelId:'gpt-6-luna',attemptedModels:['gpt-6-luna']});
+ assert.match(text,/選択 gpt-6-luna/);assert.match(text,/試行 gpt-6-luna/);assert.match(text,/中断 gpt-6-luna/);assert.doesNotMatch(text,/試行中/);
 });

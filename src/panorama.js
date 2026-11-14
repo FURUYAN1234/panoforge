@@ -131,7 +131,20 @@ export class PanoramaEngine {
   forOperation(operation) {
     const context = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
     context.requestSignal = operation.signal;
-    context.onOpenAIModelRoute = event => { operation.check(); this.onOpenAIModelRoute?.(event); };
+    const pendingRoutes = new Map();
+    context.onOpenAIModelRoute = event => {
+      operation.check();
+      if (event.phase === 'trying') pendingRoutes.set(event.workflow, event);
+      else if (event.phase !== 'idle') pendingRoutes.delete(event.workflow);
+      this.onOpenAIModelRoute?.(event);
+    };
+    operation.signal.addEventListener('abort', () => {
+      if (!operation.isCurrent()) return;
+      for (const event of pendingRoutes.values()) {
+        this.onOpenAIModelRoute?.({ ...event, phase: 'cancelled' });
+      }
+      pendingRoutes.clear();
+    }, { once: true });
     return context;
   }
 

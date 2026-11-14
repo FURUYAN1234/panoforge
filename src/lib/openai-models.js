@@ -22,7 +22,7 @@ export function formatOpenAIModelPrice(modelId = DEFAULT_OPENAI_MODEL_ID) {
 
 export function formatOpenAIModelRouteStatus(event) {
   const path = event.workflow === 'vision' ? '画像解析' : 'テキスト提案・構成確認';
-  const phase = { trying: '試行中', adopted: '採用', failed: '失敗' }[event.phase];
+  const phase = { trying: '試行中', adopted: '採用', failed: '失敗', cancelled: '中断' }[event.phase];
   if (!phase) return '';
   const attempted = event.attemptedModels?.join(' → ') || event.modelId;
   return `${path}：選択 ${event.selectedModelId || event.modelId} / 試行 ${attempted} / ${phase} ${event.modelId}`;
