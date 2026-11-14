@@ -1,3 +1,24 @@
+## Latest gate/spacing correction — 2026-11-14
+
+- Startup API gate: stop hidden and no reserved band. Started workspace: top20px/right12px, minimum44px touch height, 76px reserved band, idle/stopped disabled and active red. An active operation retains access above settings/processing overlays.
+- Independent isolated browser fixture checks gate/idle/thinking/stopped, five viewport sizes including short landscape and scroll, real GPT-6 Luna description/pricing expansion, foreground click, text fit and no other initial control overlap. Root alone reloads connected tabs and verifies live API/UI.
+
+## Latest user override: upper-right emergency stop — 2026-11-14
+
+- The prior bottom-fixed Pano placement is superseded. Emergency stop now stays at the upper right in a dedicated reserved top band, independent of header layout and processing overlays. Idle/stopped disabled behavior and transport logic are unchanged.
+- Long model descriptions/prices (GPT-6 Luna) wrap within their controls; no model or price values changed. Source HTML/CSS is checked in an isolated browser fixture, with normal/thinking/stopped and scrolled/narrow states. Root retains connected tabs and owns real API/live UI verification.
+
+## Stop overlay visibility correction — 2026-11-14
+
+- Moved the stop button out of the filtered/sticky header stacking context to a direct body child. Active control is fixed near the viewport bottom above processing; responsive sizing keeps the full button/text visible. Disabled controls retain the normal application layer below the API modal.
+- Actual HTML/CSS isolated Chromium regression reproduced the original overlay interception, then verified 1280×720, 320×568, 375×667 and 568×320 viewport containment, header separation, rendered text fit, foreground hit targets and clicks. These are synthetic overlay layout checks, not real API verification. Root owns the connected preview/API acceptance.
+
+## AI cancellation candidate v1.5.2 — 2026-11-14 (local; real API pending)
+
+- Added active-only red AI stop; request cancellation, terminal fallback behavior, late-result rejection and explicit fresh-run recovery. Existing README image banners and related links retained.
+- Local verification: 49 tests pass; production build and built security pass; npm audit 0. Operation/API PDFs each 5 pages, bounds/link checks and all rendered pages inspected. Real API and browser acceptance remain root-owned and pending.
+- Owner/evidence: `/home/furu/Codex/work/story-abort-20261114/`. Root owns real API, final review and publication. No commit/push/release/deploy/social/backup performed by this worker.
+
 ## Local candidate checkpoint v1.5.1 — 2026-11-14
 
 - Existing-app update: operation/API PDFs, visible separate-tab manual links, bilingual README and release notes are prepared. Local candidate only; no push, tag, release, deployment or backup.

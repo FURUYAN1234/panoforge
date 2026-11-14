@@ -569,3 +569,27 @@ body>.manual-links{width:100%;max-width:1200px;margin:8px auto 0;padding:8px 24p
 .manual-links a:hover{border-color:var(--border-hover)}
 .manual-links a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @media(max-width:360px){.manual-links{grid-template-columns:1fr}}
+
+/* A dedicated top band keeps emergency controls independent of header wrapping. */
+:root { --ai-stop-space:76px; }
+body.ai-workspace-ready { padding-top:var(--ai-stop-space); }
+body.ai-workspace-ready::before { content:""; position:fixed; top:0; left:0; right:0; height:var(--ai-stop-space); z-index:10000; pointer-events:none; background:#060a14; border-bottom:1px solid var(--border); }
+body.ai-workspace-ready #app-header { top:var(--ai-stop-space); }
+body.ai-workspace-ready #api-modal-overlay, body.ai-workspace-ready #processing-overlay { top:var(--ai-stop-space); }
+#api-modal-overlay .modal-card { max-height:calc(100dvh - 24px); overflow:auto; }
+body.ai-workspace-ready #api-modal-overlay .modal-card { max-height:calc(100dvh - var(--ai-stop-space) - 24px); }
+.ai-emergency-stop { min-height:44px;
+  position:fixed; right:max(12px, env(safe-area-inset-right)); top:max(20px, env(safe-area-inset-top)); bottom:auto;
+  z-index:10001; max-width:calc(100vw - 24px); box-sizing:border-box;
+  white-space:normal; overflow-wrap:anywhere; line-height:1.4;
+  background:#b91c1c; color:white; border:2px solid #fca5a5; border-radius:10px;
+  padding:12px 18px; font-weight:800; cursor:pointer;
+}
+.ai-emergency-stop:hover:not(:disabled){background:#dc2626}
+.ai-emergency-stop:disabled{background:#4b5563; border-color:#6b7280; color:#d1d5db; cursor:not-allowed; opacity:.65}
+#app-header > *, .header-left, .header-right, #openai-model-panel { min-width:0; max-width:100%; }
+#openai-model-panel .form-label { white-space:normal; overflow-wrap:anywhere; }
+#openai-model-select { min-width:0; max-width:100%; box-sizing:border-box; text-overflow:ellipsis; }
+#openai-model-panel p { font-size:12px; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
+
+.ai-emergency-stop[hidden] { display:none !important; }

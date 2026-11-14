@@ -1,5 +1,11 @@
 # 360° AI Panorama Generator / 360度AIパノラマ生成ツール
 
+### Stop AI communication / AI通信の強制切断
+
+The red **Stop AI communication** button is enabled while AI work is running, including waiting for reasoning and receiving a response. It cancels the active requests and prevents subsequent fallback, automatic corrections and late result adoption. It is disabled when idle or already stopped. Your inputs, keys and previously accepted results remain available; start again with the normal generation button. Provider billing already incurred is separate. / 赤い「AI通信を強制切断」は、思考待ち・応答受信中を含むAI処理中だけ押せます。実行中の通信を中断し、後続のモデル切替・自動修正と遅延結果の採用を止めます。待機中・中断済みは非活性です。入力・キー・採用済みの結果は保持し、通常の生成ボタンで再実行できます。既に発生したAPI利用料金は別です。
+
+
+
 **Gemini model route / Geminiモデル候補**: `gemini-3.8-flash` → `gemini-3.6-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite`. Explicit stable IDs avoid the December 1, 2026 redirects; image-generation models keep their dedicated routes. / 2026年12月1日の旧モデル自動転送に依存しないよう、現行GAモデルを明示します。画像生成は専用のモデル経路を使います。
 
 > **MIT License; your outputs remain yours.** You may use, modify, redistribute and sell the app, including in paid products and services, without individual permission from FURU. Retain the copyright and MIT license notices in copies or substantial portions of the software. External API fees and third-party terms are separate. / **アプリはMITライセンス。成果物の権利は従来どおり利用者に帰属します。** アプリの利用・改変・再配布・販売、有料商品やサービスへの組み込みに、FURUへの個別許可は不要です。ソフトウェアの複製または重要な部分には著作権表示とMITの許諾表示を残してください。外部API料金と第三者の条件は別です。
@@ -24,7 +30,7 @@ Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 
 
 
 
-**v1.5.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.5.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -41,7 +47,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-After this candidate is published, the current public line is **v1.5.1**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.1** になります。Gemini と OpenAI の両方でパノラマを生成できます。
+After this candidate is published, the current public line is **v1.5.2**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.2** になります。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -489,3 +495,9 @@ Clarify free personal, business and commissioned use and monetization of users' 
 
 ### v1.0.0 - v1.0.2 (2026-05-13)
 - Initial releases of 360° AI Panorama Generator. / **[Feature]** 360° AI Panorama Generator の初版およびバグフィックス版をリリース。Gemini 2.0 Flash APIを利用したシームレスな360度パノラマ背景の生成と、Three.jsによるインタラクティブビューワー、Zenith Protocolによるフォールバック機構を搭載。
+
+The stop button stays at the upper right, above the processing screen. Reserved top space separates it from the header and model controls at narrow widths. / 停止ボタンは画面右上に固定し、処理画面の前面に表示します。上部に専用の余白を確保し、狭い画面でもヘッダーやモデル設定と重ねません。
+
+Model descriptions and prices wrap below the selector without widening the header; GPT-6 Luna is included in the layout checks. / モデル説明・料金は選択欄の下で折り返し、ヘッダーを横へ押し広げません。GPT-6 Lunaを含めて配置を確認しています。
+
+Emergency stop is hidden on the initial API setup/start screen, with no reserved stop space. After starting the workspace it stays at the upper right (20px top / 12px right), above the reserved header area. It remains reachable if settings are open during active work. / 初期のAPI設定・未起動画面では緊急停止と専用余白を表示しません。起動後の作業画面では上20px・右12pxの右上に固定し、ヘッダーと重ならない余白を確保します。作業中に設定を開いても停止操作へ届きます。

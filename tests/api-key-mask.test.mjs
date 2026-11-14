@@ -1,3 +1,4 @@
+import { createAiOperationManager } from '../src/lib/aiOperation.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -16,7 +17,10 @@ const element = () => {
 const setup = () => {
   const dom = new Proxy({}, {get(target, name) { return target[name] ||= element(); }});
   const document = element();
-  new Function('dom', 'document', 'engine', section)(dom, document, {isReady: () => true});
+  document.body=element();document.getElementById=()=>dom.stopAi;
+  const start=source.indexOf('function syncEmergencyWorkspace()');
+  const helper=source.slice(start,source.indexOf('\n}',start)+2);
+  new Function('dom', 'document', 'engine', 'aiOperations', helper+section)(dom, document, {isReady: () => true}, createAiOperationManager());
   return {dom, document};
 };
 

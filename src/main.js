@@ -1,3 +1,4 @@
+import { createAiOperationManager, abortable } from './lib/aiOperation.js';
 // ============================================
 // 360° AI Panorama Generator - メインエントリーポイント
 // API起動時モーダル + 2段階生成 + インラインビューワー
@@ -12,6 +13,25 @@ import { resetGenerationStateForProviderChange } from './lib/provider-session.js
 import { OPENAI_MODELS, getOpenAIModel, formatOpenAIModelPrice, formatOpenAIModelRouteStatus } from './lib/openai-models.js';
 
 const engine = new PanoramaEngine();
+function finishAiOperation(operation, api) {
+  if (!operation.isCurrent()) return;
+  if (!operation.signal.aborted) { engine.lastSuccessImageModel=api.lastSuccessImageModel; engine.lastSuccessTextModel=api.lastSuccessTextModel; }
+  operation.finish();
+}
+const aiOperations = createAiOperationManager(() => {
+  syncEmergencyWorkspace();
+  const button = document.getElementById('stop-ai');
+  for (const id of ['api-settings-btn','openai-model-select']) { const control=document.getElementById(id); if(control)control.disabled=aiOperations.state().active; }
+  if (button) { const current=aiOperations.state(); button.disabled=!current.active; button.textContent=current.stopped?'⏹ AI通信を中断済み':'⏹ AI通信を強制切断'; }
+});
+function syncEmergencyWorkspace() {
+  const ready=engine.isReady() || aiOperations.state().active;
+  document.body.classList.toggle('ai-workspace-ready', ready);
+  const button=document.getElementById('stop-ai');
+  if (button) button.hidden=!ready;
+}
+document.getElementById('stop-ai')?.addEventListener('click',()=>aiOperations.stop());
+
 let pendingEnginePrototype = null;
 function applyPendingEngineUpdate() {
   if (!pendingEnginePrototype || !dom.processingOverlay.classList.contains('hidden')) return;
@@ -142,7 +162,7 @@ dom.openaiModelSelect.addEventListener('change', () => {
   dom.openaiVisionModelStatus.textContent = '';
 });
 engine.onOpenAIModelRoute = (event) => {
-  dom.openaiModelSelect.disabled = engine.openAIRouteCount > 0;
+  dom.openaiModelSelect.disabled = aiOperations.state().active || engine.openAIRouteCount > 0;
   const text = formatOpenAIModelRouteStatus(event);
   if (text) {
     const target = event.workflow === 'vision' ? dom.openaiVisionModelStatus : dom.openaiTextModelStatus;
@@ -213,6 +233,7 @@ dom.apiModalClose.addEventListener('click', () => {
   setApiKeyVisible();
   if (!engine.isReady()) return;
   dom.apiModalOverlay.classList.add('hidden');
+  syncEmergencyWorkspace();
 });
 
 dom.apiModalOverlay.addEventListener('click', (e) => {
@@ -220,6 +241,7 @@ dom.apiModalOverlay.addEventListener('click', (e) => {
   setApiKeyVisible();
   if (!engine.isReady()) return;
   dom.apiModalOverlay.classList.add('hidden');
+  syncEmergencyWorkspace();
 });
 
 document.addEventListener('keydown', (e) => {
@@ -227,6 +249,7 @@ document.addEventListener('keydown', (e) => {
     setApiKeyVisible();
     if (!engine.isReady()) return;
     dom.apiModalOverlay.classList.add('hidden');
+  syncEmergencyWorkspace();
   }
 });
 
@@ -295,6 +318,7 @@ dom.apiModalApply.addEventListener('click', () => {
     setAppLocked(false);
     setTimeout(() => {
       dom.apiModalOverlay.classList.add('hidden');
+  syncEmergencyWorkspace();
       dom.apiKeyInput.value = '';
       setApiKeyVisible();
       dom.apiKeyWarning.classList.add('hidden');
@@ -367,16 +391,23 @@ dom.scenePrompt.addEventListener('input', () => {
 // AIシーン提案ボタン
 dom.sceneAiBtn.addEventListener('click', async () => {
   if (!engine.isReady()) return;
+  if (aiOperations.state().active) return;
+  const operation=aiOperations.begin();
+  const api=engine.forOperation(operation);
   dom.sceneAiBtn.disabled = true;
   dom.sceneAiBtn.textContent = '⏳ 考え中...';
   try {
-    const suggestion = await engine.suggestScene();
+    const suggestion = await abortable(api.suggestScene(), operation.signal);
+    operation.check();
     dom.scenePrompt.value = suggestion;
     dom.sceneChips.forEach(c => c.classList.remove('active'));
     updateButtons();
   } catch (e) {
+    if (operation.signal.aborted) return;
     console.error('シーン提案エラー:', e);
   } finally {
+    if (!operation.isCurrent()) return;
+    finishAiOperation(operation, api);
     dom.sceneAiBtn.disabled = false;
     dom.sceneAiBtn.textContent = '✨ AI提案';
   }
@@ -408,16 +439,23 @@ dom.styleInput.addEventListener('input', () => {
 dom.styleAiBtn.addEventListener('click', async () => {
   const scene = dom.scenePrompt.value.trim();
   if (!scene || !engine.isReady()) return;
+  if (aiOperations.state().active) return;
+  const operation=aiOperations.begin();
+  const api=engine.forOperation(operation);
   dom.styleAiBtn.disabled = true;
   dom.styleAiBtn.textContent = '⏳ 考え中...';
   try {
-    const suggestion = await engine.suggestStyle(scene);
+    const suggestion = await abortable(api.suggestStyle(scene), operation.signal);
+    operation.check();
     dom.styleInput.value = suggestion;
     dom.styleChips.forEach(c => c.classList.remove('active'));
     updateButtons();
   } catch (e) {
+    if (operation.signal.aborted) return;
     console.error('スタイル提案エラー:', e);
   } finally {
+    if (!operation.isCurrent()) return;
+    finishAiOperation(operation, api);
     dom.styleAiBtn.disabled = false;
     dom.styleAiBtn.textContent = '✨ AI提案';
   }
@@ -697,6 +735,9 @@ async function executeImageGeneration() {
   const prompt = dom.scenePrompt.value.trim();
   const style = dom.styleInput.value.trim();
   if (!prompt || !style) return;
+  if (aiOperations.state().active) return;
+  const operation=aiOperations.begin();
+  const api=engine.forOperation(operation);
 
   const isOpenAI = engine.activeEngine === 'openai';
   const subText = isOpenAI ? '画像を生成しています...\n（※OpenAIモードでは最大10分かかることがあります）' : 'AIがシーンを描画しています...';
@@ -710,6 +751,7 @@ async function executeImageGeneration() {
 
   try {
     const onProgress = (step, detail) => {
+      operation.check();
       if (step === 'generate') {
         dom.processingSub.textContent = subText;
       } else if (step === 'fallback') {
@@ -717,9 +759,10 @@ async function executeImageGeneration() {
       }
     };
 
-    const result = await engine.generateImage(prompt, style, onProgress);
+    const result = await abortable(api.generateImage(prompt, style, onProgress), operation.signal);
     setStepState('gen', 'done');
     await sleep(300);
+    operation.check();
     hideProcessing();
 
     // 生成画像をStep 1プレビューにセット（Step 2とは分離）
@@ -733,6 +776,7 @@ async function executeImageGeneration() {
     updateButtons();
 
   } catch (error) {
+    if (operation.signal.aborted) { if (operation.isCurrent()) hideProcessing(); return; }
     console.error('画像生成エラー:', error);
     hideProcessing();
     if (error.isContentPolicy || (error.message && error.message.includes('content_policy'))) {
@@ -744,7 +788,7 @@ async function executeImageGeneration() {
       const msg = error.message ? error.message : 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。';
       showError('画像生成に失敗しました', msg);
     }
-  }
+  } finally { if (operation.isCurrent()) { hideProcessing(); finishAiOperation(operation, api); updateButtons(); } }
 }
 
 // ============================
@@ -754,6 +798,9 @@ dom.generateBtn.addEventListener('click', () => executePanoramaExpansion());
 
 async function executePanoramaExpansion() {
   if (!state.inputImageBase64) return;
+  if (aiOperations.state().active) return;
+  const operation=aiOperations.begin();
+  const api=engine.forOperation(operation);
   state.lastAction = () => executePanoramaExpansion();
   const isOpenAI = engine.activeEngine === 'openai';
   const subText = isOpenAI ? '入力画像を分析しています...\n（※OpenAIモードでは最大10分かかることがあります）' : '入力画像を分析しています...';
@@ -768,6 +815,7 @@ async function executePanoramaExpansion() {
 
   try {
     const onProgress = (step, detail) => {
+      operation.check();
       if (step === 'analyze') {
         setStepState('analyze', 'active');
       } else if (step === 'generate') {
@@ -799,9 +847,9 @@ async function executePanoramaExpansion() {
       }
     };
 
-    const result = await engine.expandToPanorama(
+    const result = await abortable(api.expandToPanorama(
       state.inputImageBase64, state.inputImageMime, onProgress
-    );
+    ), operation.signal);
 
     setStepState('seamfix', 'done');
     setStepState('qa', 'done');
@@ -830,12 +878,15 @@ async function executePanoramaExpansion() {
     viewer.loadPanorama(dataUrl);
 
     await sleep(500);
+    operation.check();
     setStepState('render', 'done');
     await sleep(300);
+    operation.check();
     hideProcessing();
     // ビューワーには自動遷移せず、メニュー画面に留まる（ユーザーがビューワーボタンで開く）
 
   } catch (error) {
+    if (operation.signal.aborted) { if (operation.isCurrent()) hideProcessing(); return; }
     console.error('パノラマ拡張エラー:', error);
     hideProcessing();
     if (error.code === 'panorama_quality_rejected') {
@@ -857,7 +908,7 @@ async function executePanoramaExpansion() {
       const msg = error.message ? error.message : 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。';
       showError('パノラマ生成に失敗しました', msg);
     }
-  }
+  } finally { if (operation.isCurrent()) { hideProcessing(); finishAiOperation(operation, api); updateButtons(); } }
 }
 
 // ============================

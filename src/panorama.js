@@ -1,3 +1,4 @@
+import { abortable } from './lib/aiOperation.js';
 // ============================================
 // 360° AI Panorama Generator - パノラマ生成エンジン (Dual-API)
 // Zenith-Style フォールバック + 2段階生成
@@ -127,6 +128,18 @@ export class PanoramaEngine {
   // ============================================
   // OpenAI Utilities
   // ============================================
+  forOperation(operation) {
+    const context = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+    context.requestSignal = operation.signal;
+    context.onOpenAIModelRoute = event => { operation.check(); this.onOpenAIModelRoute?.(event); };
+    return context;
+  }
+
+  _fetch(url, options = {}) {
+    this.requestSignal?.throwIfAborted();
+    return abortable(fetch(url, { ...options, ...(this.requestSignal ? { signal: this.requestSignal } : {}) }), this.requestSignal);
+  }
+
   async _callOpenAIChat(messages, model = this.selectedOpenAIModelId, responseFormat = "text", timeoutMs = OPENAI_TEXT_TIMEOUT_MS) {
     const reasoningModel = /^gpt-(?:6(?:\.|-)|5\.6-)/.test(model);
     const payload = { model, messages, ...(reasoningModel
@@ -135,7 +148,7 @@ export class PanoramaEngine {
     if (responseFormat === "json_object") payload.response_format = { type: "json_object" };
     
     const res = await callWithTimeout(
-      fetch("https://api.openai.com/v1/chat/completions", {
+      this._fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.openAIKey}` },
         body: JSON.stringify(payload)
@@ -185,6 +198,8 @@ export class PanoramaEngine {
           console.log(`✅ OpenAI Text ${tier.label} で処理成功`);
           return text;
         } catch (err) {
+          this.requestSignal?.throwIfAborted();
+        this.requestSignal?.throwIfAborted();
           const msg = err?.message || String(err);
           this._notifyOpenAIModelRoute('text', 'failed', tier.id, route());
           console.error(`❌ OpenAI Text ${tier.label} エラー:`, msg);
@@ -240,6 +255,8 @@ export class PanoramaEngine {
           console.log(`✅ OpenAI Vision ${tier.label} で処理成功`);
           return text;
         } catch (err) {
+          this.requestSignal?.throwIfAborted();
+        this.requestSignal?.throwIfAborted();
           const msg = err?.message || String(err);
           this._notifyOpenAIModelRoute('vision', 'failed', tier.id, route());
           console.error(`❌ OpenAI Vision ${tier.label} エラー:`, msg);
@@ -288,7 +305,7 @@ export class PanoramaEngine {
         }
         const action = edit ? 'edits' : 'generations';
         const res = await callWithTimeout(
-          fetch(`https://api.openai.com/v1/images/${action}`, {
+          this._fetch(`https://api.openai.com/v1/images/${action}`, {
             method: "POST",
             headers,
             body,
@@ -316,7 +333,7 @@ export class PanoramaEngine {
         } else if (imgData?.url) {
           const downloadRemainingMs = deadline - Date.now();
           if (downloadRemainingMs <= 0) throw new Error('OpenAI Image Error: 600秒の生成上限に達しました。');
-          const imgRes = await callWithTimeout(fetch(imgData.url), Math.min(downloadRemainingMs, 30000));
+          const imgRes = await callWithTimeout(this._fetch(imgData.url), Math.min(downloadRemainingMs, 30000));
           if (!imgRes.ok) throw new Error("画像URLのダウンロードに失敗しました");
           const blob = await imgRes.blob();
           base64 = await new Promise((resolve, reject) => {
@@ -335,6 +352,7 @@ export class PanoramaEngine {
         console.info(`OpenAI Images ${action}: ${imageModel.id} / ${imageModel.quality} / ${size}`);
         return { base64, mimeType: "image/png", usedModel: imageModel.id };
       } catch (err) {
+        this.requestSignal?.throwIfAborted();
         lastError = err;
         throw err;
       }
@@ -545,7 +563,8 @@ ${issues.map(issue => `- ${issue}`).join('\n')}`;
           console.log(`🎯 ${tier.label} で生成開始`);
         }
         const needsImage = requestConfig.config?.responseModalities?.includes('IMAGE');
-        let response = await callWithTimeout(
+        this.requestSignal?.throwIfAborted();
+        let response = await abortable(callWithTimeout(
           needsImage ? this.geminiClient.interactions.create({
             model: tier.id,
             input: requestConfig.contents.flatMap(content => content.parts).map(part => part.inlineData
@@ -557,11 +576,14 @@ ${issues.map(issue => `- ${issue}`).join('\n')}`;
             headers: { 'Api-Revision': null },
             timeout: timeoutMs,
             maxRetries: 0,
+            signal: this.requestSignal,
           }) : this.geminiClient.models.generateContent({
             model: tier.id, ...requestConfig,
+            config: { ...requestConfig.config, abortSignal: this.requestSignal },
           }),
           timeoutMs
-        );
+        ), this.requestSignal);
+        this.requestSignal?.throwIfAborted();
 
         if (needsImage) {
           const parts = (response.steps || []).flatMap(step => step.content || []).map(part =>
@@ -593,6 +615,7 @@ ${issues.map(issue => `- ${issue}`).join('\n')}`;
         console.log(`✅ ${tier.label} で生成成功`);
         return response;
       } catch (err) {
+        this.requestSignal?.throwIfAborted();
         const msg = err?.message || String(err);
         console.error(`❌ ${tier.label} エラー:`, msg);
         const isContentBlock = /SAFETY|RECITATION|コンテンツブロック|画像データなし|安全フィルタ|blocked/i.test(msg);
