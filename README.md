@@ -8,8 +8,18 @@
 
 Demo URL / デモサイト: [https://furuyan1234.github.io/panoforge/](https://furuyan1234.github.io/panoforge/)
 
+### PDF manuals / PDFマニュアル
 
-**v1.5.0** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 日本語A4版でアプリの操作とOpenAI・Gemini APIの取得・設定を説明します。
+
+[![Open the application manual PDF / 操作マニュアルPDFを開く](docs/assets/panoforge-manual-button.png)](https://furuyan1234.github.io/panoforge/downloads/panoforge-manual.pdf)
+
+[![Open the OpenAI / Gemini API setup guide PDF / OpenAI・Gemini API設定ガイドPDFを開く](docs/assets/panoforge-api-guide-button.png)](https://furuyan1234.github.io/panoforge/downloads/panoforge-api-guide.pdf)
+
+
+
+
+**v1.5.1** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -26,7 +36,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.5.0**. Both Gemini and OpenAI can generate panoramas. / 現行の公開版は **v1.5.0** です。Gemini と OpenAI の両方でパノラマを生成できます。
+After this candidate is published, the current public line is **v1.5.1**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.1** になります。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
