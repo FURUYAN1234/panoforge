@@ -1,6 +1,6 @@
 {
   "app": "PanoForge / 360 AI Panorama Generator",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "stem": "panoforge",
   "manual": [
     {
@@ -38,7 +38,7 @@
         ],
         [
           "box",
-          "本書は候補ソースv1.5.2の操作説明です。空間の連続性や生成品質を保証するものではありません。検査結果と実際のビューワー表示を両方確認してください。"
+          "本書は候補ソースv1.5.3の操作説明です。空間の連続性や生成品質を保証するものではありません。検査結果と実際のビューワー表示を両方確認してください。"
         ],
         [
           "link",
@@ -53,7 +53,7 @@
       "blocks": [
         [
           "text",
-          "API設定でGeminiまたはOpenAIのキーを入力します。キーは現在のページのメモリだけに保持し、再読み込みや終了後には再入力します。OpenAI文章・画像解析モデルの既定はGPT-6.1 Solです。"
+          "API設定でGeminiまたはOpenAIのキーを入力します。キーは現在のページのメモリだけに保持し、再読み込みや終了後には再入力します。OpenAI文章・画像解析モデルの既定はGPT-6 Lunaです。"
         ],
         [
           "text",
@@ -182,7 +182,7 @@
         ],
         [
           "text",
-          "シーン・画風提案と画像解析は選択中の文章モデルを使います。OpenAIの既定はGPT-6.1 Sol。画像はGPT Image 2.6 Sunburst / xhighまたはGemini Nano Banana 2.1を使います。"
+          "シーン・画風提案と画像解析は選択中の文章モデルを使います。OpenAIの既定はGPT-6 Luna。画像はGPT Image 2.6 Sunburst / xhighまたはGemini Nano Banana 2.1を使います。"
         ],
         [
           "text",

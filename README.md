@@ -1,5 +1,9 @@
 # 360° AI Panorama Generator / 360度AIパノラマ生成ツール
 
+OpenAI scene and style suggestions, image analysis, and spatial checks now offers **GPT-6.2 Sol** and **GPT-6.2 Astra**. The initial selection is **GPT-6 Luna**. / OpenAIによるシーン・画風提案、画像解析、空間構成の確認に **GPT-6.2 Sol** と **GPT-6.2 Astra** を追加しました。初期選択は **GPT-6 Luna** です。
+
+Standard input / output per million tokens: GPT-6 Luna $0.10 / $0.50, GPT-6.2 Sol $2 / $10, GPT-6.2 Astra $8 / $40 (November 18, 2026). / 100万トークン当たりの通常入力／出力単価はGPT-6 Luna $0.10／$0.50、GPT-6.2 Sol $2／$10、GPT-6.2 Astra $8／$40です（2026年11月18日確認）。
+
 ### Stop AI communication / AI通信の強制切断
 
 The red **Stop AI communication** button is enabled while AI work is running, including waiting for reasoning and receiving a response. It cancels the active requests and prevents subsequent fallback, automatic corrections and late result adoption. It is disabled when idle or already stopped. Your inputs, keys and previously accepted results remain available; start again with the normal generation button. Provider billing already incurred is separate. / 赤い「AI通信を強制切断」は、思考待ち・応答受信中を含むAI処理中だけ押せます。実行中の通信を中断し、後続のモデル切替・自動修正と遅延結果の採用を止めます。待機中・中断済みは非活性です。入力・キー・採用済みの結果は保持し、通常の生成ボタンで再実行できます。既に発生したAPI利用料金は別です。
@@ -30,7 +34,7 @@ Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 
 
 
 
-**v1.5.2** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.5.3** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -47,7 +51,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-After this candidate is published, the current public line is **v1.5.2**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.2** になります。Gemini と OpenAI の両方でパノラマを生成できます。
+After this candidate is published, the current public line is **v1.5.3**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.3** になります。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -62,7 +66,7 @@ The panorama path is not a blind request to "extend in every direction." Before 
 
 This routine improves scene-level continuity, but it is not a 3D reconstruction or a mathematical guarantee that every object is identical around the entire sphere. The viewer remains the final human inspection surface; rotate it to inspect multiple directions before exporting. / このルーチンはシーン全体の整合性を高めますが、3D復元や、球全周で全物体が完全一致することの数学的保証ではありません。書き出し前にビューワーを回転し、複数方向を人間が確認することが最終確認になります。
 
-For OpenAI, the selected vision model (default GPT-6.1 Sol) extracts the inventory directly from the source image. GPT Image 2.6 Sunburst/xhigh fills the unseen directions using the projected image and mask. With no lens calibration, projection assumes a level camera and a 90° horizontal field of view; the narrow source boundary is feathered. The unseen space is generated, not recovered from measured 3D geometry. Each OpenAI image request has a **600-second (10-minute)** limit. / OpenAIでは選択したVisionモデル（既定GPT-6.1 Sol）が元画像から直接台帳を抽出し、GPT Image 2.6 Sunburst/xhighが投影画像とマスクを使って見えていない方向を補います。レンズの校正情報がないため、水平なカメラと水平画角90°を仮定し、元画像の狭い境界だけをなじませます。見えない空間はAIによる生成であり、実測した3D形状の復元ではありません。OpenAI画像リクエストは1回につき **600秒（10分）** が上限です。
+For OpenAI, the selected vision model (default GPT-6 Luna) extracts the inventory directly from the source image. GPT Image 2.6 Sunburst/xhigh fills the unseen directions using the projected image and mask. With no lens calibration, projection assumes a level camera and a 90° horizontal field of view; the narrow source boundary is feathered. The unseen space is generated, not recovered from measured 3D geometry. Each OpenAI image request has a **600-second (10-minute)** limit. / OpenAIでは選択したVisionモデル（既定GPT-6 Luna）が元画像から直接台帳を抽出し、GPT Image 2.6 Sunburst/xhighが投影画像とマスクを使って見えていない方向を補います。レンズの校正情報がないため、水平なカメラと水平画角90°を仮定し、元画像の狭い境界だけをなじませます。見えない空間はAIによる生成であり、実測した3D形状の復元ではありません。OpenAI画像リクエストは1回につき **600秒（10分）** が上限です。
 
 ### Provider Isolation / プロバイダ分離
 
@@ -138,9 +142,9 @@ Text Generation Fallback Pipeline**: / **テキスト生成・スタイル提案
   3. `gemini-3.5-flash-lite` (Lower-cost fallback / 低コスト候補)
   4. `gemini-3.1-flash-lite` (Fallback / 最終候補)
 - **OpenAI**:
-  `gpt-6-astra` → `gpt-6.1-sol` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o`
+  `gpt-6.2-astra` → `gpt-6-astra` → `gpt-6.2-sol` → `gpt-6.1-sol` → `gpt-6.1-terra` → `gpt-6-sol` → `gpt-5.6-sol` → `gpt-5.6-terra` → `gpt-6-luna` → `gpt-5.6-luna` → `gpt-4.1` → `gpt-4.1-mini` → `gpt-4.1-nano` → `gpt-4o`
 
-**OpenAI model selection / OpenAIモデル選択**: All 11 text/vision models are selectable in this order, with Astra at the top and GPT-6.1 Sol selected by default in development and production. The dropdown appears only while OpenAI is connected, showing the selected model’s description and input/output price per million tokens. Each scene/style suggestion, source-image analysis and spatial check starts from the current selection and falls back only downward; earlier successes never replace that starting model. Separate text and vision statuses show the selected, attempted and adopted models. Image generation uses its existing dedicated image-model chain. / OpenAI接続時だけ11モデルのプルダウンを表示します。Astraを先頭、開発版・公開版ともGPT-6.1 Solを初期選択にし、説明と100万トークン当たりの入力・出力料金を表示します。シーン・スタイル提案、入力画像解析、空間構成確認は毎回選択モデルから開始し、下位にだけ切り替えます。以前の成功モデルが選択を上書きすることはありません。テキストと画像解析それぞれで選択・試行・採用モデルを表示します。画像生成は専用モデルの経路を維持します。
+**OpenAI model selection / OpenAIモデル選択**: All 14 text/vision models are selectable in this order, with Astra at the top and GPT-6 Luna selected by default in development and production. The dropdown appears only while OpenAI is connected, showing the selected model’s description and input/output price per million tokens. Each scene/style suggestion, source-image analysis and spatial check starts from the current selection and falls back only downward; earlier successes never replace that starting model. Separate text and vision statuses show the selected, attempted and adopted models. Image generation uses its existing dedicated image-model chain. / OpenAI接続時だけ14モデルのプルダウンを表示します。Astraを先頭、開発版・公開版ともGPT-6 Lunaを初期選択にし、説明と100万トークン当たりの入力・出力料金を表示します。シーン・スタイル提案、入力画像解析、空間構成確認は毎回選択モデルから開始し、下位にだけ切り替えます。以前の成功モデルが選択を上書きすることはありません。テキストと画像解析それぞれで選択・試行・採用モデルを表示します。画像生成は専用モデルの経路を維持します。
 
 GPT-6 / GPT-5.6 text/vision calls allow up to 120 seconds and use reasoning-compatible completion parameters; legacy GPT-4.1/GPT-4o parameters remain unchanged. Truncated/refused output is rejected and authentication/access/quota failures stop the chain. / GPT-6・GPT-5.6のテキスト・画像解析は推論対応パラメーターと最大120秒に対応します。GPT-4.1・GPT-4oの互換パラメーターを維持し、途中終了・拒否された応答を完成扱いせず、認証・アクセス・利用枠エラーで連続試行を止めます。
 
@@ -351,7 +355,7 @@ Clarify free personal, business and commissioned use and monetization of users' 
 
 ### v1.4.3 (2026-10-01)
 
-- **[OpenAI Text / Vision]** All 11 models are selectable with GPT-6.1 Sol as the default. Each text/vision call starts from the selection and moves downward, with selected/attempted/adopted status and prices. / シーン・スタイル提案と画像解析に11モデルの選択を追加しました。GPT-6.1 Solを既定とし、選択モデルから下位への切り替え、試行・採用の表示、説明・料金表示に対応します。
+- **[OpenAI Text / Vision]** All 11 models are selectable with GPT-6 Luna as the default. Each text/vision call starts from the selection and moves downward, with selected/attempted/adopted status and prices. / シーン・スタイル提案と画像解析に11モデルの選択を追加しました。GPT-6 Lunaを既定とし、選択モデルから下位への切り替え、試行・採用の表示、説明・料金表示に対応します。
 - **[Response Validation / 応答検証]** Reject incomplete/refused output and stop authentication, access and quota retry cascades. / 途中終了・拒否の応答を拒否し、認証・アクセス・利用枠エラーによる連続再試行を止めます。
 
 ### v1.4.2 (2026-09-16)

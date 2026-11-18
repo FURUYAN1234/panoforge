@@ -1,6 +1,6 @@
 import catalog from '../config/openai-models.json' with { type: 'json' };
 
-export const DEFAULT_OPENAI_MODEL_ID = 'gpt-6.1-sol';
+export const DEFAULT_OPENAI_MODEL_ID = 'gpt-6-luna';
 export const OPENAI_MODELS = Object.freeze(catalog.models.map((model) => Object.freeze(model)));
 export const OPENAI_PRICE_SNAPSHOT_DATE = catalog.priceSnapshotDate;
 

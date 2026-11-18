@@ -5,7 +5,7 @@ import { FALLBACK_CHAINS } from '../src/lib/fallback-chain-data.js';
 
 const complete = (content = 'scene result') => ({ ok: true, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content } }] }) });
 
-test('Sol text/vision requests and legacy fallback preserve their parameters', async () => {
+test('Default Luna text/vision requests and legacy fallback preserve their parameters', async () => {
   const original = globalThis.fetch;
   const originalSetTimeout = globalThis.setTimeout;
   const requests = [];
@@ -15,12 +15,12 @@ test('Sol text/vision requests and legacy fallback preserve their parameters', a
   try {
     const engine = new PanoramaEngine(); engine.setApiKey('sk-test');
     assert.equal(await engine._callOpenAIChatWithFallback([{ role: 'user', content: 'scene' }]), 'scene result');
-    assert.equal(requests[0].model, 'gpt-6.1-sol');
+    assert.equal(requests[0].model, 'gpt-6-luna');
     assert.equal(requests[0].max_completion_tokens, 32768);
     assert.equal(requests[0].temperature, undefined);
     assert.equal(requests[0].max_tokens, undefined);
     await engine._callOpenAIVisionWithFallback('sample', 'image/png');
-    assert.equal(requests[1].model, 'gpt-6.1-sol');
+    assert.equal(requests[1].model, 'gpt-6-luna');
     assert.equal(requests[1].messages[0].content[1].image_url.detail, 'high');
     await engine._callOpenAIChat([], 'gpt-4.1');
     assert.equal(requests[2].temperature, 0.7);
@@ -41,6 +41,7 @@ test('unavailable Sol falls back to Terra and retries the selection on every new
           : complete('legacy result');
       };
       const engine = new PanoramaEngine(); engine.setApiKey('sk-test');
+      engine.setOpenAIModel('gpt-6.1-sol');
       const run = () => operation === 'text' ? engine._callOpenAIChatWithFallback([]) : engine._callOpenAIVisionWithFallback('sample', 'image/png');
       assert.equal(await run(), 'legacy result');
       assert.deepEqual(calls, ['gpt-6.1-sol', 'gpt-6.1-terra']);
@@ -66,15 +67,15 @@ test('truncation, refusal, content filtering, auth and quota fail closed without
         globalThis.fetch = async (_url, init) => { calls.push(JSON.parse(init.body).model); return response; };
         const engine = new PanoramaEngine(); engine.setApiKey('sk-test');
         await assert.rejects(operation === 'text' ? engine._callOpenAIChatWithFallback([]) : engine._callOpenAIVisionWithFallback('sample', 'image/png'));
-        assert.deepEqual(calls, ['gpt-6.1-sol']);
+        assert.deepEqual(calls, ['gpt-6-luna']);
       }
     }
   } finally { globalThis.fetch = original; }
 });
 
-test('displayed text and vision fallback chains match the Sol-first runtime', () => {
+test('displayed text and vision fallback chains contain the selectable runtime models', () => {
   for (const id of ['suggest-scene-openai', 'suggest-style-openai', 'step2-analyze-openai']) {
     const ids = FALLBACK_CHAINS.find((chain) => chain.id === id).models.map((model) => model.id);
-    assert.deepEqual(ids, ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-sol', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-6-luna', 'gpt-5.6-luna', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o']);
+    assert.deepEqual(ids, ['gpt-6.2-astra', 'gpt-6-astra', 'gpt-6.2-sol', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-sol', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-6-luna', 'gpt-5.6-luna', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o']);
   }
 });
