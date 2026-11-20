@@ -1,5 +1,7 @@
 # 360° AI Panorama Generator / 360度AIパノラマ生成ツール
 
+[Release notes / 更新内容](docs/releases/v1.5.4.md)
+
 OpenAI scene and style suggestions, image analysis, and spatial checks now offers **GPT-6.2 Sol** and **GPT-6.2 Astra**. The initial selection is **GPT-6 Luna**. / OpenAIによるシーン・画風提案、画像解析、空間構成の確認に **GPT-6.2 Sol** と **GPT-6.2 Astra** を追加しました。初期選択は **GPT-6 Luna** です。
 
 Standard input / output per million tokens: GPT-6 Luna $0.10 / $0.50, GPT-6.2 Sol $2 / $10, GPT-6.2 Astra $8 / $40 (November 18, 2026). / 100万トークン当たりの通常入力／出力単価はGPT-6 Luna $0.10／$0.50、GPT-6.2 Sol $2／$10、GPT-6.2 Astra $8／$40です（2026年11月18日確認）。
@@ -34,7 +36,7 @@ Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 
 
 
 
-**v1.5.3** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.5.4** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -51,7 +53,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-After this candidate is published, the current public line is **v1.5.3**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.3** になります。Gemini と OpenAI の両方でパノラマを生成できます。
+After this candidate is published, the current public line is **v1.5.4**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.4** になります。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 

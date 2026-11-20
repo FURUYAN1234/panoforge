@@ -6,8 +6,9 @@ import { OPENAI_MODELS, DEFAULT_OPENAI_MODEL_ID, getOpenAIModelRoute, formatOpen
 
 test('catalog matches all canonical Nano IDs and prices while the product copy stays panorama-specific', () => {
   const canonical = JSON.parse(readFileSync(new URL('../../nano-banana-pro/src/config/openai-scenario-models.json', import.meta.url)));
-  assert.deepEqual(OPENAI_MODELS.filter(({ id }) => canonical.models.some((model) => model.id === id)).map(({ id, inputPriceUsdPerM, outputPriceUsdPerM }) => ({ id, inputPriceUsdPerM, outputPriceUsdPerM })),
-    canonical.models.map(({ id, inputPriceUsdPerM, outputPriceUsdPerM }) => ({ id, inputPriceUsdPerM, outputPriceUsdPerM })));
+  const pricesById = (models) => new Map(models.map(({ id, inputPriceUsdPerM, outputPriceUsdPerM }) => [id, [inputPriceUsdPerM, outputPriceUsdPerM]]));
+  // Products may intentionally prioritize the same models differently.
+  assert.deepEqual(pricesById(OPENAI_MODELS.filter(({ id }) => canonical.models.some(model => model.id === id))), pricesById(canonical.models));
   assert.equal(OPENAI_MODELS.length, 14);
   assert.equal(OPENAI_MODELS[0].id, 'gpt-6.2-astra');
   const terra = OPENAI_MODELS.find(model => model.id === 'gpt-6.1-terra');

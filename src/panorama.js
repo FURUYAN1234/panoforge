@@ -490,8 +490,8 @@ Keep one continuous, physically coherent space. Do not add furniture, openings, 
 
   async _outpaintOpenAIReference(reference, ledger, issues = [], onProgress) {
     const prompt = `Complete the missing directions in this 2:1 equirectangular panorama.
-The visible central patch is an actual perspective photograph mathematically projected onto a sphere (90-degree horizontal field of view, camera level). Its geometry and pixels are fixed. The gray area outside it is unknown space to be filled, NOT a wall, frame, fog, or an object. The transparent mask marks the area to generate.
-Continue the existing surfaces naturally out of the fixed patch in every direction. Infer the unseen sides and rear from the SAME camera position. Do not copy the front view into the rear. Do not duplicate distinctive objects or move them. Add only the plausible unseen continuation of this environment; maintain its style, lighting and density.
+The visible central patch is a perspective photograph mathematically projected onto a sphere (90-degree horizontal field of view, camera level). Preserve the opaque core. The editable mask includes the feathered rim of the reference and the unseen directions. Treat the gray outside as unknown, not part of the scene.
+Continue the existing surfaces through the rim in every direction. Match sky, horizon, exposure, texture and lines across the transition. Remove any trace of the gray placeholder or a visible cut around the reference. Infer the unseen sides and rear from the SAME camera position. Do not copy the front view into the rear. Do not duplicate distinctive objects or move them. Add only the plausible unseen continuation of this environment; maintain its style, lighting and density.
 ${EQUIRECTANGULAR_GEOMETRY}
 The output must cover the entire sphere including above and below, with no gray unfilled area, frames, panels, text or watermarks.
 

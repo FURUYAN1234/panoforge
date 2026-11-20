@@ -11,7 +11,7 @@ export function projectPerspectiveReference(source, { width = 2048, height = 102
   const mask = new Uint8ClampedArray(image.length);
   const anchor = new Uint8ClampedArray(image.length);
   const focal = source.width / (2 * Math.tan(horizontalFov * Math.PI / 360));
-  const feather = Math.max(1, source.width * 0.015);
+  const feather = Math.max(1, Math.min(source.width, source.height) * 0.12);
   for (let y = 0; y < height; y++) {
     const latitude = (0.5 - (y + 0.5) / height) * Math.PI;
     for (let x = 0; x < width; x++) {
@@ -35,10 +35,12 @@ export function projectPerspectiveReference(source, { width = 2048, height = 102
       }
       const edgeDistance = Math.min(sx, sy, source.width - 1 - sx, source.height - 1 - sy);
       const sourceAlpha = anchor[i + 3];
-      for (let c = 0; c < 3; c++) image[i + c] = anchor[i + c] * sourceAlpha / 255 + 128 * (1 - sourceAlpha / 255);
-      anchor[i + 3] = sourceAlpha * Math.min(1, edgeDistance / feather);
-      // Fully protect observed pixels; let the model complete the narrow boundary too.
-      mask[i + 3] = anchor[i + 3] === 255 ? 255 : 0;
+      const t = Math.min(1, edgeDistance / feather);
+      const opacity = sourceAlpha / 255 * t * t * (3 - 2 * t);
+      for (let c = 0; c < 3; c++) image[i + c] = anchor[i + c] * opacity + 128 * (1 - opacity);
+      anchor[i + 3] = 255 * opacity;
+      // Protect the center and let the image model match colors and edges through the transition.
+      mask[i + 3] = t === 1 && sourceAlpha === 255 ? 255 : 0;
     }
   }
   return { width, height, image, mask, anchor };

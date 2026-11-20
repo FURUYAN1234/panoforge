@@ -24,11 +24,28 @@ body{
 
 /* ヘッダー */
 #app-header{
-  display:flex;align-items:center;justify-content:space-between;
+  display:grid;gap:12px;
   padding:12px 24px;background:rgba(6,10,20,0.9);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:16px;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
 }
-.header-left{display:flex;align-items:center;gap:10px}
+.header-actions,.header-manuals,.header-right,.header-stop-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.header-actions{gap:8px 16px}
+.header-stop-controls{justify-content:flex-end;margin-inline-start:auto;max-width:100%}
+#panoforge-mcp-slot:empty,#panoforge-mcp-control-slot:not(:has(.furu-mcp-connection)),.header-stop-controls:not(:has(.furu-mcp-connection,#stop-ai:not([hidden]))){display:none}
+.header-actions .furu-mcp-resources{padding:0}
+.header-actions .header-control,.header-actions .furu-mcp-resources a,.header-actions .furu-mcp-connection button{
+  display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:5px 11px;
+  border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg-card);
+  color:var(--text-bright);font:600 13px/1.35 var(--font);text-align:center;text-decoration:none;
+}
+.header-actions :is(.header-control,.furu-mcp-resources a,.furu-mcp-connection button):hover:not(:disabled){border-color:var(--accent);text-decoration:none}
+.header-actions button.header-control:not(:disabled){cursor:pointer}
+.header-actions .furu-mcp-connection{justify-content:flex-end;gap:8px;margin:0;padding:0;border:0;background:transparent;font:12px/1.35 var(--font);color:var(--text-dim)}
+.header-actions .furu-mcp-connection [role="status"]{max-width:100%;overflow-wrap:anywhere}
+.header-actions .furu-mcp-connection button{border-color:#a5753f;background:#ffd286;color:#182132}
+.header-actions .api-settings-btn.connected{border-color:var(--success);color:var(--success)}
+.header-left{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}
+.header-status{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px}
 .logo-icon{font-size:28px;filter:drop-shadow(0 0 8px var(--accent-glow))}
 .logo-text{
   font-family:var(--font-display);font-size:1.3rem;font-weight:900;
@@ -36,7 +53,6 @@ body{
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;
 }
 .logo-sub{font-size:0.7rem;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase}
-.header-right{display:flex;align-items:center}
 .version-badge{
   font-family:var(--font);font-size:0.6rem;font-weight:600;letter-spacing:0.5px;
   color:var(--text-dim);background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.15);
@@ -570,23 +586,11 @@ body>.manual-links{width:100%;max-width:1200px;margin:8px auto 0;padding:8px 24p
 .manual-links a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @media(max-width:360px){.manual-links{grid-template-columns:1fr}}
 
-/* A dedicated top band keeps emergency controls independent of header wrapping. */
-:root { --ai-stop-space:76px; }
-body.ai-workspace-ready { padding-top:var(--ai-stop-space); }
-body.ai-workspace-ready::before { content:""; position:fixed; top:0; left:0; right:0; height:var(--ai-stop-space); z-index:10000; pointer-events:none; background:#060a14; border-bottom:1px solid var(--border); }
-body.ai-workspace-ready #app-header { top:var(--ai-stop-space); }
-body.ai-workspace-ready #api-modal-overlay, body.ai-workspace-ready #processing-overlay { top:var(--ai-stop-space); }
+/* The header keeps the stop control reachable while the progress overlay is open. */
+body:has(#processing-overlay:not(.hidden)) #app-header { z-index:201; }
 #api-modal-overlay .modal-card { max-height:calc(100dvh - 24px); overflow:auto; }
-body.ai-workspace-ready #api-modal-overlay .modal-card { max-height:calc(100dvh - var(--ai-stop-space) - 24px); }
-.ai-emergency-stop { min-height:44px;
-  position:fixed; right:max(12px, env(safe-area-inset-right)); top:max(20px, env(safe-area-inset-top)); bottom:auto;
-  z-index:10001; max-width:calc(100vw - 24px); box-sizing:border-box;
-  white-space:normal; overflow-wrap:anywhere; line-height:1.4;
-  background:#b91c1c; color:white; border:2px solid #fca5a5; border-radius:10px;
-  padding:12px 18px; font-weight:800; cursor:pointer;
-}
-.ai-emergency-stop:hover:not(:disabled){background:#dc2626}
-.ai-emergency-stop:disabled{background:#4b5563; border-color:#6b7280; color:#d1d5db; cursor:not-allowed; opacity:.65}
+.header-actions .ai-emergency-stop:not(:disabled){background:#b91c1c;color:white;border-color:#fca5a5;cursor:pointer}
+.header-actions .ai-emergency-stop:disabled{color:var(--text-dim);cursor:not-allowed}
 #app-header > *, .header-left, .header-right, #openai-model-panel { min-width:0; max-width:100%; }
 #openai-model-panel .form-label { white-space:normal; overflow-wrap:anywhere; }
 #openai-model-select { min-width:0; max-width:100%; box-sizing:border-box; text-overflow:ellipsis; }

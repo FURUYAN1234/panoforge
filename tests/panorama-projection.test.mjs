@@ -40,6 +40,21 @@ test('projection has a narrow feather and never protects transparent source pixe
   assert.equal(transparent.anchor.some(v => v !== 0), false);
 });
 
+test('the outpaint input and restored anchor fade through the same editable rim', () => {
+  const width = 2048;
+  const result = projectPerspectiveReference(fixture(), { width, height: 1024 });
+  const pixel = (image, x) => at(image, x, 500, width);
+  const rightEdge = width * 5 / 8;
+  const rim = Array.from({ length: 16 }, (_, index) => rightEdge - 16 + index);
+  assert.equal(pixel(result.mask, rightEdge - 48)[3], 255);
+  for (const x of rim) {
+    assert.equal(pixel(result.mask, x)[3], 0);
+    assert.ok(pixel(result.anchor, x)[3] < 255);
+    assert.ok(Math.abs(pixel(result.image, x)[0] - pixel(result.image, x + 1)[0]) < 12);
+  }
+  assert.deepEqual(pixel(result.image, rightEdge), [128, 128, 128, 255]);
+});
+
 test('projection refuses invalid images, dimensions and field of view', () => {
   assert.throws(() => projectPerspectiveReference(fixture(), { width: 1536, height: 1024 }), /2:1/);
   assert.throws(() => projectPerspectiveReference(fixture(), { horizontalFov: 180 }), /Invalid/);

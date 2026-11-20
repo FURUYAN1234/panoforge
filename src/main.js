@@ -1,3 +1,4 @@
+import { connectFuruMcp, mcpAppError } from './mcp-connection.js';
 import { createAiOperationManager, abortable } from './lib/aiOperation.js';
 // ============================================
 // 360° AI Panorama Generator - メインエントリーポイント
@@ -22,11 +23,10 @@ const aiOperations = createAiOperationManager(() => {
   syncEmergencyWorkspace();
   const button = document.getElementById('stop-ai');
   for (const id of ['api-settings-btn','openai-model-select']) { const control=document.getElementById(id); if(control)control.disabled=aiOperations.state().active; }
-  if (button) { const current=aiOperations.state(); button.disabled=!current.active; button.textContent=current.stopped?'⏹ AI通信を中断済み':'⏹ AI通信を強制切断'; }
+  if (button) { const current=aiOperations.state(); button.disabled=!current.active; button.textContent=current.stopped?'AI通信を中断済み':'AI通信を強制切断'; }
 });
 function syncEmergencyWorkspace() {
   const ready=engine.isReady() || aiOperations.state().active;
-  document.body.classList.toggle('ai-workspace-ready', ready);
   const button=document.getElementById('stop-ai');
   if (button) button.hidden=!ready;
 }
@@ -175,25 +175,16 @@ function updateOpenAIModelDetails() {
   dom.openaiModelPrice.textContent = formatOpenAIModelPrice(engine.selectedOpenAIModelId);
 }
 
-const viewerBtn = document.createElement('a');
-viewerBtn.href = '#';
-viewerBtn.textContent = '⚙ Model Chain';
-viewerBtn.className = 'model-chain-btn';
-viewerBtn.style.fontSize = '0.75rem';
-viewerBtn.style.color = 'var(--text-dim)';
-viewerBtn.style.textDecoration = 'none';
-viewerBtn.style.marginLeft = '12px';
-
-viewerBtn.addEventListener('click', (e) => {
-  e.preventDefault();
+const viewerBtn = document.createElement('button');
+viewerBtn.type = 'button';
+viewerBtn.textContent = 'Model Chain';
+viewerBtn.className = 'header-control model-chain-btn';
+viewerBtn.addEventListener('click', () => {
   const chainViewer = new FallbackChainViewer();
   chainViewer.open();
 });
 
-const headerLeft = document.querySelector('.header-left');
-if (headerLeft) {
-  headerLeft.appendChild(viewerBtn);
-}
+document.querySelector('.header-right')?.prepend(viewerBtn);
 
 // ============================
 // 起動時: APIモーダル自動表示 + autocomplete汚染クリア
@@ -571,40 +562,35 @@ function downloadDataUrl(dataUrl, filename) {
 }
 
 // 360°画像: GPano XMPメタデータ付きJPEGとしてダウンロード
-function download360AsJpegWithXMP(dataUrl) {
-  const img = new Image();
-  img.onload = () => {
-    const w = img.width;
-    const h = img.height;
-
-    // Canvas経由でJPEG化
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-
-    canvas.toBlob((blob) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const jpegData = new Uint8Array(reader.result);
-        const xmpPacket = buildGPanoXMP(w, h);
-        const output = injectXMPIntoJPEG(jpegData, xmpPacket);
-
-        const outputBlob = new Blob([output], { type: 'image/jpeg' });
-        const url = URL.createObjectURL(outputBlob);
-        const link = document.createElement('a');
-        link.download = `AI_Panorama_360_generated_image_${getTimestamp()}.jpg`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      };
-      reader.readAsArrayBuffer(blob);
-    }, 'image/jpeg', 0.95);
+async function buildPanoramaJpeg(dataUrl) {
+  const image = new Image();
+  image.src = dataUrl;
+  await image.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Unable to encode panorama.');
+  ctx.drawImage(image, 0, 0);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+  if (!blob) throw new Error('Unable to encode panorama.');
+  const jpeg = new Uint8Array(await blob.arrayBuffer());
+  return {
+    blob: new Blob([injectXMPIntoJPEG(jpeg, buildGPanoXMP(image.width, image.height))], { type: 'image/jpeg' }),
+    width: image.width,
+    height: image.height,
   };
-  img.src = dataUrl;
+}
+
+async function download360AsJpegWithXMP(dataUrl) {
+  try {
+    const { blob } = await buildPanoramaJpeg(dataUrl);
+    const url = URL.createObjectURL(blob);
+    try { downloadDataUrl(url, `AI_Panorama_360_generated_image_${getTimestamp()}.jpg`); }
+    finally { URL.revokeObjectURL(url); }
+  } catch (error) {
+    showError('360°画像を保存できませんでした', error.message);
+  }
 }
 
 // GPano XMPメタデータパケットを構築
@@ -731,7 +717,7 @@ function updateButtons() {
 // ============================
 dom.generateImageBtn.addEventListener('click', () => executeImageGeneration());
 
-async function executeImageGeneration() {
+async function executeImageGeneration(forMcp = false) {
   const prompt = dom.scenePrompt.value.trim();
   const style = dom.styleInput.value.trim();
   if (!prompt || !style) return;
@@ -774,6 +760,7 @@ async function executeImageGeneration() {
     dom.previewLabel.textContent = '🎨 生成された画像';
     dom.previewSection.classList.remove('hidden');
     updateButtons();
+    return dataUrl;
 
   } catch (error) {
     if (operation.signal.aborted) { if (operation.isCurrent()) hideProcessing(); return; }
@@ -788,6 +775,7 @@ async function executeImageGeneration() {
       const msg = error.message ? error.message : 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。';
       showError('画像生成に失敗しました', msg);
     }
+    if (forMcp) throw error;
   } finally { if (operation.isCurrent()) { hideProcessing(); finishAiOperation(operation, api); updateButtons(); } }
 }
 
@@ -796,7 +784,7 @@ async function executeImageGeneration() {
 // ============================
 dom.generateBtn.addEventListener('click', () => executePanoramaExpansion());
 
-async function executePanoramaExpansion() {
+async function executePanoramaExpansion(forMcp = false) {
   if (!state.inputImageBase64) return;
   if (aiOperations.state().active) return;
   const operation=aiOperations.begin();
@@ -884,6 +872,7 @@ async function executePanoramaExpansion() {
     operation.check();
     hideProcessing();
     // ビューワーには自動遷移せず、メニュー画面に留まる（ユーザーがビューワーボタンで開く）
+    return dataUrl;
 
   } catch (error) {
     if (operation.signal.aborted) { if (operation.isCurrent()) hideProcessing(); return; }
@@ -908,6 +897,7 @@ async function executePanoramaExpansion() {
       const msg = error.message ? error.message : 'サーバーが混雑しているか、一時的な問題が発生しています。\n少し時間をおいてリトライしてください。';
       showError('パノラマ生成に失敗しました', msg);
     }
+    if (forMcp) throw error;
   } finally { if (operation.isCurrent()) { hideProcessing(); finishAiOperation(operation, api); updateButtons(); } }
 }
 
@@ -1049,3 +1039,57 @@ $('#quality-save').addEventListener('click', () => {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
   console.log('🌐 360° AI Panorama Generator initialized');
+
+
+const mcpMount = document.createElement('div');
+const mcpControlMount = document.createElement('div');
+const mcpHeader = document.getElementById('panoforge-mcp-slot');
+const mcpControlHeader = document.getElementById('panoforge-mcp-control-slot');
+const mcpSetup = document.querySelector('#api-modal-overlay .modal-body');
+const placeMcpToolbar = () => {
+  const setupOpen = !$('#api-modal-overlay').classList.contains('hidden');
+  if (setupOpen) {
+    if (mcpMount.parentElement !== mcpSetup) mcpSetup.prepend(mcpMount, mcpControlMount);
+  } else {
+    if (mcpMount.parentElement !== mcpHeader) mcpHeader.append(mcpMount);
+    if (mcpControlMount.parentElement !== mcpControlHeader) mcpControlHeader.append(mcpControlMount);
+  }
+};
+placeMcpToolbar();
+const apiModalObserver = new MutationObserver(placeMcpToolbar);
+apiModalObserver.observe($('#api-modal-overlay'), { attributes: true, attributeFilter: ['class'] });
+window.addEventListener('pagehide', () => apiModalObserver.disconnect(), { once: true });
+
+connectFuruMcp({
+  appId: 'panoforge',
+  mount: mcpMount,
+  controlMount: mcpControlMount,
+  readiness: () => engine.isReady(),
+  stop: () => aiOperations.stop(),
+  async execute(operation, { action }) {
+    if (operation !== 'create_image') throw mcpAppError('OUTPUT_INVALID');
+    if (!engine.isReady()) throw mcpAppError('API_REQUIRED');
+    if (aiOperations.state().active) throw mcpAppError('APP_BUSY');
+    if (action === 'base') {
+      if (!dom.scenePrompt.value.trim() || !dom.styleInput.value.trim()) throw mcpAppError('INPUT_REQUIRED');
+      const imageData = await executeImageGeneration(true);
+      if (!imageData) throw mcpAppError('OUTPUT_INVALID');
+      return { kind: 'base', imageData };
+    }
+    if (!state.inputImageBase64) throw mcpAppError('INPUT_REQUIRED');
+    const panorama = await executePanoramaExpansion(true).catch(error => {
+      if (error.code === 'panorama_quality_rejected') throw mcpAppError('PANORAMA_QUALITY_REJECTED');
+      throw error;
+    });
+    if (!panorama) throw mcpAppError('OUTPUT_INVALID');
+    const { blob, width, height } = await buildPanoramaJpeg(panorama);
+    if (width !== 2 * height) throw mcpAppError('OUTPUT_INVALID');
+    const reader = new FileReader();
+    const imageData = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(mcpAppError('OUTPUT_INVALID'));
+      reader.readAsDataURL(blob);
+    });
+    return { kind: 'panorama', imageData };
+  },
+});

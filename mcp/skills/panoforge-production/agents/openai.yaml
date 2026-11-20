@@ -1,0 +1,3 @@
+interface:
+  display_name: "PanoForge"
+  short_description: "360度背景の空間、つなぎ目、正距円筒画像の保存を確認する"
