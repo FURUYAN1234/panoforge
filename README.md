@@ -45,6 +45,10 @@ Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 
 
 ---
 
+## Introduction video / 紹介動画
+
+[![Watch the 360° AI Panorama Generator introduction / 360° AI Panorama Generatorの紹介動画を見る](https://i.ytimg.com/vi/rrTTzcL8xm8/hqdefault.jpg)](https://youtu.be/rrTTzcL8xm8)
+
 ## 🚀 Overview / 概要
 
 360° AI Panorama Generator is an experimental tool that generates "360-degree equirectangular panoramic images" from text or a single image, allowing interactive viewing and capturing via an integrated 3D viewer. / 360° AI Panorama Generatorは、テキストや1枚の画像から「360度エクイレクタングラー（正距円筒図法）パノラマ画像」を生成し、内蔵の3Dビューワーでインタラクティブに確認・キャプチャできる実験的ツールです。
