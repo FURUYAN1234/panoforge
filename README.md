@@ -513,3 +513,9 @@ The stop button stays at the upper right, above the processing screen. Reserved 
 Model descriptions and prices wrap below the selector without widening the header; GPT-6 Luna is included in the layout checks. / モデル説明・料金は選択欄の下で折り返し、ヘッダーを横へ押し広げません。GPT-6 Lunaを含めて配置を確認しています。
 
 Emergency stop is hidden on the initial API setup/start screen, with no reserved stop space. After starting the workspace it stays at the upper right (20px top / 12px right), above the reserved header area. It remains reachable if settings are open during active work. / 初期のAPI設定・未起動画面では緊急停止と専用余白を表示しません。起動後の作業画面では上20px・右12pxの右上に固定し、ヘッダーと重ならない余白を確保します。作業中に設定を開いても停止操作へ届きます。
+
+## CLIP Drop / 習作・ベータ版
+
+クリスタの .clip を SVG・PSD・PNG に変換するWindows用の習作です。 / An experimental Windows converter for Clip Studio Paint files.
+
+- [GitHub](https://github.com/FURUYAN1234/clip-drop) · [note](https://note.com/happy_duck780/n/n8a38199a75db)
