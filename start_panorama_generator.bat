@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ============================================
-echo   360° AI Panorama Generator - Starting...
+echo   PanoForge - Starting...
 echo ============================================
 
 where node >nul 2>nul

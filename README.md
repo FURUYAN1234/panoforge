@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator / 360度AIパノラマ生成ツール
 
-[Release notes / 更新内容](docs/releases/v1.5.4.md)
+[Release notes / 更新内容](docs/releases/v1.5.5.md)
 
 OpenAI scene and style suggestions, image analysis, and spatial checks now offers **GPT-6.2 Sol** and **GPT-6.2 Astra**. The initial selection is **GPT-6 Luna**. / OpenAIによるシーン・画風提案、画像解析、空間構成の確認に **GPT-6.2 Sol** と **GPT-6.2 Astra** を追加しました。初期選択は **GPT-6 Luna** です。
 
@@ -36,7 +36,7 @@ Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 
 
 
 
-**v1.5.4** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.5.5** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -57,7 +57,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-After this candidate is published, the current public line is **v1.5.4**. Both Gemini and OpenAI can generate panoramas. / この候補版の公開後は **v1.5.4** になります。Gemini と OpenAI の両方でパノラマを生成できます。
+The current public line is **v1.5.5**. Both Gemini and OpenAI can generate panoramas. / 現行公開版は **v1.5.5** です。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -199,7 +199,7 @@ Text Generation Fallback Pipeline (Gemini)**: / **テキスト生成・スタイ
 ### 💻 Local Launch (Windows) / ローカルでの起動
 
 1. **Download / ダウンロード**: Download (ZIP) or clone the source code from the repository. / リポジトリからソースコードをダウンロード（ZIP解凍）またはクローンします。
-2. **Run / 実行**: Double-click `start_panorama_generator.bat` in the folder. *(Requires Node.js to be installed previously)* / フォルダ内の `start_panorama_generator.bat` をダブルクリックします。*(事前にNode.jsのインストールが必要です)*
+2. **Run / 実行**: Double-click `start_panorama_generator.bat` in the extracted folder. It opens PanoForge in your default browser when the local server is ready. Install Node.js first. / 展開したフォルダー内の `start_panorama_generator.bat` をダブルクリックします。準備ができると既定のブラウザーでPanoForgeが開きます。Node.jsは事前に導入してください。
 3. **Start / 開始**: Required libraries will be installed automatically, and the browser will launch. / 必要なライブラリが自動インストールされ、ブラウザが立ち上がります。
 
 ### 🔑 About API Keys / 各種APIキーについて

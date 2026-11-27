@@ -1,0 +1,2 @@
+# Keep Windows line endings in GitHub source ZIPs as well as checkouts.
+/start_panorama_generator.bat -text whitespace=cr-at-eol

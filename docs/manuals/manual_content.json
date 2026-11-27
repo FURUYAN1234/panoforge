@@ -1,6 +1,7 @@
 {
   "app": "PanoForge / 360 AI Panorama Generator",
-  "version": "1.5.4",
+  "version": "1.5.5",
+  "date": "2026年11月27日",
   "stem": "panoforge",
   "manual": [
     {
@@ -38,7 +39,7 @@
         ],
         [
           "box",
-          "本書は候補ソースv1.5.3の操作説明です。空間の連続性や生成品質を保証するものではありません。検査結果と実際のビューワー表示を両方確認してください。"
+        "WindowsではNode.jsを導入し、ZIPを展開して start_panorama_generator.bat をダブルクリックします。準備ができると既定のブラウザーにPanoForgeが開きます。"
         ],
         [
           "link",
