@@ -2,6 +2,8 @@
 
 [Release notes / 更新内容](docs/releases/v1.5.6.md)
 
+[Technical paper (English)](https://docs.google.com/document/d/1aFk4XwISx1ivyLjUes6-SM-_tk9UXMTfp-TN5EJN8QI/edit) · [技術論文（日本語）](https://docs.google.com/document/d/1ZJvao5kWwcHqGB7ARr22HWB7JxJsE8kej84WDVbpmZM/edit)
+
 OpenAI scene and style suggestions, image analysis, and spatial checks now offers **GPT-6.2 Sol** and **GPT-6.2 Astra**. The initial selection is **GPT-6 Luna**. / OpenAIによるシーン・画風提案、画像解析、空間構成の確認に **GPT-6.2 Sol** と **GPT-6.2 Astra** を追加しました。初期選択は **GPT-6 Luna** です。
 
 Standard input / output per million tokens: GPT-6 Luna $0.10 / $0.50, GPT-6.2 Sol $2 / $10, GPT-6.2 Astra $8 / $40 (November 18, 2026). / 100万トークン当たりの通常入力／出力単価はGPT-6 Luna $0.10／$0.50、GPT-6.2 Sol $2／$10、GPT-6.2 Astra $8／$40です（2026年11月18日確認）。
