@@ -7,14 +7,14 @@
 <style id="app-frame-guard">html{display:none!important}</style>
 <script>if(window.top===window.self){document.getElementById('app-frame-guard').remove();}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360° AI Panorama Generator v1.5.5</title>
+  <title>360° AI Panorama Generator v1.5.6</title>
   <meta name="description" content="1枚の画像から360°パノラマ背景をAIで自動生成。ビューワー＆HDキャプチャツール搭載。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>" />
-  <script type="module" crossorigin src="./assets/index-taxR6NHY.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CbISjeWA.css">
+  <script type="module" crossorigin src="./assets/index-CMdME4wV.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BsF8whS2.css">
 </head>
 <body>
   <header id="app-header">
@@ -35,7 +35,7 @@
     <div class="header-left">
       <span class="logo-icon">🌐</span>
       <h1 class="logo-text" style="font-size:1.1rem; line-height:1.2;">360° AI Panorama Generator</h1>
-      <span class="version-badge">v1.5.5</span>
+      <span class="version-badge">v1.5.6</span>
       <div id="api-status-badge" class="header-status">
         <span id="api-key-status" class="status-dot" title="未接続"></span>
         <span id="api-status-text">未接続</span>
@@ -287,6 +287,7 @@
             <span class="btn-text">キャプチャ保存 (1920×1080)</span>
           </button>
           <button id="btn-save-original" class="ctrl-btn save-active-btn">💾 360°画像を保存</button>
+          <p id="viewer-save-status" class="viewer-save-status" role="status"></p>
         </div>
       </div>
     </section>
@@ -327,7 +328,7 @@
   <div id="api-modal-overlay" class="modal-overlay hidden">
     <div class="modal-card glass-card">
       <div class="modal-header">
-        <h3>🔑 API Key 設定 <span class="version-badge">v1.5.5</span></h3>
+        <h3>🔑 API Key 設定 <span class="version-badge">v1.5.6</span></h3>
         <button id="api-modal-close" class="modal-close-btn">✕</button>
       </div>
       <form id="api-key-form" autocomplete="off">
@@ -351,7 +352,7 @@
       <a href="./downloads/panoforge-api-guide.pdf" target="_blank" rel="noopener noreferrer">🔑 API設定ガイド PDF（別タブ）</a>
       <span>画像の準備・360度の確認・保存とAPIの準備を説明します。</span>
     </nav>
-        <div id="api-key-feedback" class="api-feedback"></div>
+        <div id="api-key-feedback" class="api-feedback" aria-live="polite"></div>
         <div id="api-key-warning" class="api-feedback api-warning hidden">⚠ 従量課金（OpenAI API）</div>
         <div class="api-links-container" style="margin-top: 15px; text-align: center; font-size: 0.8rem;">
           <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" class="api-link" style="color: #64b5f6; margin-right: 15px;">🔵 Gemini キー取得</a>
