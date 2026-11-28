@@ -107,6 +107,6 @@ test('selector is OpenAI-only with explicit image boundary and accessible per-wo
   assert.match(html, /id="openai-text-model-status" role="status" aria-live="polite"/);
   assert.match(html, /id="openai-vision-model-status" role="status" aria-live="polite"/);
   assert.match(html, /画像生成は専用の画像モデル/);
-  assert.match(main, /openaiModelPanel\.classList\.toggle\('hidden', engineType !== 'openai'\)/);
+  assert.match(main, /openaiModelPanel\.classList\.toggle\('hidden', provider !== 'openai'\)/);
   assert.match(main, /engine\.setOpenAIModel\(dom\.openaiModelSelect\.value\)/);
 });

@@ -5,6 +5,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { canvasImageBlob, saveImageBlob } from './lib/image-download.js';
 
 /**
  * 360°パノラマビューワー
@@ -180,42 +181,24 @@ export class PanoramaViewer {
    * 現在のパノラマ画像をGPano XMPメタデータ付きJPEGでダウンロード
    * Google Photos / Facebook 等で自動的に360°ビューワーが起動する形式
    */
-  downloadOriginal() {
-    if (!this.currentImageDataUrl) return;
+  async downloadOriginal() {
+    if (!this.currentImageDataUrl) throw new Error('保存する360°画像がありません。');
 
-    const img = new Image();
-    img.onload = () => {
-      const w = img.width;
-      const h = img.height;
-
-      // Canvas経由でJPEG化
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-
-      canvas.toBlob((blob) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const jpegData = new Uint8Array(reader.result);
-          const xmpPacket = this._buildGPanoXMP(w, h);
-          const output = this._injectXMPIntoJPEG(jpegData, xmpPacket);
-
-          const outputBlob = new Blob([output], { type: 'image/jpeg' });
-          const url = URL.createObjectURL(outputBlob);
-          const link = document.createElement('a');
-          link.download = `AI_Panorama_360_generated_image_${this._getTimestamp()}.jpg`;
-          link.href = url;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        };
-        reader.readAsArrayBuffer(blob);
-      }, 'image/jpeg', 0.95);
-    };
-    img.src = this.currentImageDataUrl;
+    const image = new Image();
+    image.src = this.currentImageDataUrl;
+    await image.decode();
+    const w = image.naturalWidth;
+    const h = image.naturalHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('360°画像をJPEGに変換できませんでした。');
+    context.drawImage(image, 0, 0);
+    const jpeg = await canvasImageBlob(canvas, 'image/jpeg', 0.95);
+    const bytes = new Uint8Array(await jpeg.arrayBuffer());
+    const output = this._injectXMPIntoJPEG(bytes, this._buildGPanoXMP(w, h));
+    saveImageBlob(new Blob([output], { type: 'image/jpeg' }), `AI_Panorama_360_generated_image_${this._getTimestamp()}.jpg`);
   }
 
   /**
@@ -297,40 +280,30 @@ export class PanoramaViewer {
    * @param {number} width - キャプチャ幅（デフォルト1920）
    * @param {number} height - キャプチャ高さ（デフォルト1080）
    */
-  captureView(width = 1920, height = 1080) {
-    if (!this.renderer || !this.scene || !this.camera) return;
+  async captureView(width = 1920, height = 1080) {
+    if (!this.renderer || !this.scene || !this.camera) throw new Error('保存できるパノラマがありません。');
 
-    // 元のサイズを保存
-    const origSize = new THREE.Vector2();
-    this.renderer.getSize(origSize);
-    const origAspect = this.camera.aspect;
-    const origPixelRatio = this.renderer.getPixelRatio();
+    const renderer = this.renderer;
+    const camera = this.camera;
+    const originalSize = renderer.getSize(new THREE.Vector2());
+    const originalAspect = camera.aspect;
+    const originalPixelRatio = renderer.getPixelRatio();
+    let capture;
+    try {
+      renderer.setPixelRatio(1);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.render(this.scene, camera);
+      capture = canvasImageBlob(renderer.domElement, 'image/png');
+    } finally {
+      renderer.setPixelRatio(originalPixelRatio);
+      renderer.setSize(originalSize.x, originalSize.y, false);
+      camera.aspect = originalAspect;
+      camera.updateProjectionMatrix();
+    }
 
-    // キャプチャ用にリサイズ
-    this.renderer.setPixelRatio(1);
-    this.renderer.setSize(width, height, false);
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
-
-    // レンダリング
-    this.renderer.render(this.scene, this.camera);
-
-    // キャンバスからデータURLを取得
-    const dataUrl = this.renderer.domElement.toDataURL('image/png');
-
-    // 元に戻す
-    this.renderer.setPixelRatio(origPixelRatio);
-    this.renderer.setSize(origSize.x, origSize.y, false);
-    this.camera.aspect = origAspect;
-    this.camera.updateProjectionMatrix();
-
-    // ダウンロード
-    const link = document.createElement('a');
-    link.download = `AI_Panorama_360_capture_${width}x${height}_${this._getTimestamp()}.png`;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveImageBlob(await capture, `AI_Panorama_360_capture_${width}x${height}_${this._getTimestamp()}.png`);
   }
 
   /**

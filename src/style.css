@@ -76,6 +76,10 @@ body{
 }
 .status-dot.connected{background:var(--success);box-shadow:0 0 8px rgba(0,230,118,0.5)}
 .status-dot.openai{background:#81c784;box-shadow:0 0 8px rgba(129,199,132,0.5)}
+.status-dot.key-unverified{background:#f4c76b}
+.viewer-save-status{flex:1 0 100%;margin:0;text-align:center;font-size:.85rem;color:var(--text)}
+.viewer-save-status:empty{display:none}
+.viewer-save-status.save-error{color:var(--danger)}
 
 /* モーダル共通 */
 .modal-overlay{

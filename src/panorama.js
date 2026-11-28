@@ -14,7 +14,7 @@ import {
   parseSpatialLedger,
   parseSpatialQa,
 } from './lib/spatial-ledger.js';
-import { normalizeApiKey } from './lib/api-key.js';
+import { classifyApiAccessError, classifyGeminiSdkAccessError, normalizeApiKey, verifyApiKey } from './lib/api-key.js';
 import { DEFAULT_OPENAI_MODEL_ID, getOpenAIModel, getOpenAIModelRoute } from './lib/openai-models.js';
 import { getOpenAIImageFallbackChain } from './lib/openai-image-fallback.js';
 import { projectPerspectiveReference, projectPanoramaView } from './lib/panorama-reference.js';
@@ -80,6 +80,7 @@ export class PanoramaEngine {
     this.geminiClient = null;
     this.openAIKey = null;
     this.activeEngine = null; // 'gemini' | 'openai'
+    this.credentialStatus = 'unconfigured';
     this.lastSuccessImageModel = null;
     this.lastSuccessTextModel = null;
     this.selectedOpenAIModelId = DEFAULT_OPENAI_MODEL_ID;
@@ -92,6 +93,7 @@ export class PanoramaEngine {
       this.geminiClient = null;
       this.openAIKey = null;
       this.activeEngine = null;
+      this.credentialStatus = 'unconfigured';
       return null;
     }
     const key = normalizeApiKey(apiKey);
@@ -99,12 +101,14 @@ export class PanoramaEngine {
       this.openAIKey = key;
       this.geminiClient = null;
       this.activeEngine = 'openai';
+      this.credentialStatus = 'unverified';
       return 'openai';
     } else {
       try {
         this.geminiClient = new GoogleGenAI({ apiKey: key });
         this.openAIKey = null;
         this.activeEngine = 'gemini';
+        this.credentialStatus = 'unverified';
         return 'gemini';
       } catch (e) {
         console.error('Gemini APIクライアント初期化失敗:', e);
@@ -113,7 +117,23 @@ export class PanoramaEngine {
     }
   }
 
-  isReady() { return this.activeEngine !== null; }
+  async connectApiKey(value) {
+    const key = normalizeApiKey(value);
+    if (!key) throw new Error('APIキーを入力してください。');
+    const provider = key.startsWith('sk-') ? 'openai' : 'gemini';
+    const verified = await verifyApiKey(provider, key);
+    if (!this.setApiKey(key)) throw new Error('APIクライアントを準備できませんでした。');
+    this.credentialStatus = verified ? 'verified' : 'unverified';
+    return provider;
+  }
+
+  rejectApiKey() {
+    this.geminiClient = null;
+    this.openAIKey = null;
+    this.credentialStatus = 'rejected';
+  }
+
+  isReady() { return this.activeEngine !== null && this.credentialStatus !== 'rejected'; }
 
   setOpenAIModel(modelId) {
     if (this.openAIRouteCount > 0) throw new Error('OpenAI処理中はモデルを変更できません。');
@@ -170,6 +190,8 @@ export class PanoramaEngine {
     );
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
+      const accessError = classifyApiAccessError('openai', res.status, err.error);
+      if (accessError) throw accessError;
       const error = new Error(`OpenAI Chat Error: HTTP ${res.status} ${err.error?.message || ''}`);
       error.terminal = [401, 403, 429].includes(res.status) || /quota|content_policy|safety|refusal/i.test(err.error?.code || '');
       throw error;
@@ -183,6 +205,7 @@ export class PanoramaEngine {
     }
     const text = choice?.message?.content;
     if (choice?.finish_reason !== 'stop' || typeof text !== 'string' || !text.trim()) throw new Error('Empty or incomplete OpenAI response');
+    this.credentialStatus = 'verified';
     return text;
   }
 
@@ -332,6 +355,8 @@ export class PanoramaEngine {
             customErr.code = 'content_policy_violation';
             throw customErr;
           }
+          const accessError = classifyApiAccessError('openai', res.status, err.error);
+          if (accessError) throw accessError;
           const requestError = new Error(`OpenAI Image Error: ${err.error?.message || res.status}`);
           requestError.status = res.status;
           requestError.code = err.error?.code;
@@ -362,6 +387,7 @@ export class PanoramaEngine {
           throw new Error("画像データが見つかりませんでした");
         }
 
+        this.credentialStatus = 'verified';
         console.info(`OpenAI Images ${action}: ${imageModel.id} / ${imageModel.quality} / ${size}`);
         return { base64, mimeType: "image/png", usedModel: imageModel.id };
       } catch (err) {
@@ -566,6 +592,7 @@ ${issues.map(issue => `- ${issue}`).join('\n')}`;
     const lastSuccess = lastSuccessKey === 'image' ? this.lastSuccessImageModel : this.lastSuccessTextModel;
     const ordered = this._getModelOrder(models, lastSuccess);
     const errors = [];
+    let accessError;
     for (let i = 0; i < ordered.length; i++) {
       const tier = ordered[i];
       try {
@@ -623,18 +650,23 @@ ${issues.map(issue => `- ${issue}`).join('\n')}`;
           }
         }
 
+        this.credentialStatus = 'verified';
         if (lastSuccessKey === 'image') this.lastSuccessImageModel = tier.id;
         else this.lastSuccessTextModel = tier.id;
         console.log(`✅ ${tier.label} で生成成功`);
         return response;
       } catch (err) {
         this.requestSignal?.throwIfAborted();
-        const msg = err?.message || String(err);
+        const classified = classifyGeminiSdkAccessError(err);
+        if (classified?.code === 'API_KEY_REJECTED') throw classified;
+        if (classified) accessError = classified;
+        const msg = classified?.message || err?.message || String(err);
         console.error(`❌ ${tier.label} エラー:`, msg);
         const isContentBlock = /SAFETY|RECITATION|コンテンツブロック|画像データなし|安全フィルタ|blocked/i.test(msg);
         errors.push({ label: tier.label, msg, isContentBlock });
       }
     }
+    if (accessError) throw accessError;
     const hasContentBlock = errors.some(e => e.isContentBlock);
     console.error('全モデル失敗詳細:', errors.map(e => `[${e.label}] ${e.msg}`).join(' | '));
     const err = new Error(

@@ -8,6 +8,7 @@ import { createAiOperationManager, abortable } from './lib/aiOperation.js';
 import './style.css';
 import { PanoramaEngine } from './panorama.js';
 import { PanoramaViewer } from './viewer.js';
+import { canvasImageBlob, imageDataAsPng, saveImageBlob } from './lib/image-download.js';
 import { FallbackChainViewer } from './components/FallbackChainViewer.js';
 import { OPENAI_IMAGE_TIMEOUT_SECONDS } from './lib/processing-timeout.js';
 import { resetGenerationStateForProviderChange } from './lib/provider-session.js';
@@ -16,7 +17,14 @@ import { OPENAI_MODELS, getOpenAIModel, formatOpenAIModelPrice, formatOpenAIMode
 const engine = new PanoramaEngine();
 function finishAiOperation(operation, api) {
   if (!operation.isCurrent()) return;
-  if (!operation.signal.aborted) { engine.lastSuccessImageModel=api.lastSuccessImageModel; engine.lastSuccessTextModel=api.lastSuccessTextModel; }
+  if (!operation.signal.aborted) {
+    engine.lastSuccessImageModel = api.lastSuccessImageModel;
+    engine.lastSuccessTextModel = api.lastSuccessTextModel;
+    if (engine.credentialStatus === 'unverified' && api.credentialStatus === 'verified') {
+      engine.credentialStatus = 'verified';
+      renderApiKeyStatus();
+    }
+  }
   operation.finish();
 }
 const aiOperations = createAiOperationManager(() => {
@@ -116,6 +124,7 @@ const dom = {
   btnAutoRotate: $('#btn-auto-rotate'),
   btnFullscreen: $('#btn-fullscreen'),
   btnCapture: $('#btn-capture'),
+  viewerSaveStatus: $('#viewer-save-status'),
   btnSaveOriginal: $('#btn-save-original'),
   resolutionInfo: $('#resolution-info'),
   zoomInfo: $('#zoom-info'),
@@ -206,6 +215,8 @@ function setAppLocked(locked) {
 // ============================
 // APIキー管理
 // ============================
+let apiKeyCheckPending = false;
+
 function setApiKeyVisible(visible = false) {
   dom.apiKeyInput.type = visible ? 'text' : 'password';
   dom.iconEyeOff.classList.toggle('hidden', visible);
@@ -214,34 +225,61 @@ function setApiKeyVisible(visible = false) {
   dom.apiKeyToggle.setAttribute('aria-label', visible ? 'APIキーを隠す' : 'APIキーを表示');
 }
 
-dom.apiSettingsBtn.addEventListener('click', () => {
+function openApiSettings() {
   setApiKeyVisible();
   dom.apiModalOverlay.classList.remove('hidden');
   dom.apiKeyInput.focus();
-});
+}
 
-dom.apiModalClose.addEventListener('click', () => {
+function closeApiSettings() {
   setApiKeyVisible();
-  if (!engine.isReady()) return;
+  if (state.appLocked || apiKeyCheckPending) return;
   dom.apiModalOverlay.classList.add('hidden');
   syncEmergencyWorkspace();
-});
+}
 
-dom.apiModalOverlay.addEventListener('click', (e) => {
-  if (e.target !== dom.apiModalOverlay) return;
-  setApiKeyVisible();
-  if (!engine.isReady()) return;
-  dom.apiModalOverlay.classList.add('hidden');
-  syncEmergencyWorkspace();
-});
+function renderApiKeyStatus() {
+  const provider = engine.activeEngine === 'openai' ? 'OpenAI' : 'Gemini';
+  const status = engine.credentialStatus;
+  const descriptions = {
+    unconfigured: '未接続',
+    verified: `${provider} API キー確認済み`,
+    unverified: `${provider} API キー未確認。モデル一覧の権限がないため、AI処理時に確認します。`,
+    rejected: `${provider} API キー要確認`,
+  };
+  const text = {
+    unconfigured: '未接続',
+    verified: `Engine: ${provider}`,
+    unverified: `${provider} · キー未確認`,
+    rejected: `${provider} · キー要確認`,
+  };
+  dom.apiStatusText.textContent = text[status];
+  dom.apiKeyStatus.title = descriptions[status];
+  dom.apiKeyStatus.setAttribute('aria-label', descriptions[status]);
+  dom.apiKeyStatus.classList.toggle('connected', status === 'verified');
+  dom.apiKeyStatus.classList.toggle('openai', status === 'verified' && provider === 'OpenAI');
+  dom.apiKeyStatus.classList.toggle('key-unverified', status === 'unverified');
+  dom.apiSettingsBtn.classList.toggle('connected', status === 'verified');
+}
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !dom.apiModalOverlay.classList.contains('hidden')) {
-    setApiKeyVisible();
-    if (!engine.isReady()) return;
-    dom.apiModalOverlay.classList.add('hidden');
-  syncEmergencyWorkspace();
-  }
+function handleRejectedApiKey(error) {
+  if (error?.code !== 'API_KEY_REJECTED') return false;
+  engine.rejectApiKey();
+  renderApiKeyStatus();
+  dom.apiKeyFeedback.textContent = `${error.message} 元の画像と設定は保持しています。`;
+  dom.apiKeyFeedback.className = 'api-feedback error';
+  openApiSettings();
+  updateButtons();
+  return true;
+}
+
+dom.apiSettingsBtn.addEventListener('click', openApiSettings);
+dom.apiModalClose.addEventListener('click', closeApiSettings);
+dom.apiModalOverlay.addEventListener('click', event => {
+  if (event.target === dom.apiModalOverlay) closeApiSettings();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !dom.apiModalOverlay.classList.contains('hidden')) closeApiSettings();
 });
 
 // Reset before native insertion, with input as a fallback for autofill and IME.
@@ -250,7 +288,7 @@ dom.apiKeyInput.addEventListener('beforeinput', () => setApiKeyVisible());
 dom.apiKeyInput.addEventListener('input', () => {
   setApiKeyVisible();
   const val = dom.apiKeyInput.value.trim();
-  dom.apiModalApply.disabled = val.length === 0;
+  dom.apiModalApply.disabled = apiKeyCheckPending || !val;
   dom.apiKeyFeedback.textContent = '';
   dom.apiKeyFeedback.className = 'api-feedback';
   dom.apiKeyWarning.classList.toggle('hidden', !val.startsWith('sk-'));
@@ -260,70 +298,53 @@ dom.apiKeyToggle.addEventListener('click', () => {
   setApiKeyVisible(dom.apiKeyInput.type === 'password');
 });
 
-dom.apiKeyForm.addEventListener('submit', (event) => {
+dom.apiKeyForm.addEventListener('submit', event => {
   event.preventDefault();
-  if (!dom.apiModalApply.disabled) {
-    dom.apiModalApply.click();
-  }
+  if (!dom.apiModalApply.disabled) dom.apiModalApply.click();
 });
 
-dom.apiModalApply.addEventListener('click', () => {
+dom.apiModalApply.addEventListener('click', async () => {
   setApiKeyVisible();
   const key = dom.apiKeyInput.value.trim();
-  if (!key) return;
-  const previousProvider = state.activeProvider;
-  const engineType = engine.setApiKey(key);
-  if (engineType) {
-    if (previousProvider && previousProvider !== engineType) {
-      resetProviderGenerationSession();
-    }
-    state.activeProvider = engineType;
-    dom.openaiModelPanel.classList.toggle('hidden', engineType !== 'openai');
-    if (engineType !== 'openai') {
+  if (!key || apiKeyCheckPending || aiOperations.state().active) return;
+  apiKeyCheckPending = true;
+  const applyLabel = dom.apiModalApply.textContent;
+  dom.apiModalApply.textContent = 'APIキーを確認中…';
+  dom.apiModalApply.disabled = true;
+  dom.apiKeyInput.disabled = true;
+  dom.apiKeyToggle.disabled = true;
+  dom.apiKeyFeedback.textContent = '';
+  dom.apiKeyFeedback.className = 'api-feedback';
+  let applied = false;
+
+  try {
+    const previousProvider = state.activeProvider;
+    const provider = await engine.connectApiKey(key);
+    if (previousProvider && previousProvider !== provider) resetProviderGenerationSession();
+    state.activeProvider = provider;
+    dom.openaiModelPanel.classList.toggle('hidden', provider !== 'openai');
+    dom.openaiVisionNote.classList.toggle('hidden', provider !== 'openai');
+    if (provider !== 'openai') {
       dom.openaiTextModelStatus.textContent = '';
       dom.openaiVisionModelStatus.textContent = '';
     }
-    dom.apiKeyStatus.classList.add('connected');
-    dom.apiSettingsBtn.classList.add('connected');
-    
-    // エンジンごとのスタイル変更
-    if (engineType === 'openai') {
-      dom.apiKeyStatus.classList.add('openai');
-      dom.apiKeyFeedback.textContent = '✓ OpenAI API に接続しました';
-      dom.apiStatusText.textContent = 'Engine: OpenAI';
-      dom.apiKeyStatus.title = 'OpenAI API 接続済み';
-      dom.apiKeyStatus.setAttribute('aria-label', 'OpenAI API 接続済み');
-      state.appLocked = false;
-      dom.openaiVisionNote.classList.remove('hidden');
-    } else {
-      dom.apiKeyStatus.classList.remove('openai');
-      dom.apiKeyFeedback.textContent = '✓ Gemini API に接続しました';
-      dom.apiStatusText.textContent = 'Engine: Gemini';
-      dom.apiKeyStatus.title = 'Gemini API 接続済み';
-      dom.apiKeyStatus.setAttribute('aria-label', 'Gemini API 接続済み');
-      state.appLocked = false;
-      dom.openaiVisionNote.classList.add('hidden');
-    }
-    
-    dom.apiKeyFeedback.className = 'api-feedback success';
+    renderApiKeyStatus();
     setAppLocked(false);
-    setTimeout(() => {
-      dom.apiModalOverlay.classList.add('hidden');
-  syncEmergencyWorkspace();
-      dom.apiKeyInput.value = '';
-      setApiKeyVisible();
-      dom.apiKeyWarning.classList.add('hidden');
-    }, 800);
-  } else {
-    dom.apiKeyStatus.classList.remove('connected', 'openai');
-    dom.apiSettingsBtn.classList.remove('connected');
-    dom.apiStatusText.textContent = '未接続';
-    dom.apiKeyStatus.title = '未接続';
-    dom.apiKeyStatus.setAttribute('aria-label', '未接続');
-    dom.apiKeyFeedback.textContent = '✕ APIキーの初期化に失敗しました';
+    dom.apiKeyInput.value = '';
+    dom.apiKeyWarning.classList.add('hidden');
+    applied = true;
+  } catch (error) {
+    dom.apiKeyFeedback.textContent = error.message;
     dom.apiKeyFeedback.className = 'api-feedback error';
+  } finally {
+    apiKeyCheckPending = false;
+    dom.apiModalApply.textContent = applyLabel;
+    dom.apiModalApply.disabled = !dom.apiKeyInput.value.trim();
+    dom.apiKeyInput.disabled = false;
+    dom.apiKeyToggle.disabled = false;
+    if (applied) closeApiSettings();
+    updateButtons();
   }
-  updateButtons();
 });
 
 function resetProviderGenerationSession() {
@@ -394,12 +415,12 @@ dom.sceneAiBtn.addEventListener('click', async () => {
     dom.sceneChips.forEach(c => c.classList.remove('active'));
     updateButtons();
   } catch (e) {
-    if (operation.signal.aborted) return;
+    if (operation.signal.aborted || handleRejectedApiKey(e)) return;
     console.error('シーン提案エラー:', e);
   } finally {
     if (!operation.isCurrent()) return;
     finishAiOperation(operation, api);
-    dom.sceneAiBtn.disabled = false;
+    updateButtons();
     dom.sceneAiBtn.textContent = '✨ AI提案';
   }
 });
@@ -442,12 +463,12 @@ dom.styleAiBtn.addEventListener('click', async () => {
     dom.styleChips.forEach(c => c.classList.remove('active'));
     updateButtons();
   } catch (e) {
-    if (operation.signal.aborted) return;
+    if (operation.signal.aborted || handleRejectedApiKey(e)) return;
     console.error('スタイル提案エラー:', e);
   } finally {
     if (!operation.isCurrent()) return;
     finishAiOperation(operation, api);
-    dom.styleAiBtn.disabled = false;
+    updateButtons();
     dom.styleAiBtn.textContent = '✨ AI提案';
   }
 });
@@ -536,7 +557,7 @@ function getTimestamp() {
 dom.dlGenerated.addEventListener('click', () => {
   if (!state.generatedDataUrl) return;
   const filename = `AI_Panorama_normal_generated_image_${getTimestamp()}.png`;
-  downloadDataUrl(state.generatedDataUrl, filename);
+  downloadPng(state.generatedDataUrl, filename);
 });
 
 // 360°パノラマダウンロード（XMPメタデータ付きJPEG）
@@ -551,14 +572,12 @@ dom.openViewerBtn.addEventListener('click', () => {
   openPanoInViewer(state.panoDataUrl, false);
 });
 
-// 通常ダウンロードユーティリティ
-function downloadDataUrl(dataUrl, filename) {
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+async function downloadPng(dataUrl, filename) {
+  try {
+    saveImageBlob(await imageDataAsPng(dataUrl), filename);
+  } catch (error) {
+    showError('PNGを保存できませんでした', error.message, false);
+  }
 }
 
 // 360°画像: GPano XMPメタデータ付きJPEGとしてダウンロード
@@ -572,8 +591,7 @@ async function buildPanoramaJpeg(dataUrl) {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Unable to encode panorama.');
   ctx.drawImage(image, 0, 0);
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-  if (!blob) throw new Error('Unable to encode panorama.');
+  const blob = await canvasImageBlob(canvas, 'image/jpeg', 0.95);
   const jpeg = new Uint8Array(await blob.arrayBuffer());
   return {
     blob: new Blob([injectXMPIntoJPEG(jpeg, buildGPanoXMP(image.width, image.height))], { type: 'image/jpeg' }),
@@ -585,11 +603,9 @@ async function buildPanoramaJpeg(dataUrl) {
 async function download360AsJpegWithXMP(dataUrl) {
   try {
     const { blob } = await buildPanoramaJpeg(dataUrl);
-    const url = URL.createObjectURL(blob);
-    try { downloadDataUrl(url, `AI_Panorama_360_generated_image_${getTimestamp()}.jpg`); }
-    finally { URL.revokeObjectURL(url); }
+    saveImageBlob(blob, `AI_Panorama_360_generated_image_${getTimestamp()}.jpg`);
   } catch (error) {
-    showError('360°画像を保存できませんでした', error.message);
+    showError('360°画像を保存できませんでした', error.message, false);
   }
 }
 
@@ -764,6 +780,11 @@ async function executeImageGeneration(forMcp = false) {
 
   } catch (error) {
     if (operation.signal.aborted) { if (operation.isCurrent()) hideProcessing(); return; }
+    if (handleRejectedApiKey(error)) {
+      hideProcessing();
+      if (forMcp) throw error;
+      return;
+    }
     console.error('画像生成エラー:', error);
     hideProcessing();
     if (error.isContentPolicy || (error.message && error.message.includes('content_policy'))) {
@@ -876,6 +897,11 @@ async function executePanoramaExpansion(forMcp = false) {
 
   } catch (error) {
     if (operation.signal.aborted) { if (operation.isCurrent()) hideProcessing(); return; }
+    if (handleRejectedApiKey(error)) {
+      hideProcessing();
+      if (forMcp) throw error;
+      return;
+    }
     console.error('パノラマ拡張エラー:', error);
     hideProcessing();
     if (error.code === 'panorama_quality_rejected') {
@@ -911,8 +937,23 @@ dom.btnAutoRotate.addEventListener('click', () => {
   dom.btnAutoRotate.classList.toggle('active', isOn);
 });
 dom.btnFullscreen.addEventListener('click', () => viewer?.toggleFullscreen());
-dom.btnCapture.addEventListener('click', () => viewer?.captureView(1920, 1080));
-dom.btnSaveOriginal.addEventListener('click', () => viewer?.downloadOriginal());
+async function saveFromViewer(button, save) {
+  if (!viewer || button.disabled) return;
+  button.disabled = true;
+  dom.viewerSaveStatus.textContent = '保存ファイルを準備しています。';
+  dom.viewerSaveStatus.classList.remove('save-error');
+  try {
+    await save(viewer);
+    dom.viewerSaveStatus.textContent = 'ダウンロードを開始しました。';
+  } catch (error) {
+    dom.viewerSaveStatus.textContent = `保存できませんでした。${error.message}`;
+    dom.viewerSaveStatus.classList.add('save-error');
+  } finally {
+    button.disabled = false;
+  }
+}
+dom.btnCapture.addEventListener('click', () => saveFromViewer(dom.btnCapture, view => view.captureView(1920, 1080)));
+dom.btnSaveOriginal.addEventListener('click', () => saveFromViewer(dom.btnSaveOriginal, view => view.downloadOriginal()));
 
 function updateCompass(degrees) {
   if (dom.compass) dom.compass.style.transform = `rotate(${-degrees}deg)`;
@@ -1012,7 +1053,8 @@ function setStepState(stepId, s) {
   else { el.querySelector('.step-icon').textContent = '⏳'; }
 }
 
-function showError(title, message) {
+function showError(title, message, canRetry = Boolean(state.lastAction)) {
+  dom.errorRetry.classList.toggle('hidden', !canRetry);
   $('#quality-diagnostics').classList.add('hidden');
   $('#quality-diagnostics').open = false;
   $('#quality-panorama').removeAttribute('src');
@@ -1028,12 +1070,12 @@ function showError(title, message) {
 }
 dom.errorRetry.addEventListener('click', () => {
   dom.errorOverlay.classList.add('hidden');
-  if (state.lastAction) state.lastAction();
+  if (!dom.errorRetry.classList.contains('hidden') && state.lastAction) state.lastAction();
 });
 dom.errorDismiss.addEventListener('click', () => { dom.errorOverlay.classList.add('hidden'); });
 $('#quality-save').addEventListener('click', () => {
   const source = $('#quality-panorama').getAttribute('src');
-  if (source) downloadDataUrl(source, `PanoForge_unverified_${getTimestamp()}.png`);
+  if (source) downloadPng(source, `PanoForge_unverified_${getTimestamp()}.png`);
 });
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1064,11 +1106,12 @@ connectFuruMcp({
   appId: 'panoforge',
   mount: mcpMount,
   controlMount: mcpControlMount,
-  readiness: () => engine.isReady(),
+  readiness: () => engine.isReady() && !apiKeyCheckPending,
   stop: () => aiOperations.stop(),
   async execute(operation, { action }) {
     if (operation !== 'create_image') throw mcpAppError('OUTPUT_INVALID');
     if (!engine.isReady()) throw mcpAppError('API_REQUIRED');
+    if (apiKeyCheckPending) throw mcpAppError('APP_BUSY');
     if (aiOperations.state().active) throw mcpAppError('APP_BUSY');
     if (action === 'base') {
       if (!dom.scenePrompt.value.trim() || !dom.styleInput.value.trim()) throw mcpAppError('INPUT_REQUIRED');

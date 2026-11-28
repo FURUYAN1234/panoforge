@@ -1,6 +1,6 @@
 # 360° AI Panorama Generator / 360度AIパノラマ生成ツール
 
-[Release notes / 更新内容](docs/releases/v1.5.5.md)
+[Release notes / 更新内容](docs/releases/v1.5.6.md)
 
 OpenAI scene and style suggestions, image analysis, and spatial checks now offers **GPT-6.2 Sol** and **GPT-6.2 Astra**. The initial selection is **GPT-6 Luna**. / OpenAIによるシーン・画風提案、画像解析、空間構成の確認に **GPT-6.2 Sol** と **GPT-6.2 Astra** を追加しました。初期選択は **GPT-6 Luna** です。
 
@@ -36,7 +36,7 @@ Japanese A4 guides cover application operation and OpenAI / Gemini API setup. / 
 
 
 
-**v1.5.5** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
+**v1.5.6** — AI-driven 360° panoramic background generation and expansion tool using Gemini & OpenAI API / Gemini API と OpenAI API を使用したAI駆動の360度パノラマ背景生成・拡張ツール (Dual-API)
 
 [!['ChatGPT Image 2026年6月25日 22_19_30'](https://github.com/user-attachments/assets/d850ac7f-aa1c-40cc-a378-b8c6673c726c)](https://youtu.be/pqYVxUUg0Cs?si=27g1I3tO2EuZkOuxJ)
 
@@ -57,7 +57,7 @@ It provides seamless 360-degree environments as background assets for manga and 
 
 ## Current Release Line / 現行仕様
 
-The current public line is **v1.5.5**. Both Gemini and OpenAI can generate panoramas. / 現行公開版は **v1.5.5** です。Gemini と OpenAI の両方でパノラマを生成できます。
+The current public line is **v1.5.6**. Both Gemini and OpenAI can generate panoramas. / 現行公開版は **v1.5.6** です。Gemini と OpenAI の両方でパノラマを生成できます。
 
 ### Spatial-Ledger Panorama Routine / 空間台帳パノラマ・ルーチン
 
@@ -204,7 +204,7 @@ Text Generation Fallback Pipeline (Gemini)**: / **テキスト生成・スタイ
 
 ### 🔑 About API Keys / 各種APIキーについて
 - A **Gemini API Key** (from Google AI Studio) or an **OpenAI API Key** (starts with `sk-`) is required. / Google AI Studioで取得した **Gemini APIキー**、または **OpenAI APIキー** (`sk-` から始まるもの) が必要です。
-- Enter the API key in the settings screen shown immediately after launch. The system will automatically detect which engine to use based on the API key format (`sk-` triggers OpenAI API). / 起動直後に表示される設定画面でAPIキーを入力します。キーの形式からシステムが自動でエンジン（Gemini API または OpenAI API）を判別します。
+- Enter the API key in the settings screen shown immediately after launch. The app detects the provider and checks the key with its model list. Keys without list access remain usable with an unverified status. Re-entering a key for the same provider preserves the source image and open view. / 起動直後に表示される設定画面でAPIキーを入力します。キーの形式からシステムがエンジンを判別し、モデル一覧でキーを確認します。一覧の権限がない場合は「キー未確認」と表示し、AI処理時に確認します。同じ提供元のキーを入れ直すときは、元画像と開いているビューを保持します。
 - The API key is **session-limited** (kept in memory only) and is NOT saved in the browser's local storage. / 入力したAPIキーは**セッション限定**（メモリ内のみ保持）であり、ブラウザのローカルストレージ等には一切保存されません。
 
 ---

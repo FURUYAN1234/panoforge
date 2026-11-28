@@ -20,7 +20,7 @@ const setup = () => {
   document.body=element();document.getElementById=()=>dom.stopAi;
   const start=source.indexOf('function syncEmergencyWorkspace()');
   const helper=source.slice(start,source.indexOf('\n}',start)+2);
-  new Function('dom', 'document', 'engine', 'aiOperations', helper+section)(dom, document, {isReady: () => true}, createAiOperationManager());
+  new Function('dom', 'document', 'engine', 'aiOperations', 'state', helper+section)(dom, document, {isReady: () => true}, createAiOperationManager(), {appLocked: false});
   return {dom, document};
 };
 
